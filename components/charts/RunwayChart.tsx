@@ -50,13 +50,17 @@ export default function RunwayChart() {
       : 0;
 
     const lastKnownMonth = monthKeys[monthKeys.length - 1];
-    const futureMonths = Array.from({ length: 12 }, (_, i) => addMonths(lastKnownMonth, i + 1));
+    const futureMonths: string[] = [];
     const futureBalances: number[] = [];
     let prevBalance = balancesByMonth.filter((v): v is number => v !== null).at(-1) ?? 0;
-    futureMonths.forEach(() => {
+    const maxProjectionMonths = 24;
+    for (let i = 1; i <= maxProjectionMonths; i++) {
+      const nextMonth = addMonths(lastKnownMonth, i);
       prevBalance += avgDelta;
+      futureMonths.push(nextMonth);
       futureBalances.push(prevBalance);
-    });
+      if (prevBalance < 0) break;
+    }
 
     return {
       labels: [...monthKeys, ...futureMonths].map(monthLabel),
@@ -159,7 +163,7 @@ export default function RunwayChart() {
       <div className="chart-header">
         <div>
           <div className="chart-title">Cash Runway Projection</div>
-          <div className="chart-subtitle">Historical balance plus twelve projected months</div>
+          <div className="chart-subtitle">Historical balance projected until cash turns negative</div>
         </div>
       </div>
       <div className="chart-wrapper" style={{ height: 320 }}>
