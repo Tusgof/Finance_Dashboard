@@ -40,23 +40,23 @@ export const chartDefaults: ChartOptions = {
   plugins: {
     legend: {
       labels: {
-        color: '#667085',
-        font: { family: 'Inter', size: 11 },
-        padding: 16,
+        color: '#344054',
+        font: { family: 'Inter', size: 12, weight: 'bold' },
+        padding: 18,
         usePointStyle: true,
-        pointStyleWidth: 8,
+        pointStyleWidth: 9,
       },
     },
     tooltip: {
       backgroundColor: '#ffffff',
       titleColor: '#101828',
-      bodyColor: '#475467',
-      borderColor: '#d9e1ec',
+      bodyColor: '#344054',
+      borderColor: '#cfd8e3',
       borderWidth: 1,
       padding: 12,
       cornerRadius: 10,
-      titleFont: { family: 'Inter', weight: 'bold' },
-      bodyFont: { family: 'Inter' },
+      titleFont: { family: 'Inter', weight: 'bold', size: 13 },
+      bodyFont: { family: 'Inter', size: 12 },
       callbacks: {
         label: (ctx) => {
           const val = (ctx.parsed as { y?: number }).y ?? ctx.parsed ?? (ctx.raw as number);
@@ -67,18 +67,18 @@ export const chartDefaults: ChartOptions = {
   },
   scales: {
     x: {
-      ticks: { color: '#667085', font: { family: 'Inter', size: 11 } },
-      grid: { color: 'rgba(15,23,42,0.06)' },
-      border: { color: 'transparent' },
+      ticks: { color: '#344054', font: { family: 'Inter', size: 11, weight: 'normal' } },
+      grid: { color: 'rgba(15,23,42,0.08)' },
+      border: { color: 'rgba(15,23,42,0.08)' },
     },
     y: {
       ticks: {
-        color: '#667085',
-        font: { family: 'Inter', size: 11 },
+        color: '#344054',
+        font: { family: 'Inter', size: 11, weight: 'normal' },
         callback: (v) => '฿' + (Number(v) >= 1000 ? (Number(v) / 1000).toFixed(0) + 'K' : v),
       },
-      grid: { color: 'rgba(15,23,42,0.06)' },
-      border: { color: 'transparent' },
+      grid: { color: 'rgba(15,23,42,0.08)' },
+      border: { color: 'rgba(15,23,42,0.08)' },
     },
   },
 };

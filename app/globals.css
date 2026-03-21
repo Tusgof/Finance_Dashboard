@@ -8,17 +8,17 @@
 
 :root {
   color-scheme: light;
-  --bg-primary: #f7f9fc;
-  --bg-secondary: #eef3f9;
+  --bg-primary: #eef3f9;
+  --bg-secondary: #e7edf6;
   --bg-card: #ffffff;
   --bg-card-hover: #ffffff;
-  --border: #dbe3ee;
-  --border-strong: #c8d3e0;
+  --border: #cfd8e3;
+  --border-strong: #b9c6d6;
   --text-primary: #101828;
-  --text-secondary: #475467;
+  --text-secondary: #344054;
   --text-muted: #667085;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 8px 22px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 10px 26px rgba(15, 23, 42, 0.08);
   --accent-green: #16a34a;
   --accent-green-bg: rgba(22, 163, 74, 0.1);
   --accent-red: #dc2626;
@@ -35,7 +35,7 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(180deg, #fbfcfe 0%, #eef3f9 100%);
+  background: linear-gradient(180deg, #f3f7fc 0%, #e9eff7 100%);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.5;
@@ -63,8 +63,9 @@ select {
   justify-content: space-between;
   gap: 16px;
   padding: 18px 32px;
-  background: rgba(255, 255, 255, 0.96);
-  border-bottom: 1px solid rgba(217, 225, 236, 0.85);
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid rgba(207, 216, 227, 0.95);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
 }
 
 .header-left {
@@ -137,15 +138,15 @@ select {
   gap: 10px;
   flex-wrap: wrap;
   padding: 14px 32px;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(217, 225, 236, 0.75);
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid rgba(207, 216, 227, 0.85);
 }
 
 .filter-btn {
   padding: 9px 16px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.98);
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
@@ -155,7 +156,7 @@ select {
 }
 
 .filter-btn:hover {
-  border-color: rgba(37, 99, 235, 0.35);
+  border-color: rgba(37, 99, 235, 0.38);
   color: var(--text-primary);
   box-shadow: var(--shadow-md);
 }
@@ -192,8 +193,8 @@ select {
 .scenario-result,
 .backup-item {
   background: var(--bg-card);
-  border: 1px solid rgba(217, 225, 236, 0.9);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(207, 216, 227, 0.95);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
 .kpi-card {
@@ -212,7 +213,7 @@ select {
 .cost-kpi:hover,
 .slider-group:hover,
 .scenario-result:hover {
-  border-color: rgba(37, 99, 235, 0.28);
+  border-color: rgba(37, 99, 235, 0.36);
   box-shadow: var(--shadow-md);
 }
 
@@ -286,11 +287,12 @@ select {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
 
 .chart-subtitle {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
@@ -314,8 +316,8 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border-bottom: 1px solid rgba(217, 225, 236, 0.9);
-  background: rgba(248, 250, 252, 0.95);
+  border-bottom: 1px solid rgba(207, 216, 227, 0.95);
+  background: rgba(248, 250, 252, 0.98);
 }
 
 .table-header h3 {
@@ -358,14 +360,14 @@ th {
   text-align: left;
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   background: rgba(248, 250, 252, 0.98);
   position: sticky;
   top: 0;
   z-index: 1;
-  border-bottom: 1px solid rgba(217, 225, 236, 0.9);
+  border-bottom: 1px solid rgba(207, 216, 227, 0.95);
 }
 
 td {
@@ -400,7 +402,7 @@ tr:hover td {
   gap: 12px;
   margin-bottom: 18px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(217, 225, 236, 0.9);
+  border-bottom: 1px solid rgba(207, 216, 227, 0.95);
 }
 
 .section-header .section-icon {
@@ -411,6 +413,8 @@ tr:hover td {
   align-items: center;
   justify-content: center;
   font-size: 17px;
+  background: #eff4fb;
+  border: 1px solid rgba(207, 216, 227, 0.9);
 }
 
 .section-header h2 {
@@ -470,11 +474,11 @@ tr:hover td {
   text-align: left;
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   background: rgba(248, 250, 252, 0.98);
-  border-bottom: 1px solid rgba(217, 225, 236, 0.9);
+  border-bottom: 1px solid rgba(207, 216, 227, 0.95);
 }
 
 .breakdown-table td {
@@ -501,7 +505,7 @@ tr:hover td {
 }
 
 .breakdown-table .row-total td {
-  border-top: 2px solid rgba(217, 225, 236, 0.95);
+  border-top: 2px solid rgba(207, 216, 227, 0.95);
 }
 
 .badge-direct {

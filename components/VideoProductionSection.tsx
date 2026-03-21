@@ -106,7 +106,7 @@ export default function VideoProductionSection() {
                   <td><span className="badge-direct">Direct</span></td>
                   {activeMonths.map(m => (
                     <td key={m} style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                      {item.months[m] ? `฿${fmt(item.months[m])}` : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                      {item.months[m] ? <>฿{fmt(item.months[m])}</> : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                     </td>
                   ))}
                   <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--accent-blue)' }}>฿{fmt(rowTotal)}</td>
@@ -132,7 +132,7 @@ export default function VideoProductionSection() {
                   <td><span className="badge-indirect">Indirect</span></td>
                   {activeMonths.map(m => (
                     <td key={m} style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                      {item.months[m] ? `฿${fmt(item.months[m])}` : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                      {item.months[m] ? <>฿{fmt(item.months[m])}</> : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                     </td>
                   ))}
                   <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--accent-amber)' }}>฿{fmt(rowTotal)}</td>
