@@ -641,7 +641,7 @@
       "dueDate": "2026-03-16",
       "type": "Outflow",
       "category": "ค่าใช้จ่ายดำเนินงาน",
-      "desc": "ภาษี หัก ณ ที่จ่าย ค้างจ่าย",
+      "desc": "ค่าภาษีหัก ณ ที่ จ่าย",
       "amount": 427.5,
       "status": "Actual",
       "entity": "Administrative",
@@ -769,6 +769,18 @@
       "balance": 106133.99
     },
     {
+      "date": "2026-04-15",
+      "dueDate": "2026-04-15",
+      "type": "Inflow",
+      "category": "รายได้จากสปอนเซอร์",
+      "desc": "รายได้จากสปอนเซอร์ Webull",
+      "amount": 38800,
+      "status": "Forecast",
+      "entity": "Revenue",
+      "month": "2026-04",
+      "balance": 144933.99
+    },
+    {
       "date": "2026-04-30",
       "dueDate": "2026-04-30",
       "type": "Outflow",
@@ -778,7 +790,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-04",
-      "balance": 80133.99
+      "balance": 118933.99
     },
     {
       "date": "2026-04-30",
@@ -790,7 +802,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-04",
-      "balance": 58133.99
+      "balance": 96933.99
     },
     {
       "date": "2026-04-30",
@@ -802,7 +814,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-04",
-      "balance": 55633.99
+      "balance": 94433.99
     },
     {
       "date": "2026-04-30",
@@ -814,7 +826,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-04",
-      "balance": 49633.99
+      "balance": 88433.99
     },
     {
       "date": "2026-04-30",
@@ -826,7 +838,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-04",
-      "balance": 46723.99
+      "balance": 85523.99
     },
     {
       "date": "2026-05-05",
@@ -838,7 +850,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": 46071.47
+      "balance": 84871.47
     },
     {
       "date": "2026-05-11",
@@ -850,7 +862,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": 45846.47
+      "balance": 84646.47
     },
     {
       "date": "2026-05-13",
@@ -862,7 +874,19 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": 45193.2
+      "balance": 83993.2
+    },
+    {
+      "date": "2026-05-15",
+      "dueDate": "2026-05-15",
+      "type": "Inflow",
+      "category": "รายได้จากสปอนเซอร์",
+      "desc": "รายได้จากสปอนเซอร์ Webull",
+      "amount": 10940,
+      "status": "Forecast",
+      "entity": "Revenue",
+      "month": "2026-05",
+      "balance": 94933.2
     },
     {
       "date": "2026-05-31",
@@ -874,7 +898,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": 19193.2
+      "balance": 68933.2
     },
     {
       "date": "2026-05-31",
@@ -886,7 +910,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": -2806.8
+      "balance": 46933.2
     },
     {
       "date": "2026-05-31",
@@ -898,7 +922,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": -5306.8
+      "balance": 44433.2
     },
     {
       "date": "2026-05-31",
@@ -910,7 +934,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": -11306.8
+      "balance": 38433.2
     },
     {
       "date": "2026-05-31",
@@ -922,7 +946,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": -14216.8
+      "balance": 35523.2
     }
   ],
   "openingBalance": 124331.84
