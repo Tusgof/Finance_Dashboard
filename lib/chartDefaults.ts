@@ -16,7 +16,6 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
-// Module-level registration — runs once on first import
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -41,7 +40,7 @@ export const chartDefaults: ChartOptions = {
   plugins: {
     legend: {
       labels: {
-        color: '#8b8fa3',
+        color: '#667085',
         font: { family: 'Inter', size: 11 },
         padding: 16,
         usePointStyle: true,
@@ -49,13 +48,13 @@ export const chartDefaults: ChartOptions = {
       },
     },
     tooltip: {
-      backgroundColor: '#21242f',
-      titleColor: '#f0f1f5',
-      bodyColor: '#8b8fa3',
-      borderColor: '#2d3141',
+      backgroundColor: '#ffffff',
+      titleColor: '#101828',
+      bodyColor: '#475467',
+      borderColor: '#d9e1ec',
       borderWidth: 1,
       padding: 12,
-      cornerRadius: 8,
+      cornerRadius: 10,
       titleFont: { family: 'Inter', weight: 'bold' },
       bodyFont: { family: 'Inter' },
       callbacks: {
@@ -68,17 +67,17 @@ export const chartDefaults: ChartOptions = {
   },
   scales: {
     x: {
-      ticks: { color: '#5f6275', font: { family: 'Inter', size: 11 } },
-      grid: { color: 'rgba(45,49,65,0.5)' },
+      ticks: { color: '#667085', font: { family: 'Inter', size: 11 } },
+      grid: { color: 'rgba(15,23,42,0.06)' },
       border: { color: 'transparent' },
     },
     y: {
       ticks: {
-        color: '#5f6275',
+        color: '#667085',
         font: { family: 'Inter', size: 11 },
         callback: (v) => '฿' + (Number(v) >= 1000 ? (Number(v) / 1000).toFixed(0) + 'K' : v),
       },
-      grid: { color: 'rgba(45,49,65,0.5)' },
+      grid: { color: 'rgba(15,23,42,0.06)' },
       border: { color: 'transparent' },
     },
   },

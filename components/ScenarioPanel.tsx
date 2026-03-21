@@ -19,12 +19,7 @@ export default function ScenarioPanel() {
     const bpc = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.entity === 'Video Production').reduce((s, d) => s + d.amount, 0) / numMonths;
     const boc = totalOutflow / numMonths - bec - bpc;
     const lb = rawData.length > 0 ? rawData[rawData.length - 1].balance : openingBalance;
-    return {
-      baseExecCost: bec,
-      baseProdCost: bpc,
-      baseOtherCost: boc,
-      lastBalance: lb,
-    };
+    return { baseExecCost: bec, baseProdCost: bpc, baseOtherCost: boc, lastBalance: lb };
   }, [rawData, openingBalance]);
 
   const newExec = baseExecCost * (1 + execAdj / 100);

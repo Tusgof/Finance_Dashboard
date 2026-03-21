@@ -6,8 +6,8 @@ import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 import { fmt } from '@/lib/dataUtils';
 
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
-const LABELS = ['Jan','Feb','Mar','Apr','May','Jun'];
+const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
 export default function PersonnelChart() {
   const { filteredData } = useDashboard();
@@ -28,9 +28,9 @@ export default function PersonnelChart() {
       data: {
         labels: LABELS,
         datasets: [
-          { label: 'Executive Salaries', data: exec, backgroundColor: 'rgba(168,85,247,0.7)', borderRadius: 4, barPercentage: 0.5, categoryPercentage: 0.7 },
-          { label: 'Freelancer Costs', data: freelancer, backgroundColor: 'rgba(6,182,212,0.7)', borderRadius: 4, barPercentage: 0.5, categoryPercentage: 0.7 },
-          { label: 'Bonuses', data: bonuses, backgroundColor: 'rgba(245,158,11,0.7)', borderRadius: 4, barPercentage: 0.5, categoryPercentage: 0.7 },
+          { label: 'Executive Salaries', data: exec, backgroundColor: 'rgba(124,58,237,0.68)', borderRadius: 8, barPercentage: 0.5, categoryPercentage: 0.7 },
+          { label: 'Freelancer Costs', data: freelancer, backgroundColor: 'rgba(8,145,178,0.68)', borderRadius: 8, barPercentage: 0.5, categoryPercentage: 0.7 },
+          { label: 'Bonuses', data: bonuses, backgroundColor: 'rgba(217,119,6,0.68)', borderRadius: 8, barPercentage: 0.5, categoryPercentage: 0.7 },
         ],
       },
       options: {

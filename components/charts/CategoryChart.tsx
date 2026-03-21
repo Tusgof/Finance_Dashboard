@@ -6,7 +6,7 @@ import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 import { fmt } from '@/lib/dataUtils';
 
-const COLORS = ['#3b82f6','#ef4444','#f59e0b','#a855f7','#06b6d4','#22c55e','#ec4899','#f97316'];
+const COLORS = ['#2563eb', '#dc2626', '#d97706', '#7c3aed', '#0891b2', '#16a34a', '#db2777', '#f97316'];
 
 export default function CategoryChart() {
   const { filteredData } = useDashboard();
@@ -34,7 +34,7 @@ export default function CategoryChart() {
         maintainAspectRatio: false,
         cutout: '65%',
         plugins: {
-          legend: { position: 'right', labels: { color: '#8b8fa3', font: { family: 'Inter', size: 11 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } },
+          legend: { position: 'right', labels: { color: '#667085', font: { family: 'Inter', size: 11 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } },
           tooltip: {
             ...(chartDefaults.plugins as Record<string, unknown>)?.tooltip as object,
             callbacks: { label: (ctx) => ` ${ctx.label}: ฿${fmt(ctx.raw as number)} (${total > 0 ? ((ctx.raw as number / total) * 100).toFixed(1) : 0}%)` },

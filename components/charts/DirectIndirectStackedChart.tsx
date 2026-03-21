@@ -6,8 +6,8 @@ import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 import { getCostType } from '@/lib/dataUtils';
 
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
-const LABELS = ['Jan','Feb','Mar','Apr','May','Jun'];
+const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
 export default function DirectIndirectStackedChart() {
   const { filteredData, currentFilter } = useDashboard();
@@ -38,8 +38,8 @@ export default function DirectIndirectStackedChart() {
       data: {
         labels: LABELS,
         datasets: [
-          { label: 'Direct', data: direct, backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 4, barPercentage: 0.5 },
-          { label: 'Indirect', data: indirect, backgroundColor: 'rgba(245,158,11,0.65)', borderRadius: 4, barPercentage: 0.5 },
+          { label: 'Direct', data: direct, backgroundColor: 'rgba(37,99,235,0.75)', borderRadius: 8, barPercentage: 0.5 },
+          { label: 'Indirect', data: indirect, backgroundColor: 'rgba(217,119,6,0.70)', borderRadius: 8, barPercentage: 0.5 },
         ],
       },
       options: {

@@ -6,8 +6,8 @@ import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 import { fmt } from '@/lib/dataUtils';
 
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
-const LABELS = ['Jan','Feb','Mar','Apr','May','Jun'];
+const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
 export default function CashFlowChart() {
   const { filteredData, rawData } = useDashboard();
@@ -30,9 +30,9 @@ export default function CashFlowChart() {
       data: {
         labels: LABELS,
         datasets: [
-          { label: 'Income', data: inflows, backgroundColor: 'rgba(34,197,94,0.7)', borderRadius: 6, barPercentage: 0.35, categoryPercentage: 0.7 },
-          { label: 'Expenses', data: outflows, backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 6, barPercentage: 0.35, categoryPercentage: 0.7 },
-          { label: 'Balance', data: balances, type: 'line', borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', pointBackgroundColor: '#3b82f6', pointRadius: 5, pointHoverRadius: 7, tension: 0.4, fill: true, yAxisID: 'y1', borderWidth: 3 },
+          { label: 'Income', data: inflows, backgroundColor: 'rgba(22,163,74,0.72)', borderRadius: 10, barPercentage: 0.35, categoryPercentage: 0.7 },
+          { label: 'Expenses', data: outflows, backgroundColor: 'rgba(220,38,38,0.72)', borderRadius: 10, barPercentage: 0.35, categoryPercentage: 0.7 },
+          { label: 'Balance', data: balances, type: 'line', borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.10)', pointBackgroundColor: '#2563eb', pointRadius: 5, pointHoverRadius: 7, tension: 0.4, fill: true, yAxisID: 'y1', borderWidth: 3 },
         ],
       },
       options: {
@@ -50,7 +50,7 @@ export default function CashFlowChart() {
           ...chartDefaults.scales,
           y1: {
             position: 'right',
-            ticks: { color: '#5f6275', font: { family: 'Inter', size: 11 }, callback: (v) => '฿' + (Number(v)/1000).toFixed(0) + 'K' },
+            ticks: { color: '#667085', font: { family: 'Inter', size: 11 }, callback: (v) => '฿' + (Number(v) / 1000).toFixed(0) + 'K' },
             grid: { drawOnChartArea: false },
             border: { color: 'transparent' },
           },

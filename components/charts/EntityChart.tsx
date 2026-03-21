@@ -6,7 +6,7 @@ import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 import { fmt } from '@/lib/dataUtils';
 
-const COLORS = ['#a855f7','#c084fc','#d8b4fe','#e9d5ff','#f3e8ff','#faf5ff'];
+const COLORS = ['#7c3aed', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'];
 
 export default function EntityChart() {
   const { filteredData } = useDashboard();
@@ -26,14 +26,14 @@ export default function EntityChart() {
       type: 'doughnut',
       data: {
         labels: sorted.map(s => s[0]),
-        datasets: [{ data: sorted.map(s => s[1]), backgroundColor: COLORS.map(c => c + 'cc'), borderWidth: 2, borderColor: '#171923', hoverOffset: 8 }],
+        datasets: [{ data: sorted.map(s => s[1]), backgroundColor: COLORS.map(c => c + 'cc'), borderWidth: 2, borderColor: '#ffffff', hoverOffset: 8 }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         cutout: '55%',
         plugins: {
-          legend: { position: 'right', labels: { color: '#8b8fa3', font: { family: 'Inter', size: 11 }, padding: 8, usePointStyle: true } },
+          legend: { position: 'right', labels: { color: '#667085', font: { family: 'Inter', size: 11 }, padding: 8, usePointStyle: true } },
           tooltip: {
             ...(chartDefaults.plugins as Record<string, unknown>)?.tooltip as object,
             callbacks: {

@@ -15,7 +15,7 @@ export default function Header({ onRefresh, refreshing, lastRefresh }: HeaderPro
         <div className="logo">E</div>
         <div className="header-title">
           <h1>EasyMoneyConcept</h1>
-          <span>Financial Dashboard &middot; Jan &ndash; Jun 2026</span>
+          <span>Financial Dashboard · Jan – Jun 2026</span>
         </div>
       </div>
       <div className="header-right">
@@ -25,7 +25,7 @@ export default function Header({ onRefresh, refreshing, lastRefresh }: HeaderPro
           </span>
         )}
         <button className="refresh-btn" onClick={onRefresh} disabled={refreshing}>
-          {refreshing ? '⟳ Refreshing...' : '⟳ Refresh'}
+          {refreshing ? '↻ Refreshing...' : '↻ Refresh'}
         </button>
         <Link href="/backups" className="backup-link">Backups</Link>
         <span className="status-badge status-live">Live Data</span>

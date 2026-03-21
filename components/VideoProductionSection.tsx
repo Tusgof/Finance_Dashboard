@@ -7,8 +7,12 @@ import DirectIndirectDonutChart from './charts/DirectIndirectDonutChart';
 
 const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
 const MONTH_LABELS: Record<string, string> = {
-  '2026-01': 'ม.ค.', '2026-02': 'ก.พ.', '2026-03': 'มี.ค.',
-  '2026-04': 'เม.ย.', '2026-05': 'พ.ค.', '2026-06': 'มิ.ย.',
+  '2026-01': 'ม.ค.',
+  '2026-02': 'ก.พ.',
+  '2026-03': 'มี.ค.',
+  '2026-04': 'เม.ย.',
+  '2026-05': 'พ.ค.',
+  '2026-06': 'มิ.ย.',
 };
 
 export default function VideoProductionSection() {
@@ -24,7 +28,6 @@ export default function VideoProductionSection() {
   const directPct = total > 0 ? ((totalDirect / total) * 100).toFixed(1) : '0';
   const indirectPct = total > 0 ? ((totalIndirect / total) * 100).toFixed(1) : '0';
 
-  // Build breakdown table data
   const groups: Record<string, { desc: string; costType: 'Direct' | 'Indirect' | null; months: Record<string, number> }> = {};
   vp.forEach(d => {
     if (!groups[d.desc]) groups[d.desc] = { desc: d.desc, costType: d.costType, months: {} };
@@ -36,10 +39,8 @@ export default function VideoProductionSection() {
 
   const directItems = Object.values(groups).filter(g => g.costType === 'Direct').sort(sortByTotal);
   const indirectItems = Object.values(groups).filter(g => g.costType === 'Indirect').sort(sortByTotal);
-
   const activeMonths = MONTHS.filter(m => vp.some(d => d.month === m));
 
-  // Totals per month
   const directTotalByMonth: Record<string, number> = {};
   const indirectTotalByMonth: Record<string, number> = {};
   directItems.forEach(item => activeMonths.forEach(m => { directTotalByMonth[m] = (directTotalByMonth[m] || 0) + (item.months[m] || 0); }));
@@ -51,10 +52,10 @@ export default function VideoProductionSection() {
   return (
     <div className="chart-card full-width" style={{ marginBottom: 24 }}>
       <div className="section-header">
-        <div className="section-icon" style={{ background: 'linear-gradient(135deg,var(--accent-blue),var(--accent-amber))' }}>&#9881;</div>
+        <div className="section-icon" style={{ background: 'linear-gradient(135deg,var(--accent-blue),var(--accent-amber))' }}>⚙</div>
         <div>
           <h2>Video Production Cost Breakdown</h2>
-          <div className="section-sub">Direct vs Indirect cost analysis &middot; COGS (ต้นทุนสินค้า)</div>
+          <div className="section-sub">Direct vs Indirect cost analysis · COGS (ต้นทุนสินค้า)</div>
         </div>
       </div>
 
@@ -92,7 +93,6 @@ export default function VideoProductionSection() {
             </tr>
           </thead>
           <tbody>
-            {/* Direct section */}
             <tr>
               <td colSpan={activeMonths.length + 3} style={{ background: 'var(--accent-blue-bg)', color: 'var(--accent-blue)', fontWeight: 700, fontSize: 12, padding: '8px 14px', letterSpacing: '0.5px' }}>
                 DIRECT COST (ต้นทุนทางตรง)
@@ -119,7 +119,6 @@ export default function VideoProductionSection() {
               <td style={{ textAlign: 'right', color: 'var(--accent-blue)', fontSize: 14 }}>฿{fmt(directGrandTotal)}</td>
             </tr>
 
-            {/* Indirect section */}
             <tr>
               <td colSpan={activeMonths.length + 3} style={{ background: 'var(--accent-amber-bg)', color: 'var(--accent-amber)', fontWeight: 700, fontSize: 12, padding: '8px 14px', letterSpacing: '0.5px' }}>
                 INDIRECT COST (ต้นทุนทางอ้อม)
@@ -146,7 +145,6 @@ export default function VideoProductionSection() {
               <td style={{ textAlign: 'right', color: 'var(--accent-amber)', fontSize: 14 }}>฿{fmt(indirectGrandTotal)}</td>
             </tr>
 
-            {/* Grand total */}
             <tr style={{ background: 'var(--accent-purple-bg)' }}>
               <td style={{ fontWeight: 800, color: 'var(--accent-purple)' }}>TOTAL VIDEO PRODUCTION</td>
               <td></td>

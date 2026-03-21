@@ -5,8 +5,8 @@ import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
-const LABELS = ['Jan','Feb','Mar','Apr','May','Jun'];
+const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
 export default function MarginChart() {
   const { rawData } = useDashboard();
@@ -40,8 +40,8 @@ export default function MarginChart() {
       data: {
         labels: LABELS,
         datasets: [
-          { label: 'Gross Margin %', data: grossMargins, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: false, tension: 0.3, borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#22c55e' },
-          { label: 'Operating Margin %', data: opMargins, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: false, tension: 0.3, borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#3b82f6' },
+          { label: 'Gross Margin %', data: grossMargins, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: false, tension: 0.3, borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#16a34a' },
+          { label: 'Operating Margin %', data: opMargins, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: false, tension: 0.3, borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#2563eb' },
         ],
       },
       options: {
@@ -50,7 +50,7 @@ export default function MarginChart() {
           ...chartDefaults.plugins,
           annotation: {
             annotations: {
-              zeroLine: { type: 'line', yMin: 0, yMax: 0, borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, borderDash: [4, 4] },
+              zeroLine: { type: 'line', yMin: 0, yMax: 0, borderColor: 'rgba(15,23,42,0.12)', borderWidth: 1, borderDash: [4, 4] },
             },
           },
           tooltip: {
@@ -62,8 +62,9 @@ export default function MarginChart() {
           ...chartDefaults.scales,
           y: {
             ...(chartDefaults.scales as Record<string, unknown>)?.y as object,
-            min: -200, max: 100,
-            ticks: { color: '#5f6275', font: { family: 'Inter', size: 11 }, callback: (v) => v + '%' },
+            min: -200,
+            max: 100,
+            ticks: { color: '#667085', font: { family: 'Inter', size: 11 }, callback: (v) => v + '%' },
           },
         },
       } as ChartOptions,

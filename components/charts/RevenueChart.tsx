@@ -6,7 +6,7 @@ import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 import { fmt } from '@/lib/dataUtils';
 
-const COLORS = ['#22c55e','#34d399','#6ee7b7','#a7f3d0','#bbf7d0','#d1fae5'];
+const COLORS = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0', '#dcfce7'];
 
 export default function RevenueChart() {
   const { filteredData } = useDashboard();
@@ -24,7 +24,7 @@ export default function RevenueChart() {
       if (d.desc.includes('Eightcap')) src = 'Eightcap';
       else if (d.desc.includes('InnovestX')) src = 'InnovestX';
       else if (d.desc.includes('OceanLife')) src = 'OceanLife';
-      else if (d.desc.includes('เงินเทอร์โบ')) src = 'เงินเทอร์โบ';
+      else if (d.desc.includes('เนเงินเทอร์โบ')) src = 'เนเงินเทอร์โบ';
       else if (d.desc.includes('Facebook')) src = 'Facebook Ads';
       else if (d.desc.includes('TikTok')) src = 'TikTok';
       sources[src] = (sources[src] || 0) + d.amount;
@@ -35,7 +35,7 @@ export default function RevenueChart() {
       type: 'bar',
       data: {
         labels: sorted.map(s => s[0]),
-        datasets: [{ label: 'Revenue', data: sorted.map(s => s[1]), backgroundColor: COLORS.slice(0, sorted.length), borderRadius: 6, barPercentage: 0.6 }],
+        datasets: [{ label: 'Revenue', data: sorted.map(s => s[1]), backgroundColor: COLORS.slice(0, sorted.length), borderRadius: 10, barPercentage: 0.6 }],
       },
       options: {
         ...chartDefaults,
@@ -49,7 +49,7 @@ export default function RevenueChart() {
           },
         },
         scales: {
-          x: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, ticks: { color: '#5f6275', font: { family: 'Inter', size: 11 }, callback: (v: unknown) => '฿' + (Number(v) >= 1000 ? (Number(v)/1000).toFixed(0) + 'K' : v) } },
+          x: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, ticks: { color: '#667085', font: { family: 'Inter', size: 11 }, callback: (v: unknown) => '฿' + (Number(v) >= 1000 ? (Number(v) / 1000).toFixed(0) + 'K' : v) } },
           y: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, grid: { display: false } },
         },
       } as ChartOptions,

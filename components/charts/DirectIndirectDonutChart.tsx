@@ -4,8 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { getCostType } from '@/lib/dataUtils';
-import { fmt } from '@/lib/dataUtils';
+import { getCostType, fmt } from '@/lib/dataUtils';
 
 export default function DirectIndirectDonutChart() {
   const { filteredData } = useDashboard();
@@ -26,10 +25,10 @@ export default function DirectIndirectDonutChart() {
     chartRef.current = new Chart(canvasRef.current, {
       type: 'doughnut',
       data: {
-        labels: ['Direct (ทางตรง)', 'Indirect (ทางอ้อม)'],
+        labels: ['Direct (ต้นทุนทางตรง)', 'Indirect (ต้นทุนทางอ้อม)'],
         datasets: [{
           data: [totalDirect, totalIndirect],
-          backgroundColor: ['rgba(59,130,246,0.8)', 'rgba(245,158,11,0.7)'],
+          backgroundColor: ['rgba(37,99,235,0.85)', 'rgba(217,119,6,0.78)'],
           borderWidth: 0,
           hoverOffset: 10,
         }],
@@ -39,7 +38,7 @@ export default function DirectIndirectDonutChart() {
         maintainAspectRatio: false,
         cutout: '60%',
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#8b8fa3', font: { family: 'Inter', size: 12, weight: 'bold' }, padding: 20, usePointStyle: true } },
+          legend: { position: 'bottom', labels: { color: '#667085', font: { family: 'Inter', size: 12, weight: 'bold' }, padding: 20, usePointStyle: true } },
           tooltip: {
             ...(chartDefaults.plugins as Record<string, unknown>)?.tooltip as object,
             callbacks: {

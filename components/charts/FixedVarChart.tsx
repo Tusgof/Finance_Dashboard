@@ -4,11 +4,10 @@ import { useEffect, useRef } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { classifyCost } from '@/lib/dataUtils';
-import { fmt } from '@/lib/dataUtils';
+import { classifyCost, fmt } from '@/lib/dataUtils';
 
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
-const LABELS = ['Jan','Feb','Mar','Apr','May','Jun'];
+const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
 export default function FixedVarChart() {
   const { filteredData } = useDashboard();
@@ -29,9 +28,9 @@ export default function FixedVarChart() {
       data: {
         labels: LABELS,
         datasets: [
-          { label: 'Fixed/Recurring', data: fixed, backgroundColor: 'rgba(100,116,139,0.7)', borderRadius: 4, barPercentage: 0.6 },
-          { label: 'Production Variable', data: production, backgroundColor: 'rgba(6,182,212,0.7)', borderRadius: 4, barPercentage: 0.6 },
-          { label: 'One-time', data: onetime, backgroundColor: 'rgba(245,158,11,0.7)', borderRadius: 4, barPercentage: 0.6 },
+          { label: 'Fixed/Recurring', data: fixed, backgroundColor: 'rgba(100,116,139,0.60)', borderRadius: 8, barPercentage: 0.6 },
+          { label: 'Production Variable', data: production, backgroundColor: 'rgba(8,145,178,0.65)', borderRadius: 8, barPercentage: 0.6 },
+          { label: 'One-time', data: onetime, backgroundColor: 'rgba(217,119,6,0.62)', borderRadius: 8, barPercentage: 0.6 },
         ],
       },
       options: {
