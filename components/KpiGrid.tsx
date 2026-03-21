@@ -10,6 +10,8 @@ export default function KpiGrid() {
   const totalOutflow = filteredData.filter(d => d.type === 'Outflow').reduce((s, d) => s + d.amount, 0);
   const netCashFlow = totalInflow - totalOutflow;
   const txCount = filteredData.length;
+  const actualMonths = Array.from(new Set(filteredData.filter(d => d.status === 'Actual').map(d => d.month)));
+  const avgMonthlyIncome = totalInflow / (actualMonths.length || 1);
   const lastBalance = filteredData.length > 0 ? filteredData[filteredData.length - 1].balance : openingBalance;
   const burnRate = totalOutflow / (new Set(filteredData.map(d => d.month)).size || 1);
 
@@ -19,7 +21,7 @@ export default function KpiGrid() {
     <>
       {showWarning && (
         <div className="warning-banner">
-          <div className="icon">&#9888;</div>
+          <div className="icon">⚠</div>
           <div className="text">
             <h4>Cash Flow Alert</h4>
             <p>Projected balance turns negative. Consider revenue optimization or cost reduction strategies.</p>
@@ -53,6 +55,11 @@ export default function KpiGrid() {
             ฿{fmt(lastBalance)}
           </div>
           <div className="kpi-sub">From ฿{fmt(openingBalance)}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">Avg Monthly Income</div>
+          <div className="kpi-value" style={{ color: 'var(--accent-green)' }}>฿{fmt(avgMonthlyIncome)}</div>
+          <div className="kpi-sub">Per month avg</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label">Avg Monthly Burn</div>
