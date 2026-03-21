@@ -6,7 +6,7 @@ import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 import { fmt } from '@/lib/dataUtils';
 
-const COLORS = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0', '#dcfce7'];
+const COLORS = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0', '#dcfce7', '#93c5fd'];
 
 export default function RevenueChart() {
   const { filteredData } = useDashboard();
@@ -25,6 +25,7 @@ export default function RevenueChart() {
       else if (d.desc.includes('InnovestX')) src = 'InnovestX';
       else if (d.desc.includes('OceanLife')) src = 'OceanLife';
       else if (d.desc.includes('เงินเทอร์โบ')) src = 'เงินเทอร์โบ';
+      else if (d.desc.includes('Webull')) src = 'Webull';
       else if (d.desc.includes('Facebook')) src = 'Facebook Ads';
       else if (d.desc.includes('TikTok')) src = 'TikTok';
       sources[src] = (sources[src] || 0) + d.amount;
@@ -49,7 +50,7 @@ export default function RevenueChart() {
           },
         },
         scales: {
-          x: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, ticks: { color: '#667085', font: { family: 'Inter', size: 11 }, callback: (v: unknown) => '฿' + (Number(v) >= 1000 ? (Number(v) / 1000).toFixed(0) + 'K' : v) } },
+          x: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, ticks: { color: '#344054', font: { family: 'Inter', size: 11 }, callback: (v: unknown) => '฿' + (Number(v) >= 1000 ? (Number(v) / 1000).toFixed(0) + 'K' : v) } },
           y: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, grid: { display: false } },
         },
       } as ChartOptions,

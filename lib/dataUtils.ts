@@ -20,7 +20,7 @@ export function getFilteredData(
 
 export function classifyCost(desc: string): 'fixed' | 'production' | 'onetime' {
   if (/เงินเดือน|ChatGPT|Gemini|Claude|บัญชี|ธรรมเนียม/.test(desc)) return 'fixed';
-  if (/อุปกรณ์|ไมค์|จอมอนิเตอร์|ฟอนต์|Freepik|Vecteezy|ตั๋วงาน|ภาษี/.test(desc)) return 'onetime';
+  if (/อุปกรณ์|ไมค์|จอมอนิเตอร์|ฟอนต์|Freepik|Vecteezy|ตัวจ้างงาน|ภาษี/.test(desc)) return 'onetime';
   if (/ค่าจ้าง|โบนัส|พากย์เสียง|เขียนบท|ตัดต่อ|ฟุตเทจ|กราฟิกข่าว|จัดหาข่าว|ดูแลลูกค้า|ดูแลคอมมูนิตี้/.test(desc)) return 'production';
   return 'fixed';
 }
@@ -33,6 +33,7 @@ export function calculateHHI(data: Transaction[]): number {
     else if (d.desc.includes('InnovestX')) src = 'InnovestX';
     else if (d.desc.includes('OceanLife')) src = 'OceanLife';
     else if (d.desc.includes('เงินเทอร์โบ')) src = 'เงินเทอร์โบ';
+    else if (d.desc.includes('Webull')) src = 'Webull';
     else if (d.desc.includes('Facebook')) src = 'Facebook Ads';
     else if (d.desc.includes('TikTok')) src = 'TikTok';
     sources[src] = (sources[src] || 0) + d.amount;
@@ -51,8 +52,8 @@ export function getCostType(d: Transaction): 'Direct' | 'Indirect' | null {
     'ตัดต่อ',
     'Production',
     'ค่าจ้าง',
-    'โบนัส',
     'ค่าจ้างจัดทำของ',
+    'ค่าอุปกรณ์',
   ];
   if (directKeywords.some(k => d.desc.includes(k))) return 'Direct';
   return 'Indirect';
