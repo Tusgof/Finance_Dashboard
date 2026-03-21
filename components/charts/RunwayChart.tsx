@@ -1,45 +1,93 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Chart, type ChartOptions, type ScriptableContext, type ScriptableLineSegmentContext } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
 
-const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
-const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+function monthToDate(month: string): Date {
+  const [year, m] = month.split('-').map(Number);
+  return new Date(year, (m || 1) - 1, 1);
+}
+
+function dateToMonth(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function addMonths(month: string, count: number): string {
+  const d = monthToDate(month);
+  d.setMonth(d.getMonth() + count);
+  return dateToMonth(d);
+}
+
+function monthLabel(month: string): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short' }).format(monthToDate(month));
+}
 
 export default function RunwayChart() {
   const { rawData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    chartRef.current?.destroy();
-
-    const balances: (number | null)[] = MONTHS.map(m => {
+  const series = useMemo(() => {
+    const monthKeys = Array.from(new Set(rawData.map(d => d.month))).sort();
+    const balancesByMonth = monthKeys.map(m => {
       const md = rawData.filter(d => d.month === m);
       return md.length > 0 ? md[md.length - 1].balance : null;
     });
 
-    const pointColors = balances.map(b => b !== null && b < 0 ? '#dc2626' : '#2563eb');
+    const actualMonthCount = balancesByMonth.filter(v => v !== null).length;
+    const actualDeltas: number[] = [];
+    balancesByMonth.forEach((val, idx) => {
+      const prev = idx > 0 ? balancesByMonth[idx - 1] : null;
+      if (val !== null && prev !== null) actualDeltas.push(val - prev);
+    });
+
+    const avgDelta = actualDeltas.length > 0
+      ? actualDeltas.slice(-3).reduce((s, v) => s + v, 0) / actualDeltas.slice(-3).length
+      : 0;
+
+    const lastKnownMonth = monthKeys[monthKeys.length - 1];
+    const futureMonths = Array.from({ length: 6 }, (_, i) => addMonths(lastKnownMonth, i + 1));
+    const futureBalances: number[] = [];
+    let prevBalance = balancesByMonth.filter((v): v is number => v !== null).at(-1) ?? 0;
+    futureMonths.forEach(() => {
+      prevBalance += avgDelta;
+      futureBalances.push(prevBalance);
+    });
+
+    return {
+      labels: [...monthKeys, ...futureMonths].map(monthLabel),
+      balances: [...balancesByMonth, ...futureBalances],
+      projectedStartIndex: balancesByMonth.length - 1,
+      actualMonthCount,
+    };
+  }, [rawData]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    chartRef.current?.destroy();
+
+    const pointColors = series.balances.map((b, idx) => idx <= series.projectedStartIndex ? ((b ?? 0) < 0 ? '#dc2626' : '#2563eb') : '#94a3b8');
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'line',
       data: {
-        labels: LABELS,
+        labels: series.labels,
         datasets: [{
           label: 'Balance',
-          data: balances,
+          data: series.balances,
           borderColor: '#2563eb',
           backgroundColor: (ctx: ScriptableContext<'line'>) => {
             const chart = ctx.chart;
             const { ctx: c, chartArea } = chart;
             if (!chartArea) return 'rgba(37,99,235,0.08)';
             const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(22,163,74,0.12)');
-            gradient.addColorStop(0.7, 'rgba(37,99,235,0.05)');
-            gradient.addColorStop(1, 'rgba(220,38,38,0.10)');
+            gradient.addColorStop(0, 'rgba(37,99,235,0.12)');
+            gradient.addColorStop(0.7, 'rgba(37,99,235,0.06)');
+            gradient.addColorStop(1, 'rgba(37,99,235,0.02)');
             return gradient;
           },
           fill: true,
@@ -50,8 +98,7 @@ export default function RunwayChart() {
           pointHoverRadius: 8,
           segment: {
             borderDash: (ctx: ScriptableLineSegmentContext) => {
-              const idx = ctx.p1DataIndex;
-              return rawData.some(d => d.month === MONTHS[idx] && d.status === 'Forecast') ? [6, 4] : [];
+              return ctx.p1DataIndex > series.projectedStartIndex ? [6, 4] : [];
             },
           },
         }],
@@ -83,26 +130,36 @@ export default function RunwayChart() {
               },
             },
           },
+          tooltip: {
+            ...(chartDefaults.plugins as Record<string, unknown>)?.tooltip as object,
+            callbacks: {
+              label: (ctx) => ` Balance: ฿${Number((ctx.parsed as { y?: number }).y ?? ctx.raw).toFixed(2)}`,
+            },
+          },
         },
         scales: {
           ...chartDefaults.scales,
           y: {
             ...(chartDefaults.scales as Record<string, unknown>)?.y as object,
-            ticks: { color: '#667085', font: { family: 'Inter', size: 11 }, callback: (v) => '฿' + (Number(v) / 1000).toFixed(0) + 'K' },
+            ticks: { color: '#344054', font: { family: 'Inter', size: 11 }, callback: (v) => '฿' + (Number(v) / 1000).toFixed(0) + 'K' },
+          },
+          x: {
+            ...(chartDefaults.scales as Record<string, unknown>)?.x as object,
+            ticks: { color: '#344054', font: { family: 'Inter', size: 11 } },
           },
         },
       } as ChartOptions,
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [rawData]);
+  }, [series]);
 
   return (
     <div className="chart-card full-width">
       <div className="chart-header">
         <div>
           <div className="chart-title">Cash Runway Projection</div>
-          <div className="chart-subtitle">Balance forecast with zero-crossing analysis</div>
+          <div className="chart-subtitle">Historical balance plus six projected months</div>
         </div>
       </div>
       <div className="chart-wrapper" style={{ height: 320 }}>
