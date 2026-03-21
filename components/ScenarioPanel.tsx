@@ -45,7 +45,7 @@ export default function ScenarioPanel() {
             type="range"
             min={0}
             max={200000}
-            step={5000}
+            step={1000}
             value={revenueTarget}
             onChange={e => setRevenueTarget(+e.target.value)}
           />
