@@ -15,7 +15,7 @@ export default function HealthCards() {
   const lastBalance = sortedData.length > 0 ? sortedData[sortedData.length - 1].balance : openingBalance;
   const runway = avgBurn > 0 ? lastBalance / avgBurn : 99;
 
-  const cogs = sortedData.filter(d => d.type === 'Outflow' && d.entity === 'Video Production').reduce((s, d) => s + d.amount, 0);
+  const cogs = sortedData.filter(d => d.type === 'Outflow' && d.category === 'ต้นทุนสินค้า').reduce((s, d) => s + d.amount, 0);
   const grossMargin = totalInflow > 0 ? ((totalInflow - cogs) / totalInflow) * 100 : -999;
 
   const hhi = calculateHHI(sortedData);

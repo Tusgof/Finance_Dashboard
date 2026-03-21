@@ -15,8 +15,8 @@ export default function ScenarioPanel() {
     const actualMonths = Array.from(new Set(rawData.filter(d => d.status === 'Actual').map(d => d.month)));
     const numMonths = actualMonths.length || 1;
     const totalOutflow = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual').reduce((s, d) => s + d.amount, 0);
-    const bec = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && /เงินเดือน.*(CEO|COO|CFO|CLO|CDO|CMO|CHRO|CCO|CTO|กรรมการ)/.test(d.desc)).reduce((s, d) => s + d.amount, 0) / numMonths;
-    const bpc = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.category === 'ต้นทุนสินค้า').reduce((s, d) => s + d.amount, 0) / numMonths;
+    const bec = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.entity === 'Administrative').reduce((s, d) => s + d.amount, 0) / numMonths;
+    const bpc = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.entity === 'Video Production').reduce((s, d) => s + d.amount, 0) / numMonths;
     const boc = totalOutflow / numMonths - bec - bpc;
     const lb = rawData.length > 0 ? rawData[rawData.length - 1].balance : openingBalance;
     return {
