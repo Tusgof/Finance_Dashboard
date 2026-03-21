@@ -26,7 +26,7 @@ import PersonnelChart from './charts/PersonnelChart';
 export default function DashboardClient() {
   const [rawData, setRawData] = useState<Transaction[]>([]);
   const [openingBalance, setOpeningBalance] = useState(0);
-  const [currentFilter, setCurrentFilter] = useState<FilterType>('all');
+  const [currentFilter, setCurrentFilter] = useState<FilterType>('actual');
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

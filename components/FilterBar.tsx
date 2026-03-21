@@ -5,14 +5,14 @@ import type { FilterType } from '@/lib/types';
 
 const FILTERS: { label: string; value: FilterType }[] = [
   { label: 'All Months', value: 'all' },
+  { label: 'Actual Only', value: 'actual' },
+  { label: 'Forecast Only', value: 'forecast' },
   { label: 'Jan 2026', value: '2026-01' },
   { label: 'Feb 2026', value: '2026-02' },
   { label: 'Mar 2026', value: '2026-03' },
   { label: 'Apr 2026', value: '2026-04' },
   { label: 'May 2026', value: '2026-05' },
   { label: 'Jun 2026', value: '2026-06' },
-  { label: 'Actual Only', value: 'actual' },
-  { label: 'Forecast Only', value: 'forecast' },
 ];
 
 export default function FilterBar() {
