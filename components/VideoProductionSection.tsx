@@ -5,7 +5,7 @@ import { fmt, getCostType } from '@/lib/dataUtils';
 import DirectIndirectStackedChart from './charts/DirectIndirectStackedChart';
 import DirectIndirectDonutChart from './charts/DirectIndirectDonutChart';
 
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
+const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
 const MONTH_LABELS: Record<string, string> = {
   '2026-01': 'ม.ค.',
   '2026-02': 'ก.พ.',

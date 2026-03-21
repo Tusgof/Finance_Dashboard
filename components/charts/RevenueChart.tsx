@@ -24,7 +24,7 @@ export default function RevenueChart() {
       if (d.desc.includes('Eightcap')) src = 'Eightcap';
       else if (d.desc.includes('InnovestX')) src = 'InnovestX';
       else if (d.desc.includes('OceanLife')) src = 'OceanLife';
-      else if (d.desc.includes('เนเงินเทอร์โบ')) src = 'เนเงินเทอร์โบ';
+      else if (d.desc.includes('เงินเทอร์โบ')) src = 'เงินเทอร์โบ';
       else if (d.desc.includes('Facebook')) src = 'Facebook Ads';
       else if (d.desc.includes('TikTok')) src = 'TikTok';
       sources[src] = (sources[src] || 0) + d.amount;
