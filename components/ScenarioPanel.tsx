@@ -11,15 +11,16 @@ export default function ScenarioPanel() {
   const [execAdj, setExecAdj] = useState(0);
   const [prodAdj, setProdAdj] = useState(0);
 
-  const { baseExecCost, baseProdCost, baseOtherCost, lastBalance } = useMemo(() => {
+  const { baseExecCost, baseProdCost, baseOtherCost, lastBalance, avgMonthlyIncome } = useMemo(() => {
     const actualMonths = Array.from(new Set(rawData.filter(d => d.status === 'Actual').map(d => d.month)));
     const numMonths = actualMonths.length || 1;
+    const totalInflow = rawData.filter(d => d.type === 'Inflow' && d.status === 'Actual').reduce((s, d) => s + d.amount, 0);
     const totalOutflow = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual').reduce((s, d) => s + d.amount, 0);
-    const bec = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && /เงินเดือน.*(CEO|COO|CFO|CLO|CDO|CMO|CHRO|CCO|CTO|กรรมการ)/.test(d.desc)).reduce((s, d) => s + d.amount, 0) / numMonths;
-    const bpc = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.category === 'ต้นทุนสินค้า').reduce((s, d) => s + d.amount, 0) / numMonths;
+    const bec = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && /เน€เธเธดเธเน€เธ”เธทเธญเธ.*(CEO|COO|CFO|CLO|CDO|CMO|CHRO|CCO|CTO|เธเธฃเธฃเธกเธเธฒเธฃ)/.test(d.desc)).reduce((s, d) => s + d.amount, 0) / numMonths;
+    const bpc = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.category === 'เธ•เนเธเธ—เธธเธเธชเธดเธเธเนเธฒ').reduce((s, d) => s + d.amount, 0) / numMonths;
     const boc = totalOutflow / numMonths - bec - bpc;
     const lb = rawData.length > 0 ? rawData[rawData.length - 1].balance : openingBalance;
-    return { baseExecCost: bec, baseProdCost: bpc, baseOtherCost: boc, lastBalance: lb };
+    return { baseExecCost: bec, baseProdCost: bpc, baseOtherCost: boc, lastBalance: lb, avgMonthlyIncome: totalInflow / numMonths };
   }, [rawData, openingBalance]);
 
   const newExec = baseExecCost * (1 + execAdj / 100);
@@ -35,7 +36,7 @@ export default function ScenarioPanel() {
       <div className="slider-grid">
         <div className="slider-group">
           <label>Monthly Revenue Target</label>
-          <div className="slider-value">฿{fmt(revenueTarget)}</div>
+          <div className="slider-value">เธฟ{fmt(revenueTarget)}</div>
           <input type="range" min={0} max={200000} step={5000} value={revenueTarget} onChange={e => setRevenueTarget(+e.target.value)} />
         </div>
         <div className="slider-group">
@@ -52,7 +53,11 @@ export default function ScenarioPanel() {
       <div className="scenario-results">
         <div className="scenario-result">
           <div className="sr-label">Monthly Burn Rate</div>
-          <div className="sr-value" style={{ color: 'var(--accent-red)' }}>฿{fmt(newBurn)}</div>
+          <div className="sr-value" style={{ color: 'var(--accent-red)' }}>เธฟ{fmt(newBurn)}</div>
+        </div>
+        <div className="scenario-result">
+          <div className="sr-label">Avg Monthly Income</div>
+          <div className="sr-value" style={{ color: 'var(--accent-green)' }}>เธฟ{fmt(avgMonthlyIncome)}</div>
         </div>
         <div className="scenario-result">
           <div className="sr-label">Cash Runway</div>
@@ -62,11 +67,11 @@ export default function ScenarioPanel() {
         </div>
         <div className="scenario-result">
           <div className="sr-label">Break-Even Revenue</div>
-          <div className="sr-value" style={{ color: 'var(--accent-blue)' }}>฿{fmt(newBurn)}</div>
+          <div className="sr-value" style={{ color: 'var(--accent-blue)' }}>เธฟ{fmt(newBurn)}</div>
         </div>
         <div className="scenario-result">
           <div className="sr-label">Balance at Month 6</div>
-          <div className="sr-value" style={{ color: balAt6 >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>฿{fmt(balAt6)}</div>
+          <div className="sr-value" style={{ color: balAt6 >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>เธฟ{fmt(balAt6)}</div>
         </div>
       </div>
     </div>

@@ -8,14 +8,9 @@ export const fmt = (n: number): string =>
 
 export function getFilteredData(
   rawData: Transaction[],
-  currentFilter: FilterType,
-  isYearly: boolean
+  currentFilter: FilterType
 ): Transaction[] {
   let data = rawData;
-
-  if (isYearly) {
-    data = data.filter(d => d.date >= '2026-01-06');
-  }
 
   if (currentFilter === 'all') return data;
   if (currentFilter === 'actual') return data.filter(d => d.status === 'Actual');

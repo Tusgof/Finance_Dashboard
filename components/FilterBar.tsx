@@ -16,7 +16,7 @@ const FILTERS: { label: string; value: FilterType }[] = [
 ];
 
 export default function FilterBar() {
-  const { currentFilter, setCurrentFilter, isYearly, setIsYearly } = useDashboard();
+  const { currentFilter, setCurrentFilter } = useDashboard();
 
   return (
     <div className="filters-bar">
@@ -29,18 +29,6 @@ export default function FilterBar() {
           {f.label}
         </button>
       ))}
-      <button
-        className={`filter-btn${isYearly ? ' active' : ''}`}
-        style={{
-          marginLeft: 'auto',
-          borderColor: 'var(--accent-purple)',
-          color: isYearly ? '#fff' : 'var(--accent-purple)',
-          background: isYearly ? 'var(--accent-purple)' : 'var(--bg-card)',
-        }}
-        onClick={() => setIsYearly(!isYearly)}
-      >
-        This Year (from Jan 6)
-      </button>
     </div>
   );
 }

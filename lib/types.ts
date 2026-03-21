@@ -27,8 +27,6 @@ export interface DashboardContextType {
   openingBalance: number;
   currentFilter: FilterType;
   setCurrentFilter: (f: FilterType) => void;
-  isYearly: boolean;
-  setIsYearly: (v: boolean) => void;
   filteredData: Transaction[];
 }
 

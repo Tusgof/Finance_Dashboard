@@ -27,7 +27,6 @@ export default function DashboardClient() {
   const [rawData, setRawData] = useState<Transaction[]>([]);
   const [openingBalance, setOpeningBalance] = useState(0);
   const [currentFilter, setCurrentFilter] = useState<FilterType>('all');
-  const [isYearly, setIsYearly] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,8 +44,8 @@ export default function DashboardClient() {
   }, []);
 
   const filteredData = useMemo(
-    () => getFilteredData(rawData, currentFilter, isYearly),
-    [rawData, currentFilter, isYearly]
+    () => getFilteredData(rawData, currentFilter),
+    [rawData, currentFilter]
   );
 
   const handleRefresh = async () => {
@@ -77,7 +76,7 @@ export default function DashboardClient() {
 
   return (
     <DashboardContext.Provider
-      value={{ rawData, openingBalance, currentFilter, setCurrentFilter, isYearly, setIsYearly, filteredData }}
+      value={{ rawData, openingBalance, currentFilter, setCurrentFilter, filteredData }}
     >
       <Header onRefresh={handleRefresh} refreshing={refreshing} lastRefresh={lastRefresh} />
       <FilterBar />
