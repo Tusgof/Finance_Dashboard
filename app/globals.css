@@ -177,6 +177,80 @@ select {
   margin-top: 24px;
 }
 
+.workspace-nav {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(207, 216, 227, 0.95);
+  border-radius: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.workspace-nav-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.workspace-title {
+  font-size: 20px;
+  font-weight: 760;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.workspace-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.workspace-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.workspace-tab {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.workspace-tab:hover {
+  border-color: rgba(37, 99, 235, 0.34);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.workspace-tab.active {
+  background: var(--text-primary);
+  color: #fff;
+  border-color: var(--text-primary);
+}
+
+.page-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.page-section {
+  display: grid;
+  gap: 18px;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -879,6 +953,15 @@ tr:hover td {
   .table-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .workspace-nav {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .workspace-tabs {
+    justify-content: flex-start;
   }
 
   .search-box {
