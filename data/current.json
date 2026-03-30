@@ -651,6 +651,42 @@
     {
       "date": "2026-03-20",
       "dueDate": "2026-03-20",
+      "type": "Outflow",
+      "category": "ค่าใช้จ่ายดำเนินงาน",
+      "desc": "ค่าบริการ AI - กรรมการ",
+      "amount": 653.27,
+      "status": "Actual",
+      "entity": "Administrative",
+      "month": "2026-03",
+      "balance": 49631.51
+    },
+    {
+      "date": "2026-03-20",
+      "dueDate": "2026-03-20",
+      "type": "Inflow",
+      "category": "รายได้จากสปอนเซอร์",
+      "desc": "รายได้จากสปอนเซอร์ Eightcap 3",
+      "amount": 61500,
+      "status": "Actual",
+      "entity": "Revenue",
+      "month": "2026-03",
+      "balance": 111131.51
+    },
+    {
+      "date": "2026-03-21",
+      "dueDate": "2026-03-21",
+      "type": "Inflow",
+      "category": "รายได้อื่นๆ",
+      "desc": "รายได้จากโฆษณาเดือนกุมภาพันธ์- Facebook",
+      "amount": 3651.12,
+      "status": "Actual",
+      "entity": "Revenue",
+      "month": "2026-03",
+      "balance": 114782.63
+    },
+    {
+      "date": "2026-03-31",
+      "dueDate": "2026-03-31",
       "type": "Inflow",
       "category": "รายได้จากสปอนเซอร์",
       "desc": "รายได้จากสปอนเซอร์ เงินเทอร์โบ",
@@ -658,19 +694,7 @@
       "status": "Actual",
       "entity": "Revenue",
       "month": "2026-03",
-      "balance": 105574.78
-    },
-    {
-      "date": "2026-03-31",
-      "dueDate": "2026-03-31",
-      "type": "Inflow",
-      "category": "รายได้จากสปอนเซอร์",
-      "desc": "รายได้จากสปอนเซอร์ Eightcap 2",
-      "amount": 61500,
-      "status": "Actual",
-      "entity": "Revenue",
-      "month": "2026-03",
-      "balance": 167074.78
+      "balance": 170072.63
     },
     {
       "date": "2026-03-31",
@@ -682,7 +706,7 @@
       "status": "Actual",
       "entity": "Administrative",
       "month": "2026-03",
-      "balance": 141074.78
+      "balance": 144072.63
     },
     {
       "date": "2026-03-31",
@@ -694,7 +718,7 @@
       "status": "Actual",
       "entity": "Video Production",
       "month": "2026-03",
-      "balance": 119074.78
+      "balance": 122072.63
     },
     {
       "date": "2026-03-31",
@@ -706,7 +730,7 @@
       "status": "Actual",
       "entity": "Administrative",
       "month": "2026-03",
-      "balance": 116574.78
+      "balance": 119572.63
     },
     {
       "date": "2026-03-31",
@@ -718,7 +742,7 @@
       "status": "Actual",
       "entity": "Video Production",
       "month": "2026-03",
-      "balance": 110574.78
+      "balance": 113572.63
     },
     {
       "date": "2026-03-31",
@@ -730,7 +754,7 @@
       "status": "Actual",
       "entity": "Administrative",
       "month": "2026-03",
-      "balance": 107664.78
+      "balance": 110662.63
     },
     {
       "date": "2026-04-05",
@@ -742,7 +766,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-04",
-      "balance": 107012.26
+      "balance": 110010.11
     },
     {
       "date": "2026-04-11",
@@ -754,7 +778,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-04",
-      "balance": 106787.26
+      "balance": 109785.11
     },
     {
       "date": "2026-04-13",
@@ -766,7 +790,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-04",
-      "balance": 106133.99
+      "balance": 109131.84
     },
     {
       "date": "2026-04-15",
@@ -778,7 +802,7 @@
       "status": "Forecast",
       "entity": "Revenue",
       "month": "2026-04",
-      "balance": 144933.99
+      "balance": 147931.84
     },
     {
       "date": "2026-04-30",
@@ -790,7 +814,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-04",
-      "balance": 118933.99
+      "balance": 121931.84
     },
     {
       "date": "2026-04-30",
@@ -802,7 +826,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-04",
-      "balance": 96933.99
+      "balance": 99931.84
     },
     {
       "date": "2026-04-30",
@@ -814,7 +838,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-04",
-      "balance": 94433.99
+      "balance": 97431.84
     },
     {
       "date": "2026-04-30",
@@ -826,7 +850,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-04",
-      "balance": 88433.99
+      "balance": 91431.84
     },
     {
       "date": "2026-04-30",
@@ -838,7 +862,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-04",
-      "balance": 85523.99
+      "balance": 88521.84
     },
     {
       "date": "2026-05-05",
@@ -850,7 +874,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": 84871.47
+      "balance": 87869.32
     },
     {
       "date": "2026-05-11",
@@ -862,7 +886,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": 84646.47
+      "balance": 87644.32
     },
     {
       "date": "2026-05-13",
@@ -874,7 +898,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": 83993.2
+      "balance": 86991.05
     },
     {
       "date": "2026-05-15",
@@ -886,7 +910,7 @@
       "status": "Forecast",
       "entity": "Revenue",
       "month": "2026-05",
-      "balance": 94933.2
+      "balance": 97931.05
     },
     {
       "date": "2026-05-31",
@@ -898,7 +922,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": 68933.2
+      "balance": 71931.05
     },
     {
       "date": "2026-05-31",
@@ -910,7 +934,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": 46933.2
+      "balance": 49931.05
     },
     {
       "date": "2026-05-31",
@@ -922,7 +946,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": 44433.2
+      "balance": 47431.05
     },
     {
       "date": "2026-05-31",
@@ -934,7 +958,7 @@
       "status": "Forecast",
       "entity": "Video Production",
       "month": "2026-05",
-      "balance": 38433.2
+      "balance": 41431.05
     },
     {
       "date": "2026-05-31",
@@ -946,7 +970,7 @@
       "status": "Forecast",
       "entity": "Administrative",
       "month": "2026-05",
-      "balance": 35523.2
+      "balance": 38521.05
     }
   ],
   "openingBalance": 124331.84
