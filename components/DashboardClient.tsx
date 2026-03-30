@@ -23,15 +23,9 @@ import MarginChart from './charts/MarginChart';
 import FixedVarChart from './charts/FixedVarChart';
 import PersonnelChart from './charts/PersonnelChart';
 
-type DashboardView = 'overview' | 'production' | 'health' | 'transactions';
+type DashboardView = 'production' | 'health' | 'transactions';
 
 const VIEWS: { id: DashboardView; label: string; title: string; description: string }[] = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    title: 'Financial Overview',
-    description: 'Top KPIs and core charts for daily monitoring.',
-  },
   {
     id: 'production',
     label: 'Production',
@@ -59,7 +53,7 @@ export default function DashboardClient() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<DashboardView>('overview');
+  const [activeView, setActiveView] = useState<DashboardView>('health');
 
   useEffect(() => {
     fetch('/api/data')
@@ -136,18 +130,6 @@ export default function DashboardClient() {
 
         <KpiGrid />
 
-        {activeView === 'overview' && (
-          <div className="page-stack">
-            <div className="charts-grid">
-              <CashFlowChart />
-              <CategoryChart />
-              <RevenueChart />
-              <EntityChart />
-              <ActualForecastChart />
-            </div>
-          </div>
-        )}
-
         {activeView === 'production' && (
           <div className="page-stack">
             <VideoProductionSection />
@@ -170,6 +152,13 @@ export default function DashboardClient() {
 
         {activeView === 'health' && (
           <div className="page-stack">
+            <div className="charts-grid">
+              <CashFlowChart />
+              <CategoryChart />
+              <RevenueChart />
+              <EntityChart />
+              <ActualForecastChart />
+            </div>
             <div className="page-section">
               <div className="section-header">
                 <div className="section-icon" style={{ background: 'var(--accent-red-bg)', color: 'var(--accent-red)' }}>&#9888;</div>
