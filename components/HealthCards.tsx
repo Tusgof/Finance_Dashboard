@@ -19,41 +19,42 @@ export default function HealthCards() {
   }, []);
 
   const sortedData = [...filteredData].sort((a, b) => a.date.localeCompare(b.date) || a.desc.localeCompare(b.desc));
-
   const months = Array.from(new Set(sortedData.map(d => d.month))).sort();
-  const totalInflow = sortedData.filter(d => d.type === 'Inflow').reduce((s, d) => s + d.amount, 0);
-  const totalOutflow = sortedData.filter(d => d.type === 'Outflow').reduce((s, d) => s + d.amount, 0);
+  const totalInflow = sortedData.filter(d => d.type === 'Inflow').reduce((sum, row) => sum + row.amount, 0);
+  const totalOutflow = sortedData.filter(d => d.type === 'Outflow').reduce((sum, row) => sum + row.amount, 0);
   const numMonths = months.length || 1;
   const avgBurn = totalOutflow / numMonths;
   const lastBalance = sortedData.length > 0 ? sortedData[sortedData.length - 1].balance : openingBalance;
   const runway = avgBurn > 0 ? lastBalance / avgBurn : 99;
 
-  const cogs = sortedData.filter(d => d.type === 'Outflow' && d.category === 'ต้นทุนสินค้า').reduce((s, d) => s + d.amount, 0);
+  const cogs = sortedData.filter(d => d.type === 'Outflow' && d.category === 'เธ•เนเธเธ—เธธเธเธชเธดเธเธเนเธฒ').reduce((sum, row) => sum + row.amount, 0);
   const grossMargin = totalInflow > 0 ? ((totalInflow - cogs) / totalInflow) * 100 : -999;
-
   const hhi = calculateHHI(sortedData, settings);
 
-  const execCost = sortedData.filter(d => d.type === 'Outflow' && d.entity === 'Administrative').reduce((s, d) => s + d.amount, 0);
-  const prodCost = sortedData.filter(d => d.type === 'Outflow' && d.entity === 'Video Production').reduce((s, d) => s + d.amount, 0);
+  const execCost = sortedData.filter(d => d.type === 'Outflow' && d.entity === 'Administrative').reduce((sum, row) => sum + row.amount, 0);
+  const prodCost = sortedData.filter(d => d.type === 'Outflow' && d.entity === 'Video Production').reduce((sum, row) => sum + row.amount, 0);
   const execRatio = prodCost > 0 ? execCost / prodCost : 99;
 
   const avgRevenue = totalInflow / numMonths;
   const beGap = avgBurn > 0 ? ((avgRevenue - avgBurn) / avgBurn) * 100 : 0;
 
   const thresholds = settings.healthThresholds;
+  const grossMarginThresholds = thresholds.grossMarginPct ?? { healthyMin: 30, cautionMin: 0 };
+  const revenueHHIThresholds = thresholds.revenueHHI ?? { diversifiedMax: 2500, moderateMax: 5000 };
+  const breakEvenThresholds = thresholds.breakEvenGapPct ?? { surplusMin: 0, nearMin: -20 };
   const runwayStatus = runway >= thresholds.cashRunwayMonths.healthyMin
     ? 'green'
     : runway >= thresholds.cashRunwayMonths.cautionMin
       ? 'amber'
       : 'red';
-  const grossMarginStatus = grossMargin >= thresholds.grossMarginPct.healthyMin
+  const grossMarginStatus = grossMargin >= grossMarginThresholds.healthyMin
     ? 'green'
-    : grossMargin >= thresholds.grossMarginPct.cautionMin
+    : grossMargin >= grossMarginThresholds.cautionMin
       ? 'amber'
       : 'red';
-  const hhiStatus = hhi < thresholds.revenueHHI.diversifiedMax
+  const hhiStatus = hhi < revenueHHIThresholds.diversifiedMax
     ? 'green'
-    : hhi < thresholds.revenueHHI.moderateMax
+    : hhi < revenueHHIThresholds.moderateMax
       ? 'amber'
       : 'red';
   const execRatioStatus = execRatio <= thresholds.execToProdRatio.healthyMax
@@ -61,9 +62,9 @@ export default function HealthCards() {
     : execRatio <= thresholds.execToProdRatio.cautionMax
       ? 'amber'
       : 'red';
-  const beGapStatus = beGap >= thresholds.breakEvenGapPct.surplusMin
+  const beGapStatus = beGap >= breakEvenThresholds.surplusMin
     ? 'green'
-    : beGap >= thresholds.breakEvenGapPct.nearMin
+    : beGap >= breakEvenThresholds.nearMin
       ? 'amber'
       : 'red';
 

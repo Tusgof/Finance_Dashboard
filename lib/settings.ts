@@ -1,4 +1,4 @@
-import fs from 'fs';
+﻿import fs from 'fs';
 import path from 'path';
 import type {
   CostClassificationSettings,
@@ -9,14 +9,10 @@ import type {
   RevenueSourceMapping,
   ScenarioSettings,
 } from './types';
+import { DEFAULT_DASHBOARD_SETTINGS, SHEET_ID, buildCsvExportUrl } from './settingsDefaults';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
-const SHEET_ID = '1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8';
-
-function buildCsvExportUrl(sheetId: string): string {
-  return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
-}
 
 function cloneSettings<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
@@ -41,9 +37,7 @@ function normalizeNumber(value: unknown, fallback: number): number {
 
 function normalizeStringArray(value: unknown, fallback: string[]): string[] {
   if (!Array.isArray(value)) return [...fallback];
-  const cleaned = value
-    .map(item => normalizeString(item))
-    .filter(Boolean);
+  const cleaned = value.map(item => normalizeString(item)).filter(Boolean);
   return cleaned.length > 0 ? Array.from(new Set(cleaned)) : [...fallback];
 }
 
@@ -99,10 +93,11 @@ function normalizeCostClassification(
 ): CostClassificationSettings {
   if (!isRecord(value)) {
     return {
-      fixed: normalizeBucket(fallback.fixed, fallback.fixed),
-      production: normalizeBucket(fallback.production, fallback.production),
-      onetime: normalizeBucket(fallback.onetime, fallback.onetime),
+      fixed: { ...fallback.fixed, keywords: [...fallback.fixed.keywords] },
+      production: { ...fallback.production, keywords: [...fallback.production.keywords] },
+      onetime: { ...fallback.onetime, keywords: [...fallback.onetime.keywords] },
       directKeywords: [...fallback.directKeywords],
+      peopleCostKeywords: [...fallback.peopleCostKeywords],
     };
   }
 
@@ -111,18 +106,18 @@ function normalizeCostClassification(
     production: normalizeBucket(value.production, fallback.production),
     onetime: normalizeBucket(value.onetime, fallback.onetime),
     directKeywords: normalizeStringArray(value.directKeywords, fallback.directKeywords),
+    peopleCostKeywords: normalizeStringArray(value.peopleCostKeywords, fallback.peopleCostKeywords),
   };
 }
 
-function normalizeHealthThresholds(
-  value: unknown,
-  fallback: HealthThresholds
-): HealthThresholds {
+function normalizeHealthThresholds(value: unknown, fallback: HealthThresholds): HealthThresholds {
   if (!isRecord(value)) {
     return {
       cashRunwayMonths: { ...fallback.cashRunwayMonths },
       grossMarginPct: { ...fallback.grossMarginPct },
       revenueHHI: { ...fallback.revenueHHI },
+      revenueDropRatio: { ...fallback.revenueDropRatio },
+      headcountCostRatio: { ...fallback.headcountCostRatio },
       execToProdRatio: { ...fallback.execToProdRatio },
       breakEvenGapPct: { ...fallback.breakEvenGapPct },
     };
@@ -147,6 +142,17 @@ function normalizeHealthThresholds(
           moderateMax: normalizeNumber(value.revenueHHI.moderateMax, fallback.revenueHHI.moderateMax),
         }
       : { ...fallback.revenueHHI },
+    revenueDropRatio: isRecord(value.revenueDropRatio)
+      ? {
+          warningMax: normalizeNumber(value.revenueDropRatio.warningMax, fallback.revenueDropRatio.warningMax),
+        }
+      : { ...fallback.revenueDropRatio },
+    headcountCostRatio: isRecord(value.headcountCostRatio)
+      ? {
+          healthyMax: normalizeNumber(value.headcountCostRatio.healthyMax, fallback.headcountCostRatio.healthyMax),
+          cautionMax: normalizeNumber(value.headcountCostRatio.cautionMax, fallback.headcountCostRatio.cautionMax),
+        }
+      : { ...fallback.headcountCostRatio },
     execToProdRatio: isRecord(value.execToProdRatio)
       ? {
           healthyMax: normalizeNumber(value.execToProdRatio.healthyMax, fallback.execToProdRatio.healthyMax),
@@ -162,16 +168,19 @@ function normalizeHealthThresholds(
   };
 }
 
-function normalizeScenarioSettings(
-  value: unknown,
-  fallback: ScenarioSettings
-): ScenarioSettings {
+function normalizeScenarioSettings(value: unknown, fallback: ScenarioSettings): ScenarioSettings {
   if (!isRecord(value)) {
     return {
       revenueTarget: { ...fallback.revenueTarget },
       execSalaryAdjustmentPct: { ...fallback.execSalaryAdjustmentPct },
       productionCostAdjustmentPct: { ...fallback.productionCostAdjustmentPct },
+      variableCostReductionPct: { ...fallback.variableCostReductionPct },
+      newDealRevenue: { ...fallback.newDealRevenue },
+      bestCaseRevenueLiftPct: fallback.bestCaseRevenueLiftPct,
+      worstCaseRevenueHaircutPct: fallback.worstCaseRevenueHaircutPct,
       projectionMonths: fallback.projectionMonths,
+      breakEvenLookbackMonths: fallback.breakEvenLookbackMonths,
+      runwayLookbackMonths: fallback.runwayLookbackMonths,
     };
   }
 
@@ -182,102 +191,34 @@ function normalizeScenarioSettings(
       value.productionCostAdjustmentPct,
       fallback.productionCostAdjustmentPct
     ),
+    variableCostReductionPct: normalizeRange(value.variableCostReductionPct, fallback.variableCostReductionPct),
+    newDealRevenue: normalizeRange(value.newDealRevenue, fallback.newDealRevenue),
+    bestCaseRevenueLiftPct: normalizeNumber(value.bestCaseRevenueLiftPct, fallback.bestCaseRevenueLiftPct),
+    worstCaseRevenueHaircutPct: normalizeNumber(value.worstCaseRevenueHaircutPct, fallback.worstCaseRevenueHaircutPct),
     projectionMonths: normalizeNumber(value.projectionMonths, fallback.projectionMonths),
+    breakEvenLookbackMonths: normalizeNumber(value.breakEvenLookbackMonths, fallback.breakEvenLookbackMonths),
+    runwayLookbackMonths: normalizeNumber(value.runwayLookbackMonths, fallback.runwayLookbackMonths),
   };
 }
 
-function normalizeRefreshConfig(
-  value: unknown,
-  fallback: RefreshSourceConfig
-): RefreshSourceConfig {
+function normalizeRefreshConfig(value: unknown, fallback: RefreshSourceConfig): RefreshSourceConfig {
   if (!isRecord(value)) {
     return { ...fallback };
   }
 
-  const sheetId = normalizeString(value.sheetId, fallback.sheetId);
+  const sheetId = normalizeString(value.sheetId, fallback.sheetId || SHEET_ID);
   const csvExportUrl = normalizeString(value.csvExportUrl, buildCsvExportUrl(sheetId));
 
   return {
     sheetId,
     csvExportUrl,
+    productionSummaryPath: normalizeString(value.productionSummaryPath, fallback.productionSummaryPath),
+    sponsorPipelinePath: normalizeString(value.sponsorPipelinePath, fallback.sponsorPipelinePath),
     fallbackOpeningBalance: normalizeNumber(value.fallbackOpeningBalance, fallback.fallbackOpeningBalance),
   };
 }
 
-export const DEFAULT_SETTINGS: DashboardSettings = {
-  revenueSources: [
-    { label: 'Eightcap', keywords: ['Eightcap'] },
-    { label: 'InnovestX', keywords: ['InnovestX'] },
-    { label: 'OceanLife', keywords: ['OceanLife'] },
-    { label: 'เงินเทอร์โบ', keywords: ['เงินเทอร์โบ'] },
-    { label: 'Webull', keywords: ['Webull'] },
-    { label: 'Facebook Ads', keywords: ['Facebook', 'Facebook Ads', 'Meta'] },
-    { label: 'TikTok', keywords: ['TikTok'] },
-  ],
-  costClassification: {
-    fixed: {
-      label: 'Fixed',
-      keywords: ['เงินเดือน', 'ChatGPT', 'Gemini', 'Claude', 'บัญชี', 'ธรรมเนียม'],
-    },
-    production: {
-      label: 'Production',
-      keywords: ['ค่าจ้าง', 'โบนัส', 'พากย์เสียง', 'เขียนบท', 'ทำฟุตเทจ', 'ตัดต่อ', 'กราฟิกข่าว', 'จัดหาข่าว', 'ดูแลลูกค้า', 'ดูแลคอมมูนิตี้'],
-    },
-    onetime: {
-      label: 'One-time',
-      keywords: ['อุปกรณ์', 'ไมค์', 'จอมอนิเตอร์', 'ฟอนต์', 'Freepik', 'Vecteezy', 'ตัวจ้างงาน', 'ภาษี'],
-    },
-    directKeywords: ['พากย์เสียง', 'เขียนบท', 'ทำฟุตเทจ', 'ตัดต่อ', 'Production', 'ค่าจ้าง', 'ค่าจ้างจัดทำของ', 'ค่าอุปกรณ์'],
-  },
-  healthThresholds: {
-    cashRunwayMonths: {
-      healthyMin: 6,
-      cautionMin: 3,
-    },
-    grossMarginPct: {
-      healthyMin: 30,
-      cautionMin: 0,
-    },
-    revenueHHI: {
-      diversifiedMax: 2500,
-      moderateMax: 5000,
-    },
-    execToProdRatio: {
-      healthyMax: 0.5,
-      cautionMax: 1.5,
-    },
-    breakEvenGapPct: {
-      surplusMin: 0,
-      nearMin: -20,
-    },
-  },
-  scenario: {
-    revenueTarget: {
-      default: 34000,
-      min: 0,
-      max: 200000,
-      step: 1000,
-    },
-    execSalaryAdjustmentPct: {
-      default: 0,
-      min: -50,
-      max: 0,
-      step: 5,
-    },
-    productionCostAdjustmentPct: {
-      default: 0,
-      min: -30,
-      max: 30,
-      step: 5,
-    },
-    projectionMonths: 6,
-  },
-  refresh: {
-    sheetId: SHEET_ID,
-    csvExportUrl: buildCsvExportUrl(SHEET_ID),
-    fallbackOpeningBalance: 124331.84,
-  },
-};
+export const DEFAULT_SETTINGS: DashboardSettings = DEFAULT_DASHBOARD_SETTINGS;
 
 export function getDefaultSettings(): DashboardSettings {
   return cloneSettings(DEFAULT_SETTINGS);
@@ -339,3 +280,5 @@ export function saveSettings(value: unknown): DashboardSettings {
 }
 
 export const SETTINGS_PATHNAME = SETTINGS_PATH;
+
+

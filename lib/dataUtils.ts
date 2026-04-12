@@ -1,75 +1,29 @@
-import type { DashboardSettings, FilterType, Transaction } from './types';
+﻿import type { DashboardSettings, FilterType, Transaction } from './types';
+import { DEFAULT_DASHBOARD_SETTINGS as SETTINGS_DEFAULTS } from './settingsDefaults';
 
-export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
-  revenueSources: [
-    { label: 'Eightcap', keywords: ['Eightcap'] },
-    { label: 'InnovestX', keywords: ['InnovestX'] },
-    { label: 'OceanLife', keywords: ['OceanLife'] },
-    { label: 'เงินเทอร์โบ', keywords: ['เงินเทอร์โบ'] },
-    { label: 'Webull', keywords: ['Webull'] },
-    { label: 'Facebook Ads', keywords: ['Facebook', 'Facebook Ads', 'Meta'] },
-    { label: 'TikTok', keywords: ['TikTok'] },
-  ],
-  costClassification: {
-    fixed: {
-      label: 'Fixed',
-      keywords: ['เงินเดือน', 'ChatGPT', 'Gemini', 'Claude', 'บัญชี', 'ธรรมเนียม'],
-    },
-    production: {
-      label: 'Production',
-      keywords: [
-        'ค่าจ้าง',
-        'โบนัส',
-        'พากย์เสียง',
-        'เขียนบท',
-        'ทำฟุตเทจ',
-        'ตัดต่อ',
-        'กราฟิกข่าว',
-        'จัดหาข่าว',
-        'ดูแลลูกค้า',
-        'ดูแลคอมมูนิตี้',
-      ],
-    },
-    onetime: {
-      label: 'One-time',
-      keywords: ['อุปกรณ์', 'ไมค์', 'จอมอนิเตอร์', 'ฟอนต์', 'Freepik', 'Vecteezy', 'ตัวจ้างงาน', 'ภาษี'],
-    },
-    directKeywords: [
-      'พากย์เสียง',
-      'เขียนบท',
-      'ทำฟุตเทจ',
-      'ตัดต่อ',
-      'Production',
-      'ค่าจ้าง',
-      'ค่าจ้างจัดทำของ',
-      'ค่าจ้างอุปกรณ์',
-      'ค่าอุปกรณ์',
-      'ดูแลลูกค้า',
-      'ดูแลคอมมูนิตี้',
-    ],
-  },
-  healthThresholds: {
-    cashRunwayMonths: { healthyMin: 6, cautionMin: 3 },
-    grossMarginPct: { healthyMin: 30, cautionMin: 0 },
-    revenueHHI: { diversifiedMax: 2500, moderateMax: 5000 },
-    execToProdRatio: { healthyMax: 0.5, cautionMax: 1.5 },
-    breakEvenGapPct: { surplusMin: 0, nearMin: -20 },
-  },
-  scenario: {
-    revenueTarget: { default: 34000, min: 0, max: 200000, step: 1000 },
-    execSalaryAdjustmentPct: { default: 0, min: -50, max: 0, step: 5 },
-    productionCostAdjustmentPct: { default: 0, min: -30, max: 30, step: 5 },
-    projectionMonths: 6,
-  },
-  refresh: {
-    sheetId: '1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8',
-    csvExportUrl: 'https://docs.google.com/spreadsheets/d/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8/export?format=csv',
-    fallbackOpeningBalance: 124331.84,
-  },
-};
+export const DEFAULT_DASHBOARD_SETTINGS = SETTINGS_DEFAULTS;
 
 function resolveSettings(settings?: DashboardSettings | null): DashboardSettings {
   return settings ?? DEFAULT_DASHBOARD_SETTINGS;
+}
+
+function normalizeText(value: string | undefined | null): string {
+  return (value ?? '').trim();
+}
+
+function transactionSearchText(transaction: Transaction): string {
+  return [
+    transaction.sponsor,
+    transaction.person,
+    transaction.desc,
+    transaction.desc,
+    transaction.subCategory,
+    transaction.category,
+    transaction.mainCategory,
+  ]
+    .map(normalizeText)
+    .filter(Boolean)
+    .join(' ');
 }
 
 export const fmt = (n: number): string =>
@@ -78,20 +32,16 @@ export const fmt = (n: number): string =>
     maximumFractionDigits: 2,
   }).format(n);
 
-export function getFilteredData(
-  rawData: Transaction[],
-  currentFilter: FilterType
-): Transaction[] {
-  let data = rawData;
-
-  if (currentFilter === 'all') return data;
-  if (currentFilter === 'actual') return data.filter(d => d.status === 'Actual');
-  if (currentFilter === 'forecast') return data.filter(d => d.status === 'Forecast');
-  return data.filter(d => d.month === currentFilter);
+export function getFilteredData(rawData: Transaction[], currentFilter: FilterType): Transaction[] {
+  if (currentFilter === 'all') return rawData;
+  if (currentFilter === 'actual') return rawData.filter(d => d.status === 'Actual');
+  if (currentFilter === 'committed') return rawData.filter(d => d.status === 'Committed');
+  if (currentFilter === 'forecast') return rawData.filter(d => d.status === 'Forecast');
+  return rawData.filter(d => (d.workMonth || d.month) === currentFilter);
 }
 
 export function getAvailableMonths(data: Transaction[]): string[] {
-  return Array.from(new Set(data.map(d => d.month).filter(Boolean))).sort();
+  return Array.from(new Set(data.map(d => d.workMonth || d.month).filter(Boolean))).sort();
 }
 
 export function formatMonthLabel(month: string, locale: string = 'en-US'): string {
@@ -108,6 +58,7 @@ export function classifyCost(
 ): 'fixed' | 'production' | 'onetime' {
   const { costClassification } = resolveSettings(settings);
   if (costClassification.fixed.keywords.some(keyword => desc.includes(keyword))) return 'fixed';
+  if (costClassification.peopleCostKeywords.some(keyword => desc.includes(keyword))) return 'fixed';
   if (costClassification.onetime.keywords.some(keyword => desc.includes(keyword))) return 'onetime';
   if (costClassification.production.keywords.some(keyword => desc.includes(keyword))) return 'production';
   return 'fixed';
@@ -125,10 +76,12 @@ export function calculateHHI(data: Transaction[], settings?: DashboardSettings |
   const resolved = resolveSettings(settings);
   const sources: Record<string, number> = {};
 
-  data.filter(d => d.type === 'Inflow').forEach(d => {
-    const src = getRevenueSourceLabel(d.desc, resolved);
-    sources[src] = (sources[src] || 0) + d.amount;
-  });
+  data
+    .filter(d => d.type === 'Inflow')
+    .forEach(d => {
+      const src = getRevenueSourceLabel(transactionSearchText(d), resolved);
+      sources[src] = (sources[src] || 0) + d.amount;
+    });
 
   const total = Object.values(sources).reduce((s, v) => s + v, 0);
   if (total === 0) return 10000;
@@ -139,9 +92,17 @@ export function getCostType(
   d: Transaction,
   settings?: DashboardSettings | null
 ): 'Direct' | 'Indirect' | null {
-  if (d.category !== 'ต้นทุนสินค้า' || d.entity !== 'Video Production') return null;
+  const text = transactionSearchText(d);
+  const mainCategory = normalizeText(d.mainCategory || d.category);
+  const isProductionCost =
+    mainCategory === 'COGS' ||
+    /เธ•เนเธเธ—เธธเธ|production|video|content|เธเธฒเธเธขเน|เธ•เธฑเธ”เธ•เนเธญ|เน€เธเธตเธขเธเธเธ—|เธเธฃเธฒเธเธดเธ|เธเธฑเธ”เธ—เธณ/i.test(text) ||
+    d.entity === 'Video Production';
+
+  if (!isProductionCost) return null;
+
   const { costClassification } = resolveSettings(settings);
-  if (costClassification.directKeywords.some(keyword => d.desc.includes(keyword))) return 'Direct';
+  if (costClassification.directKeywords.some(keyword => text.includes(keyword))) return 'Direct';
   return 'Indirect';
 }
 
@@ -156,3 +117,5 @@ export async function loadDashboardSettings(): Promise<DashboardSettings> {
     return DEFAULT_DASHBOARD_SETTINGS;
   }
 }
+
+

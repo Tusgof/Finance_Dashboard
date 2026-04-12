@@ -19,7 +19,10 @@ export default function EntityChart() {
 
     const data = filteredData.filter(d => d.type === 'Outflow' && d.entity);
     const entities: Record<string, number> = {};
-    data.forEach(d => { entities[d.entity] = (entities[d.entity] || 0) + d.amount; });
+    data.forEach(d => {
+      const entity = d.entity ?? 'Administrative';
+      entities[entity] = (entities[entity] || 0) + d.amount;
+    });
     const sorted = Object.entries(entities).sort((a, b) => b[1] - a[1]);
 
     chartRef.current = new Chart(canvasRef.current, {
