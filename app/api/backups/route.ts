@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import type { BackupMeta, DataFile } from '@/lib/types';
+import { loadSettings } from '@/lib/settings';
+import type { BackupMeta } from '@/lib/types';
+import { normalizeDataFile } from '@/lib/transactionModel';
 
 export async function GET() {
+  const settings = loadSettings();
   const backupDir = path.join(process.cwd(), 'data', 'backups');
 
   if (!fs.existsSync(backupDir)) {
@@ -14,7 +17,7 @@ export async function GET() {
     .readdirSync(backupDir)
     .filter(f => f.endsWith('.json'))
     .sort()
-    .reverse(); // newest first
+    .reverse();
 
   const metas: BackupMeta[] = files.map(filename => {
     const filePath = path.join(backupDir, filename);
@@ -22,14 +25,13 @@ export async function GET() {
     let openingBalance = 0;
 
     try {
-      const content: DataFile = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      count = content.rawData?.length ?? 0;
-      openingBalance = content.openingBalance ?? 0;
+      const parsed = normalizeDataFile(JSON.parse(fs.readFileSync(filePath, 'utf-8')), settings);
+      count = parsed.rawData.length;
+      openingBalance = parsed.openingBalance;
     } catch {
-      // skip malformed
+      // skip malformed files
     }
 
-    // Filename format: 2026-03-21T10-30-00.json → ISO timestamp
     const tsRaw = filename.replace('.json', '').replace(/T(\d{2})-(\d{2})-(\d{2})$/, 'T$1:$2:$3');
     const timestamp = new Date(tsRaw).toISOString();
 
