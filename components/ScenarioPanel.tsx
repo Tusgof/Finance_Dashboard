@@ -1,15 +1,29 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDashboard } from './DashboardContext';
-import { fmt } from '@/lib/dataUtils';
+import { DEFAULT_DASHBOARD_SETTINGS, fmt, loadDashboardSettings } from '@/lib/dataUtils';
 
 export default function ScenarioPanel() {
   const { rawData, openingBalance } = useDashboard();
+  const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+  const [revenueTarget, setRevenueTarget] = useState(DEFAULT_DASHBOARD_SETTINGS.scenario.revenueTarget.default);
+  const [execAdj, setExecAdj] = useState(DEFAULT_DASHBOARD_SETTINGS.scenario.execSalaryAdjustmentPct.default);
+  const [prodAdj, setProdAdj] = useState(DEFAULT_DASHBOARD_SETTINGS.scenario.productionCostAdjustmentPct.default);
 
-  const [revenueTarget, setRevenueTarget] = useState(34000);
-  const [execAdj, setExecAdj] = useState(0);
-  const [prodAdj, setProdAdj] = useState(0);
+  useEffect(() => {
+    let active = true;
+    void loadDashboardSettings().then(next => {
+      if (!active) return;
+      setSettings(next);
+      setRevenueTarget(next.scenario.revenueTarget.default);
+      setExecAdj(next.scenario.execSalaryAdjustmentPct.default);
+      setProdAdj(next.scenario.productionCostAdjustmentPct.default);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const { baseExecCost, baseProdCost, baseOtherCost, lastBalance } = useMemo(() => {
     const actualMonths = Array.from(new Set(rawData.filter(d => d.status === 'Actual').map(d => d.month)));
@@ -27,20 +41,22 @@ export default function ScenarioPanel() {
   const newBurn = newExec + newProd + baseOtherCost;
   const netMonthly = revenueTarget - newBurn;
   const newRunway = netMonthly < 0 ? lastBalance / Math.abs(netMonthly) : 99;
-  const balAt6 = lastBalance + netMonthly * 6;
+  const projectionMonths = settings.scenario.projectionMonths;
+  const balAtProjection = lastBalance + netMonthly * projectionMonths;
+  const runwayThresholds = settings.healthThresholds.cashRunwayMonths;
 
   return (
     <div className="scenario-panel">
-      <h3>🔬 What-If Scenario Analysis</h3>
+      <h3>What-If Scenario Analysis</h3>
       <div className="slider-grid">
         <div className="slider-group">
           <label>Monthly Revenue Target</label>
           <div className="slider-value">฿{fmt(revenueTarget)}</div>
           <input
             type="range"
-            min={0}
-            max={200000}
-            step={1000}
+            min={settings.scenario.revenueTarget.min}
+            max={settings.scenario.revenueTarget.max}
+            step={settings.scenario.revenueTarget.step}
             value={revenueTarget}
             onChange={e => setRevenueTarget(+e.target.value)}
           />
@@ -50,9 +66,9 @@ export default function ScenarioPanel() {
           <div className="slider-value">{execAdj}%</div>
           <input
             type="range"
-            min={-50}
-            max={0}
-            step={5}
+            min={settings.scenario.execSalaryAdjustmentPct.min}
+            max={settings.scenario.execSalaryAdjustmentPct.max}
+            step={settings.scenario.execSalaryAdjustmentPct.step}
             value={execAdj}
             onChange={e => setExecAdj(+e.target.value)}
           />
@@ -62,9 +78,9 @@ export default function ScenarioPanel() {
           <div className="slider-value">{prodAdj >= 0 ? '+' : ''}{prodAdj}%</div>
           <input
             type="range"
-            min={-30}
-            max={30}
-            step={5}
+            min={settings.scenario.productionCostAdjustmentPct.min}
+            max={settings.scenario.productionCostAdjustmentPct.max}
+            step={settings.scenario.productionCostAdjustmentPct.step}
             value={prodAdj}
             onChange={e => setProdAdj(+e.target.value)}
           />
@@ -79,7 +95,7 @@ export default function ScenarioPanel() {
           <div className="sr-label">Cash Runway</div>
           <div
             className="sr-value"
-            style={{ color: newRunway >= 6 ? 'var(--accent-green)' : newRunway >= 3 ? 'var(--accent-amber)' : 'var(--accent-red)' }}
+            style={{ color: newRunway >= runwayThresholds.healthyMin ? 'var(--accent-green)' : newRunway >= runwayThresholds.cautionMin ? 'var(--accent-amber)' : 'var(--accent-red)' }}
           >
             {newRunway >= 99 ? 'Infinite' : `${newRunway.toFixed(1)} mo`}
           </div>
@@ -89,8 +105,10 @@ export default function ScenarioPanel() {
           <div className="sr-value" style={{ color: 'var(--accent-blue)' }}>฿{fmt(newBurn)}</div>
         </div>
         <div className="scenario-result">
-          <div className="sr-label">Balance at Month 6</div>
-          <div className="sr-value" style={{ color: balAt6 >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>฿{fmt(balAt6)}</div>
+          <div className="sr-label">Balance at Month {projectionMonths}</div>
+          <div className="sr-value" style={{ color: balAtProjection >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+            ฿{fmt(balAtProjection)}
+          </div>
         </div>
       </div>
     </div>

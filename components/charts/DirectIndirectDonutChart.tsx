@@ -1,15 +1,26 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { getCostType, fmt } from '@/lib/dataUtils';
+import { DEFAULT_DASHBOARD_SETTINGS, fmt, getCostType, loadDashboardSettings } from '@/lib/dataUtils';
 
 export default function DirectIndirectDonutChart() {
   const { filteredData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+
+  useEffect(() => {
+    let active = true;
+    void loadDashboardSettings().then(next => {
+      if (active) setSettings(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -17,7 +28,7 @@ export default function DirectIndirectDonutChart() {
 
     const vp = filteredData
       .filter(d => d.category === 'ต้นทุนสินค้า' && d.entity === 'Video Production')
-      .map(d => ({ ...d, costType: getCostType(d) }));
+      .map(d => ({ ...d, costType: getCostType(d, settings) }));
     const totalDirect = vp.filter(d => d.costType === 'Direct').reduce((s, d) => s + d.amount, 0);
     const totalIndirect = vp.filter(d => d.costType === 'Indirect').reduce((s, d) => s + d.amount, 0);
     const total = totalDirect + totalIndirect;
@@ -25,7 +36,7 @@ export default function DirectIndirectDonutChart() {
     chartRef.current = new Chart(canvasRef.current, {
       type: 'doughnut',
       data: {
-        labels: ['Direct (ต้นทุนทางตรง)', 'Indirect (ต้นทุนทางอ้อม)'],
+        labels: ['Direct (ทางตรง)', 'Indirect (ทางอ้อม)'],
         datasets: [{
           data: [totalDirect, totalIndirect],
           backgroundColor: ['rgba(37,99,235,0.85)', 'rgba(217,119,6,0.78)'],
@@ -53,7 +64,7 @@ export default function DirectIndirectDonutChart() {
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [filteredData]);
+  }, [filteredData, settings]);
 
   return (
     <div className="chart-card" style={{ borderColor: 'var(--border)' }}>

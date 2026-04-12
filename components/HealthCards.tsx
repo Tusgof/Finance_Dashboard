@@ -1,10 +1,23 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useDashboard } from './DashboardContext';
-import { calculateHHI } from '@/lib/dataUtils';
+import { DEFAULT_DASHBOARD_SETTINGS, calculateHHI, loadDashboardSettings } from '@/lib/dataUtils';
 
 export default function HealthCards() {
   const { filteredData, openingBalance } = useDashboard();
+  const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+
+  useEffect(() => {
+    let active = true;
+    void loadDashboardSettings().then(next => {
+      if (active) setSettings(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const sortedData = [...filteredData].sort((a, b) => a.date.localeCompare(b.date) || a.desc.localeCompare(b.desc));
 
   const months = Array.from(new Set(sortedData.map(d => d.month))).sort();
@@ -18,7 +31,7 @@ export default function HealthCards() {
   const cogs = sortedData.filter(d => d.type === 'Outflow' && d.category === 'ต้นทุนสินค้า').reduce((s, d) => s + d.amount, 0);
   const grossMargin = totalInflow > 0 ? ((totalInflow - cogs) / totalInflow) * 100 : -999;
 
-  const hhi = calculateHHI(sortedData);
+  const hhi = calculateHHI(sortedData, settings);
 
   const execCost = sortedData.filter(d => d.type === 'Outflow' && d.entity === 'Administrative').reduce((s, d) => s + d.amount, 0);
   const prodCost = sortedData.filter(d => d.type === 'Outflow' && d.entity === 'Video Production').reduce((s, d) => s + d.amount, 0);
@@ -27,48 +40,63 @@ export default function HealthCards() {
   const avgRevenue = totalInflow / numMonths;
   const beGap = avgBurn > 0 ? ((avgRevenue - avgBurn) / avgBurn) * 100 : 0;
 
-  type StatusColor = 'green' | 'amber' | 'red';
-  function statusClass(val: number, greenThresh: number | { green: number; amber: number }, amberThresh?: number): StatusColor {
-    if (typeof greenThresh === 'object') {
-      if (val < greenThresh.green) return 'green';
-      if (val < greenThresh.amber) return 'amber';
-      return 'red';
-    }
-    if (val >= greenThresh) return 'green';
-    if (amberThresh !== undefined && val >= amberThresh) return 'amber';
-    return 'red';
-  }
+  const thresholds = settings.healthThresholds;
+  const runwayStatus = runway >= thresholds.cashRunwayMonths.healthyMin
+    ? 'green'
+    : runway >= thresholds.cashRunwayMonths.cautionMin
+      ? 'amber'
+      : 'red';
+  const grossMarginStatus = grossMargin >= thresholds.grossMarginPct.healthyMin
+    ? 'green'
+    : grossMargin >= thresholds.grossMarginPct.cautionMin
+      ? 'amber'
+      : 'red';
+  const hhiStatus = hhi < thresholds.revenueHHI.diversifiedMax
+    ? 'green'
+    : hhi < thresholds.revenueHHI.moderateMax
+      ? 'amber'
+      : 'red';
+  const execRatioStatus = execRatio <= thresholds.execToProdRatio.healthyMax
+    ? 'green'
+    : execRatio <= thresholds.execToProdRatio.cautionMax
+      ? 'amber'
+      : 'red';
+  const beGapStatus = beGap >= thresholds.breakEvenGapPct.surplusMin
+    ? 'green'
+    : beGap >= thresholds.breakEvenGapPct.nearMin
+      ? 'amber'
+      : 'red';
 
   const cards = [
     {
       label: 'Cash Runway',
       value: runway.toFixed(1) + ' mo',
-      status: statusClass(runway, 6, 3),
-      detail: runway >= 6 ? 'Healthy' : runway >= 3 ? 'Caution' : 'Critical',
+      status: runwayStatus,
+      detail: runwayStatus === 'green' ? 'Healthy' : runwayStatus === 'amber' ? 'Caution' : 'Critical',
     },
     {
       label: 'Gross Margin',
       value: grossMargin > -200 ? grossMargin.toFixed(1) + '%' : '<-200%',
-      status: statusClass(grossMargin, 30, 0),
-      detail: grossMargin >= 30 ? 'Healthy' : grossMargin >= 0 ? 'Low' : 'Negative',
+      status: grossMarginStatus,
+      detail: grossMarginStatus === 'green' ? 'Healthy' : grossMarginStatus === 'amber' ? 'Low' : 'Negative',
     },
     {
       label: 'Revenue HHI',
       value: hhi.toFixed(0),
-      status: statusClass(hhi, { green: 2500, amber: 5000 }),
-      detail: hhi < 2500 ? 'Diversified' : hhi < 5000 ? 'Moderate' : 'Concentrated',
+      status: hhiStatus,
+      detail: hhiStatus === 'green' ? 'Diversified' : hhiStatus === 'amber' ? 'Moderate' : 'Concentrated',
     },
     {
       label: 'Exec:Prod Ratio',
       value: execRatio.toFixed(1) + ':1',
-      status: statusClass(1 / execRatio, 2, 0.67),
-      detail: execRatio < 0.5 ? 'Lean' : execRatio < 1.5 ? 'Moderate' : 'Top-heavy',
+      status: execRatioStatus,
+      detail: execRatioStatus === 'green' ? 'Lean' : execRatioStatus === 'amber' ? 'Moderate' : 'Top-heavy',
     },
     {
       label: 'Break-Even Gap',
       value: beGap > 0 ? '+' + beGap.toFixed(0) + '%' : beGap.toFixed(0) + '%',
-      status: statusClass(beGap, 0, -20),
-      detail: beGap >= 0 ? 'Surplus' : beGap >= -20 ? 'Near' : 'Deficit',
+      status: beGapStatus,
+      detail: beGapStatus === 'green' ? 'Surplus' : beGapStatus === 'amber' ? 'Near' : 'Deficit',
     },
   ];
 

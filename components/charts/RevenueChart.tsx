@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { fmt } from '@/lib/dataUtils';
+import { DEFAULT_DASHBOARD_SETTINGS, fmt, getRevenueSourceLabel, loadDashboardSettings } from '@/lib/dataUtils';
 
 const COLORS = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0', '#dcfce7', '#93c5fd'];
 
@@ -12,6 +12,17 @@ export default function RevenueChart() {
   const { filteredData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+
+  useEffect(() => {
+    let active = true;
+    void loadDashboardSettings().then(next => {
+      if (active) setSettings(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -20,14 +31,7 @@ export default function RevenueChart() {
     const data = filteredData.filter(d => d.type === 'Inflow');
     const sources: Record<string, number> = {};
     data.forEach(d => {
-      let src = 'Other';
-      if (d.desc.includes('Eightcap')) src = 'Eightcap';
-      else if (d.desc.includes('InnovestX')) src = 'InnovestX';
-      else if (d.desc.includes('OceanLife')) src = 'OceanLife';
-      else if (d.desc.includes('เงินเทอร์โบ')) src = 'เงินเทอร์โบ';
-      else if (d.desc.includes('Webull')) src = 'Webull';
-      else if (d.desc.includes('Facebook')) src = 'Facebook Ads';
-      else if (d.desc.includes('TikTok')) src = 'TikTok';
+      const src = getRevenueSourceLabel(d.desc, settings);
       sources[src] = (sources[src] || 0) + d.amount;
     });
     const sorted = Object.entries(sources).sort((a, b) => b[1] - a[1]);
@@ -51,13 +55,13 @@ export default function RevenueChart() {
         },
         scales: {
           x: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, ticks: { color: '#344054', font: { family: 'Inter', size: 11 }, callback: (v: unknown) => '฿' + (Number(v) >= 1000 ? (Number(v) / 1000).toFixed(0) + 'K' : v) } },
-          y: { ...(chartDefaults.scales as Record<string, unknown>)?.x as object, grid: { display: false } },
+          y: { ...(chartDefaults.scales as Record<string, unknown>)?.y as object, grid: { display: false } },
         },
       } as ChartOptions,
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [filteredData]);
+  }, [filteredData, settings]);
 
   return (
     <div className="chart-card">

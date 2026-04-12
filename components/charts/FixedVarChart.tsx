@@ -1,32 +1,46 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { classifyCost, fmt } from '@/lib/dataUtils';
-
-const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
-const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+import { DEFAULT_DASHBOARD_SETTINGS, classifyCost, fmt, getAvailableMonths, loadDashboardSettings } from '@/lib/dataUtils';
 
 export default function FixedVarChart() {
   const { filteredData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+
+  const months = useMemo(() => getAvailableMonths(filteredData), [filteredData]);
+  const labels = useMemo(
+    () => months.map((month) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
+    [months]
+  );
+
+  useEffect(() => {
+    let active = true;
+    void loadDashboardSettings().then(next => {
+      if (active) setSettings(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const data = filteredData.filter(d => d.type === 'Outflow');
-    const fixed = MONTHS.map(m => data.filter(d => d.month === m && classifyCost(d.desc) === 'fixed').reduce((s, d) => s + d.amount, 0));
-    const production = MONTHS.map(m => data.filter(d => d.month === m && classifyCost(d.desc) === 'production').reduce((s, d) => s + d.amount, 0));
-    const onetime = MONTHS.map(m => data.filter(d => d.month === m && classifyCost(d.desc) === 'onetime').reduce((s, d) => s + d.amount, 0));
+    const data = filteredData.filter((d) => d.type === 'Outflow');
+    const fixed = months.map((month) => data.filter((d) => d.month === month && classifyCost(d.desc, settings) === 'fixed').reduce((s, d) => s + d.amount, 0));
+    const production = months.map((month) => data.filter((d) => d.month === month && classifyCost(d.desc, settings) === 'production').reduce((s, d) => s + d.amount, 0));
+    const onetime = months.map((month) => data.filter((d) => d.month === month && classifyCost(d.desc, settings) === 'onetime').reduce((s, d) => s + d.amount, 0));
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'bar',
       data: {
-        labels: LABELS,
+        labels,
         datasets: [
           { label: 'Fixed/Recurring', data: fixed, backgroundColor: 'rgba(100,116,139,0.60)', borderRadius: 8, barPercentage: 0.6 },
           { label: 'Production Variable', data: production, backgroundColor: 'rgba(8,145,178,0.65)', borderRadius: 8, barPercentage: 0.6 },
@@ -51,7 +65,7 @@ export default function FixedVarChart() {
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [filteredData]);
+  }, [filteredData, months, labels, settings]);
 
   return (
     <div className="chart-card" style={{ borderColor: 'var(--border)' }}>

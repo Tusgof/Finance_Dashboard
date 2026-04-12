@@ -1,42 +1,62 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { getCostType } from '@/lib/dataUtils';
-
-const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
-const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+import { DEFAULT_DASHBOARD_SETTINGS, getAvailableMonths, getCostType, loadDashboardSettings } from '@/lib/dataUtils';
 
 export default function DirectIndirectStackedChart() {
   const { filteredData, currentFilter } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+
+  const filteredVideoProduction = useMemo(
+    () => filteredData
+      .filter((d) => d.category === 'ต้นทุนสินค้า' && d.entity === 'Video Production')
+      .map((d) => ({ ...d, costType: getCostType(d, settings) })),
+    [filteredData, settings]
+  );
+
+  const months = useMemo(() => getAvailableMonths(filteredVideoProduction), [filteredVideoProduction]);
+  const labels = useMemo(
+    () => months.map((month) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
+    [months]
+  );
+
+  useEffect(() => {
+    let active = true;
+    void loadDashboardSettings().then(next => {
+      if (active) setSettings(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const filteredVP = filteredData
-      .filter(d => d.category === 'ต้นทุนสินค้า' && d.entity === 'Video Production')
-      .map(d => ({ ...d, costType: getCostType(d) }));
-    const activeMonths = new Set(filteredVP.map(d => d.month));
-
+    const activeMonths = new Set(filteredVideoProduction.map((d) => d.month));
     const showAll = currentFilter === 'all' || currentFilter === 'actual' || currentFilter === 'forecast';
-    const direct = MONTHS.map(m =>
-      showAll || activeMonths.has(m)
-        ? filteredVP.filter(d => d.month === m && d.costType === 'Direct').reduce((s, d) => s + d.amount, 0) : 0
+
+    const direct = months.map((month) =>
+      showAll || activeMonths.has(month)
+        ? filteredVideoProduction.filter((d) => d.month === month && d.costType === 'Direct').reduce((s, d) => s + d.amount, 0)
+        : 0
     );
-    const indirect = MONTHS.map(m =>
-      showAll || activeMonths.has(m)
-        ? filteredVP.filter(d => d.month === m && d.costType === 'Indirect').reduce((s, d) => s + d.amount, 0) : 0
+    const indirect = months.map((month) =>
+      showAll || activeMonths.has(month)
+        ? filteredVideoProduction.filter((d) => d.month === month && d.costType === 'Indirect').reduce((s, d) => s + d.amount, 0)
+        : 0
     );
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'bar',
       data: {
-        labels: LABELS,
+        labels,
         datasets: [
           { label: 'Direct', data: direct, backgroundColor: 'rgba(37,99,235,0.75)', borderRadius: 8, barPercentage: 0.5 },
           { label: 'Indirect', data: indirect, backgroundColor: 'rgba(217,119,6,0.70)', borderRadius: 8, barPercentage: 0.5 },
@@ -53,7 +73,7 @@ export default function DirectIndirectStackedChart() {
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [filteredData, currentFilter]);
+  }, [filteredVideoProduction, currentFilter, months, labels]);
 
   return (
     <div className="chart-card" style={{ borderColor: 'var(--border)' }}>
