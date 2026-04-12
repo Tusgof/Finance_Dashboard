@@ -1,56 +1,39 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DashboardContext } from './DashboardContext';
 import { getFilteredData } from '@/lib/dataUtils';
-import type { Transaction, FilterType, DataFile } from '@/lib/types';
+import type { DataFile, FilterType, ProductionSummaryRow, SponsorPipelineDeal, Transaction } from '@/lib/types';
 
 import Header from './Header';
 import FilterBar from './FilterBar';
 import KpiGrid from './KpiGrid';
-import VideoProductionSection from './VideoProductionSection';
-import HealthCards from './HealthCards';
-import ScenarioPanel from './ScenarioPanel';
 import TransactionTable from './TransactionTable';
+import CashOverviewSection from './sections/CashOverviewSection';
+import RevenueSponsorSection from './sections/RevenueSponsorSection';
+import PnLCostSection from './sections/PnLCostSection';
+import ScenarioPlannerSection from './sections/ScenarioPlannerSection';
 
-import CashFlowChart from './charts/CashFlowChart';
-import CategoryChart from './charts/CategoryChart';
-import RevenueChart from './charts/RevenueChart';
-import RunwayChart from './charts/RunwayChart';
-import MarginChart from './charts/MarginChart';
-import FixedVarChart from './charts/FixedVarChart';
-
-type DashboardView = 'production' | 'health' | 'transactions';
+type DashboardView = 'cash' | 'revenue' | 'pnl' | 'scenario' | 'transactions';
 
 const VIEWS: { id: DashboardView; label: string; title: string; description: string }[] = [
-  {
-    id: 'production',
-    label: 'Production',
-    title: 'Production & Cost Analysis',
-    description: 'Video production cost structure, operating mix, and planning tools.',
-  },
-  {
-    id: 'health',
-    label: 'Health',
-    title: 'Health & Survival',
-    description: 'Runway, margin, and continuity indicators in one place.',
-  },
-  {
-    id: 'transactions',
-    label: 'Transactions',
-    title: 'Transaction Details',
-    description: 'Search and inspect the raw transaction ledger without extra scrolling.',
-  },
+  { id: 'cash', label: 'Cash', title: 'Cash Overview', description: 'Cash balance, runway, and immediate warning signals.' },
+  { id: 'revenue', label: 'Revenue', title: 'Revenue & Sponsor', description: 'Revenue trend and expected sponsor pipeline.' },
+  { id: 'pnl', label: 'P&L', title: 'P&L & Cost', description: 'Monthly P&L, cost per content, and forecast variance.' },
+  { id: 'scenario', label: 'Scenario', title: 'Scenario Planner', description: 'Break-even, best/base/worst view, and what-if planning.' },
+  { id: 'transactions', label: 'Transactions', title: 'Transaction Details', description: 'Raw ledger inspection and search.' },
 ];
 
 export default function DashboardClient() {
   const [rawData, setRawData] = useState<Transaction[]>([]);
   const [openingBalance, setOpeningBalance] = useState(0);
+  const [productionSummary, setProductionSummary] = useState<ProductionSummaryRow[]>([]);
+  const [sponsorPipeline, setSponsorPipeline] = useState<SponsorPipelineDeal[]>([]);
   const [currentFilter, setCurrentFilter] = useState<FilterType>('actual');
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<DashboardView>('health');
+  const [activeView, setActiveView] = useState<DashboardView>('cash');
 
   useEffect(() => {
     fetch('/api/data')
@@ -58,15 +41,14 @@ export default function DashboardClient() {
       .then((d: DataFile) => {
         setRawData(d.rawData);
         setOpeningBalance(d.openingBalance);
+        setProductionSummary(d.productionSummary ?? []);
+        setSponsorPipeline(d.sponsorPipeline ?? []);
         setLastRefresh(new Date().toISOString());
         setLoading(false);
       });
   }, []);
 
-  const filteredData = useMemo(
-    () => getFilteredData(rawData, currentFilter),
-    [rawData, currentFilter]
-  );
+  const filteredData = useMemo(() => getFilteredData(rawData, currentFilter), [rawData, currentFilter]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -77,9 +59,12 @@ export default function DashboardClient() {
         alert('Refresh failed: ' + (err.error ?? 'Unknown error'));
         return;
       }
+
       const fresh: DataFile = await fetch('/api/data').then(r => r.json());
       setRawData(fresh.rawData);
       setOpeningBalance(fresh.openingBalance);
+      setProductionSummary(fresh.productionSummary ?? []);
+      setSponsorPipeline(fresh.sponsorPipeline ?? []);
       setLastRefresh(new Date().toISOString());
     } finally {
       setRefreshing(false);
@@ -98,7 +83,7 @@ export default function DashboardClient() {
 
   return (
     <DashboardContext.Provider
-      value={{ rawData, openingBalance, currentFilter, setCurrentFilter, filteredData }}
+      value={{ rawData, openingBalance, currentFilter, setCurrentFilter, filteredData, productionSummary, sponsorPipeline }}
     >
       <Header onRefresh={handleRefresh} refreshing={refreshing} lastRefresh={lastRefresh} />
       <FilterBar />
@@ -127,51 +112,10 @@ export default function DashboardClient() {
 
         <KpiGrid />
 
-        {activeView === 'production' && (
-          <div className="page-stack">
-            <VideoProductionSection />
-            <div className="page-section">
-              <div className="section-header">
-                <div className="section-icon" style={{ background: 'var(--accent-purple-bg)', color: 'var(--accent-purple)' }}>&#9881;</div>
-                <div>
-                  <h2>Strategic Cost &amp; Revenue Analysis</h2>
-                  <div className="section-sub">Cost structure and scenario planning</div>
-                </div>
-              </div>
-              <div className="charts-grid" style={{ gridTemplateColumns: '1fr' }}>
-                <FixedVarChart />
-              </div>
-              <ScenarioPanel />
-            </div>
-          </div>
-        )}
-
-        {activeView === 'health' && (
-          <div className="page-stack">
-            <div className="charts-grid">
-              <CashFlowChart />
-              <CategoryChart />
-              <RevenueChart />
-            </div>
-            <div className="page-section">
-              <div className="section-header">
-                <div className="section-icon" style={{ background: 'var(--accent-red-bg)', color: 'var(--accent-red)' }}>&#9888;</div>
-                <div>
-                  <h2>Financial Health &amp; Survival</h2>
-                  <div className="section-sub">Critical indicators for business continuity</div>
-                </div>
-              </div>
-              <HealthCards />
-              <div className="charts-grid" style={{ gridTemplateColumns: '1fr' }}>
-                <RunwayChart />
-              </div>
-              <div className="charts-grid" style={{ gridTemplateColumns: '1fr', marginTop: 20 }}>
-                <MarginChart />
-              </div>
-            </div>
-          </div>
-        )}
-
+        {activeView === 'cash' && <CashOverviewSection />}
+        {activeView === 'revenue' && <RevenueSponsorSection />}
+        {activeView === 'pnl' && <PnLCostSection />}
+        {activeView === 'scenario' && <ScenarioPlannerSection />}
         {activeView === 'transactions' && (
           <div className="page-stack">
             <TransactionTable />

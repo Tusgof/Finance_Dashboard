@@ -13,7 +13,7 @@ export default function MarginChart() {
 
   const months = useMemo(() => getAvailableMonths(rawData), [rawData]);
   const labels = useMemo(
-    () => months.map((month) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
+    () => months.map(month => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
     [months]
   );
 
@@ -24,11 +24,11 @@ export default function MarginChart() {
     const grossMargins: (number | null)[] = [];
     const opMargins: (number | null)[] = [];
 
-    months.forEach((month) => {
-      const monthData = rawData.filter((d) => d.month === month);
-      const revenue = monthData.filter((d) => d.type === 'Inflow').reduce((s, d) => s + d.amount, 0);
-      const cogs = monthData.filter((d) => d.type === 'Outflow' && d.category === 'ต้นทุนสินค้า').reduce((s, d) => s + d.amount, 0);
-      const opex = monthData.filter((d) => d.type === 'Outflow' && d.category === 'ค่าใช้จ่ายดำเนินงาน').reduce((s, d) => s + d.amount, 0);
+    months.forEach(month => {
+      const monthData = rawData.filter(d => d.month === month);
+      const revenue = monthData.filter(d => d.type === 'Inflow').reduce((sum, row) => sum + row.amount, 0);
+      const cogs = monthData.filter(d => d.type === 'Outflow' && d.category === 'เธ•เนเธเธ—เธธเธเธชเธดเธเธเนเธฒ').reduce((sum, row) => sum + row.amount, 0);
+      const opex = monthData.filter(d => d.type === 'Outflow' && d.category === 'เธเนเธฒเนเธเนเธเนเธฒเธขเธ”เธณเน€เธเธดเธเธเธฒเธ').reduce((sum, row) => sum + row.amount, 0);
 
       if (revenue > 0) {
         grossMargins.push(Math.max(-200, Math.min(100, ((revenue - cogs) / revenue) * 100)));

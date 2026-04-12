@@ -14,7 +14,7 @@ export default function FixedVarChart() {
 
   const months = useMemo(() => getAvailableMonths(filteredData), [filteredData]);
   const labels = useMemo(
-    () => months.map((month) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
+    () => months.map(month => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
     [months]
   );
 
@@ -32,10 +32,10 @@ export default function FixedVarChart() {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const data = filteredData.filter((d) => d.type === 'Outflow');
-    const fixed = months.map((month) => data.filter((d) => d.month === month && classifyCost(d.desc, settings) === 'fixed').reduce((s, d) => s + d.amount, 0));
-    const production = months.map((month) => data.filter((d) => d.month === month && classifyCost(d.desc, settings) === 'production').reduce((s, d) => s + d.amount, 0));
-    const onetime = months.map((month) => data.filter((d) => d.month === month && classifyCost(d.desc, settings) === 'onetime').reduce((s, d) => s + d.amount, 0));
+    const data = filteredData.filter(d => d.type === 'Outflow');
+    const fixed = months.map(month => data.filter(d => d.month === month && classifyCost(d.desc, settings) === 'fixed').reduce((sum, row) => sum + row.amount, 0));
+    const production = months.map(month => data.filter(d => d.month === month && classifyCost(d.desc, settings) === 'production').reduce((sum, row) => sum + row.amount, 0));
+    const onetime = months.map(month => data.filter(d => d.month === month && classifyCost(d.desc, settings) === 'onetime').reduce((sum, row) => sum + row.amount, 0));
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'bar',

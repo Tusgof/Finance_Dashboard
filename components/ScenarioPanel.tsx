@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDashboard } from './DashboardContext';
 import { DEFAULT_DASHBOARD_SETTINGS, fmt, loadDashboardSettings } from '@/lib/dataUtils';
+import { buildMonthlyPnLRows, getCurrentCash, normalizeTransactions } from '@/lib/dashboardMetrics';
 
 export default function ScenarioPanel() {
   const { rawData, openingBalance } = useDashboard();
@@ -26,21 +27,29 @@ export default function ScenarioPanel() {
   }, []);
 
   const { baseExecCost, baseProdCost, baseOtherCost, lastBalance } = useMemo(() => {
-    const actualMonths = Array.from(new Set(rawData.filter(d => d.status === 'Actual').map(d => d.month)));
-    const numMonths = actualMonths.length || 1;
-    const totalOutflow = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual').reduce((s, d) => s + d.amount, 0);
-    const bec = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.entity === 'Administrative').reduce((s, d) => s + d.amount, 0) / numMonths;
-    const bpc = rawData.filter(d => d.type === 'Outflow' && d.status === 'Actual' && d.entity === 'Video Production').reduce((s, d) => s + d.amount, 0) / numMonths;
-    const boc = totalOutflow / numMonths - bec - bpc;
-    const lb = rawData.length > 0 ? rawData[rawData.length - 1].balance : openingBalance;
-    return { baseExecCost: bec, baseProdCost: bpc, baseOtherCost: boc, lastBalance: lb };
-  }, [rawData, openingBalance]);
+    const normalized = normalizeTransactions(rawData, settings);
+    const pnlRows = buildMonthlyPnLRows(normalized, settings);
+    const recentRows = pnlRows
+      .filter(row => row.revenue > 0 || row.cogs > 0 || row.opEx > 0 || row.capEx > 0)
+      .slice(-settings.scenario.breakEvenLookbackMonths);
+    const months = recentRows.length || 1;
+    const totalPeopleCost = recentRows.reduce((sum, row) => sum + row.peopleCost, 0);
+    const totalProductionCost = recentRows.reduce((sum, row) => sum + row.cogs, 0);
+    const totalOutflow = recentRows.reduce((sum, row) => sum + row.cogs + row.opEx + row.capEx, 0);
+
+    return {
+      baseExecCost: totalPeopleCost / months,
+      baseProdCost: totalProductionCost / months,
+      baseOtherCost: Math.max(totalOutflow / months - totalPeopleCost / months - totalProductionCost / months, 0),
+      lastBalance: getCurrentCash(normalized, openingBalance),
+    };
+  }, [rawData, openingBalance, settings]);
 
   const newExec = baseExecCost * (1 + execAdj / 100);
   const newProd = baseProdCost * (1 + prodAdj / 100);
   const newBurn = newExec + newProd + baseOtherCost;
   const netMonthly = revenueTarget - newBurn;
-  const newRunway = netMonthly < 0 ? lastBalance / Math.abs(netMonthly) : 99;
+  const newRunway = netMonthly < 0 ? lastBalance / Math.abs(netMonthly) : null;
   const projectionMonths = settings.scenario.projectionMonths;
   const balAtProjection = lastBalance + netMonthly * projectionMonths;
   const runwayThresholds = settings.healthThresholds.cashRunwayMonths;
@@ -61,9 +70,10 @@ export default function ScenarioPanel() {
             onChange={e => setRevenueTarget(+e.target.value)}
           />
         </div>
+
         <div className="slider-group">
-          <label>Exec Salary Adjustment</label>
-          <div className="slider-value">{execAdj}%</div>
+          <label>People Cost Adjustment</label>
+          <div className="slider-value">{execAdj >= 0 ? '+' : ''}{execAdj}%</div>
           <input
             type="range"
             min={settings.scenario.execSalaryAdjustmentPct.min}
@@ -73,8 +83,9 @@ export default function ScenarioPanel() {
             onChange={e => setExecAdj(+e.target.value)}
           />
         </div>
+
         <div className="slider-group">
-          <label>Production Cost Adjustment</label>
+          <label>COGS Adjustment</label>
           <div className="slider-value">{prodAdj >= 0 ? '+' : ''}{prodAdj}%</div>
           <input
             type="range"
@@ -86,6 +97,7 @@ export default function ScenarioPanel() {
           />
         </div>
       </div>
+
       <div className="scenario-results">
         <div className="scenario-result">
           <div className="sr-label">Monthly Burn Rate</div>
@@ -95,9 +107,16 @@ export default function ScenarioPanel() {
           <div className="sr-label">Cash Runway</div>
           <div
             className="sr-value"
-            style={{ color: newRunway >= runwayThresholds.healthyMin ? 'var(--accent-green)' : newRunway >= runwayThresholds.cautionMin ? 'var(--accent-amber)' : 'var(--accent-red)' }}
+            style={{
+              color:
+                newRunway === null || newRunway >= runwayThresholds.healthyMin
+                  ? 'var(--accent-green)'
+                  : newRunway >= runwayThresholds.cautionMin
+                    ? 'var(--accent-amber)'
+                    : 'var(--accent-red)',
+            }}
           >
-            {newRunway >= 99 ? 'Infinite' : `${newRunway.toFixed(1)} mo`}
+            {newRunway === null ? 'Infinite' : `${newRunway.toFixed(1)} mo`}
           </div>
         </div>
         <div className="scenario-result">

@@ -15,15 +15,15 @@ export default function Header({ onRefresh, refreshing, lastRefresh }: HeaderPro
         <div className="logo">E</div>
         <div className="header-title">
           <h1>EasyMoneyConcept</h1>
-          <span>Financial Dashboard · Jan - Jun 2026</span>
+          <span>Management Dashboard • Jan - Jun 2026</span>
         </div>
       </div>
       <div className="header-right">
-        {lastRefresh && (
+        {lastRefresh ? (
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
             Updated {new Date(lastRefresh).toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit' })}
           </span>
-        )}
+        ) : null}
         <button className="refresh-btn" onClick={onRefresh} disabled={refreshing}>
           {refreshing ? 'Refreshing...' : 'Refresh'}
         </button>

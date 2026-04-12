@@ -13,7 +13,7 @@ export default function CashFlowChart() {
 
   const months = useMemo(() => getAvailableMonths(rawData), [rawData]);
   const labels = useMemo(
-    () => months.map((month) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
+    () => months.map(month => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
     [months]
   );
 
@@ -21,10 +21,10 @@ export default function CashFlowChart() {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const inflows = months.map((month) => filteredData.filter((d) => d.month === month && d.type === 'Inflow').reduce((s, d) => s + d.amount, 0));
-    const outflows = months.map((month) => filteredData.filter((d) => d.month === month && d.type === 'Outflow').reduce((s, d) => s + d.amount, 0));
-    const balances = months.map((month) => {
-      const monthData = rawData.filter((d) => d.month === month);
+    const inflows = months.map(month => filteredData.filter(d => d.month === month && d.type === 'Inflow').reduce((sum, row) => sum + row.amount, 0));
+    const outflows = months.map(month => filteredData.filter(d => d.month === month && d.type === 'Outflow').reduce((sum, row) => sum + row.amount, 0));
+    const balances = months.map(month => {
+      const monthData = rawData.filter(d => d.month === month);
       return monthData.length > 0 ? monthData[monthData.length - 1].balance : null;
     });
 

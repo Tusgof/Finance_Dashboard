@@ -251,6 +251,228 @@ select {
   gap: 18px;
 }
 
+.section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.section-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-nav-link:hover {
+  border-color: rgba(37, 99, 235, 0.34);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-section {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(207, 216, 227, 0.95);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-section-body {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-section-header {
+  margin-bottom: 0;
+}
+
+.section-header-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.section-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.section-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.summary-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.summary-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.summary-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(207, 216, 227, 0.95);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: 6px;
+}
+
+.summary-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.signal-panel {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.signal-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.signal-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.signal-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--text-primary);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.section-split {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.section-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.table-caption {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.table-card .empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 20px 12px;
+}
+
+.pnl-table th,
+.source-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.pnl-table .align-right,
+.source-table .align-right {
+  text-align: right;
+}
+
+.ledger-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ledger-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ledger-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ledger-page-btn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ledger-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ledger-page-indicator {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.compact {
+  max-height: 440px;
+}
+
+.revenue-table-card {
+  display: grid;
+  gap: 14px;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -1345,6 +1567,11 @@ tr:hover td {
   .settings-grid-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .summary-grid-4,
+  .section-split {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 860px) {
@@ -1360,6 +1587,11 @@ tr:hover td {
   .settings-grid-4,
   .settings-list-row-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-section {
+    padding: 18px;
+    border-radius: 20px;
   }
 
   .settings-footer {
@@ -1381,5 +1613,13 @@ tr:hover td {
 
   .settings-hero-copy h1 {
     font-size: 28px;
+  }
+
+  .section-nav {
+    gap: 8px;
+  }
+
+  .section-nav-link {
+    width: 100%;
   }
 }
