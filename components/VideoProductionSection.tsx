@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDashboard } from './DashboardContext';
 import { DEFAULT_DASHBOARD_SETTINGS, fmt, formatMonthLabel, getAvailableMonths, getCostType, loadDashboardSettings } from '@/lib/dataUtils';
 import DirectIndirectStackedChart from './charts/DirectIndirectStackedChart';
-import DirectIndirectDonutChart from './charts/DirectIndirectDonutChart';
 
 export default function VideoProductionSection() {
   const { filteredData } = useDashboard();
@@ -85,9 +84,8 @@ export default function VideoProductionSection() {
         </div>
       </div>
 
-      <div className="charts-grid" style={{ marginBottom: 20 }}>
+      <div className="charts-grid" style={{ gridTemplateColumns: '1fr', marginBottom: 20 }}>
         <DirectIndirectStackedChart />
-        <DirectIndirectDonutChart />
       </div>
 
       <div style={{ overflowX: 'auto' }}>

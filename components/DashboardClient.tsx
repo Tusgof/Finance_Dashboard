@@ -16,12 +16,9 @@ import TransactionTable from './TransactionTable';
 import CashFlowChart from './charts/CashFlowChart';
 import CategoryChart from './charts/CategoryChart';
 import RevenueChart from './charts/RevenueChart';
-import EntityChart from './charts/EntityChart';
-import ActualForecastChart from './charts/ActualForecastChart';
 import RunwayChart from './charts/RunwayChart';
 import MarginChart from './charts/MarginChart';
 import FixedVarChart from './charts/FixedVarChart';
-import PersonnelChart from './charts/PersonnelChart';
 
 type DashboardView = 'production' | 'health' | 'transactions';
 
@@ -138,12 +135,11 @@ export default function DashboardClient() {
                 <div className="section-icon" style={{ background: 'var(--accent-purple-bg)', color: 'var(--accent-purple)' }}>&#9881;</div>
                 <div>
                   <h2>Strategic Cost &amp; Revenue Analysis</h2>
-                  <div className="section-sub">Cost structure, personnel, and scenario planning</div>
+                  <div className="section-sub">Cost structure and scenario planning</div>
                 </div>
               </div>
-              <div className="charts-grid">
+              <div className="charts-grid" style={{ gridTemplateColumns: '1fr' }}>
                 <FixedVarChart />
-                <PersonnelChart />
               </div>
               <ScenarioPanel />
             </div>
@@ -156,8 +152,6 @@ export default function DashboardClient() {
               <CashFlowChart />
               <CategoryChart />
               <RevenueChart />
-              <EntityChart />
-              <ActualForecastChart />
             </div>
             <div className="page-section">
               <div className="section-header">
