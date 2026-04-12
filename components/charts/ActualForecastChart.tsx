@@ -1,29 +1,33 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
-const LABELS = ['Jan','Feb','Mar','Apr','May','Jun'];
+import { getAvailableMonths } from '@/lib/dataUtils';
 
 export default function ActualForecastChart() {
-  const { rawData } = useDashboard(); // uses rawData (not filteredData) — shows all months
+  const { rawData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+
+  const months = useMemo(() => getAvailableMonths(rawData), [rawData]);
+  const labels = useMemo(
+    () => months.map((month) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
+    [months]
+  );
 
   useEffect(() => {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const actual = MONTHS.map(m => rawData.filter(d => d.month === m && d.status === 'Actual' && d.type === 'Outflow').reduce((s, d) => s + d.amount, 0));
-    const forecast = MONTHS.map(m => rawData.filter(d => d.month === m && d.status === 'Forecast' && d.type === 'Outflow').reduce((s, d) => s + d.amount, 0));
+    const actual = months.map((month) => rawData.filter((d) => d.month === month && d.status === 'Actual' && d.type === 'Outflow').reduce((s, d) => s + d.amount, 0));
+    const forecast = months.map((month) => rawData.filter((d) => d.month === month && d.status === 'Forecast' && d.type === 'Outflow').reduce((s, d) => s + d.amount, 0));
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'bar',
       data: {
-        labels: LABELS,
+        labels,
         datasets: [
           { label: 'Actual', data: actual, backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 6, barPercentage: 0.4, categoryPercentage: 0.7 },
           { label: 'Forecast', data: forecast, backgroundColor: 'rgba(245,158,11,0.5)', borderRadius: 6, barPercentage: 0.4, categoryPercentage: 0.7, borderWidth: 2, borderColor: 'rgba(245,158,11,0.8)' },
@@ -33,7 +37,7 @@ export default function ActualForecastChart() {
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [rawData]);
+  }, [rawData, months, labels]);
 
   return (
     <div className="chart-card">

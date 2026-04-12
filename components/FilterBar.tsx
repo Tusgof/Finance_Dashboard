@@ -1,32 +1,37 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useDashboard } from './DashboardContext';
+import { formatMonthLabel, getAvailableMonths } from '@/lib/dataUtils';
 import type { FilterType } from '@/lib/types';
 
-const FILTERS: { label: string; value: FilterType }[] = [
-  { label: 'All Months', value: 'all' },
-  { label: 'Actual Only', value: 'actual' },
-  { label: 'Forecast Only', value: 'forecast' },
-  { label: 'Jan 2026', value: '2026-01' },
-  { label: 'Feb 2026', value: '2026-02' },
-  { label: 'Mar 2026', value: '2026-03' },
-  { label: 'Apr 2026', value: '2026-04' },
-  { label: 'May 2026', value: '2026-05' },
-  { label: 'Jun 2026', value: '2026-06' },
-];
-
 export default function FilterBar() {
-  const { currentFilter, setCurrentFilter } = useDashboard();
+  const { rawData, currentFilter, setCurrentFilter } = useDashboard();
+
+  const monthFilters = useMemo(
+    () => getAvailableMonths(rawData).map((month) => ({
+      label: formatMonthLabel(month),
+      value: month as FilterType,
+    })),
+    [rawData]
+  );
+
+  const filters: { label: string; value: FilterType }[] = [
+    { label: 'All Months', value: 'all' },
+    { label: 'Actual Only', value: 'actual' },
+    { label: 'Forecast Only', value: 'forecast' },
+    ...monthFilters,
+  ];
 
   return (
     <div className="filters-bar">
-      {FILTERS.map(f => (
+      {filters.map((filter) => (
         <button
-          key={f.value}
-          className={`filter-btn${currentFilter === f.value ? ' active' : ''}`}
-          onClick={() => setCurrentFilter(f.value)}
+          key={filter.value}
+          className={`filter-btn${currentFilter === filter.value ? ' active' : ''}`}
+          onClick={() => setCurrentFilter(filter.value)}
         >
-          {f.label}
+          {filter.label}
         </button>
       ))}
     </div>

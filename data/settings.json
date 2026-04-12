@@ -1,0 +1,95 @@
+{
+  "revenueSources": [
+    {
+      "label": "Eightcap",
+      "keywords": ["Eightcap"]
+    },
+    {
+      "label": "InnovestX",
+      "keywords": ["InnovestX"]
+    },
+    {
+      "label": "OceanLife",
+      "keywords": ["OceanLife"]
+    },
+    {
+      "label": "เงินเทอร์โบ",
+      "keywords": ["เงินเทอร์โบ"]
+    },
+    {
+      "label": "Webull",
+      "keywords": ["Webull"]
+    },
+    {
+      "label": "Facebook Ads",
+      "keywords": ["Facebook", "Facebook Ads", "Meta"]
+    },
+    {
+      "label": "TikTok",
+      "keywords": ["TikTok"]
+    }
+  ],
+  "costClassification": {
+    "fixed": {
+      "label": "Fixed",
+      "keywords": ["เงินเดือน", "ChatGPT", "Gemini", "Claude", "บัญชี", "ธรรมเนียม"]
+    },
+    "production": {
+      "label": "Production",
+      "keywords": ["ค่าจ้าง", "โบนัส", "พากย์เสียง", "เขียนบท", "ทำฟุตเทจ", "ตัดต่อ", "กราฟิกข่าว", "จัดหาข่าว", "ดูแลลูกค้า", "ดูแลคอมมูนิตี้"]
+    },
+    "onetime": {
+      "label": "One-time",
+      "keywords": ["อุปกรณ์", "ไมค์", "จอมอนิเตอร์", "ฟอนต์", "Freepik", "Vecteezy", "ตัวจ้างงาน", "ภาษี"]
+    },
+    "directKeywords": ["พากย์เสียง", "เขียนบท", "ทำฟุตเทจ", "ตัดต่อ", "Production", "ค่าจ้าง", "ค่าจ้างจัดทำของ", "ค่าอุปกรณ์"]
+  },
+  "healthThresholds": {
+    "cashRunwayMonths": {
+      "healthyMin": 6,
+      "cautionMin": 3
+    },
+    "grossMarginPct": {
+      "healthyMin": 30,
+      "cautionMin": 0
+    },
+    "revenueHHI": {
+      "diversifiedMax": 2500,
+      "moderateMax": 5000
+    },
+    "execToProdRatio": {
+      "healthyMax": 0.5,
+      "cautionMax": 1.5
+    },
+    "breakEvenGapPct": {
+      "surplusMin": 0,
+      "nearMin": -20
+    }
+  },
+  "scenario": {
+    "revenueTarget": {
+      "default": 34000,
+      "min": 0,
+      "max": 200000,
+      "step": 1000
+    },
+    "execSalaryAdjustmentPct": {
+      "default": 0,
+      "min": -50,
+      "max": 0,
+      "step": 5
+    },
+    "productionCostAdjustmentPct": {
+      "default": 0,
+      "min": -30,
+      "max": 30,
+      "step": 5
+    },
+    "projectionMonths": 6
+  },
+  "refresh": {
+    "sheetId": "1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8",
+    "csvExportUrl": "https://docs.google.com/spreadsheets/d/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8/export?format=csv",
+    "fallbackOpeningBalance": 124331.84
+  }
+}

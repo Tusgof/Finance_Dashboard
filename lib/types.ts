@@ -11,16 +11,7 @@ export interface Transaction {
   balance: number;      // Running balance after this transaction
 }
 
-export type FilterType =
-  | 'all'
-  | 'actual'
-  | 'forecast'
-  | '2026-01'
-  | '2026-02'
-  | '2026-03'
-  | '2026-04'
-  | '2026-05'
-  | '2026-06';
+export type FilterType = 'all' | 'actual' | 'forecast' | `${number}-${number}`;
 
 export interface DashboardContextType {
   rawData: Transaction[];
@@ -40,4 +31,72 @@ export interface BackupMeta {
 export interface DataFile {
   rawData: Transaction[];
   openingBalance: number;
+}
+
+export interface RevenueSourceMapping {
+  label: string;
+  keywords: string[];
+}
+
+export interface CostKeywordBucket {
+  label: string;
+  keywords: string[];
+}
+
+export interface CostClassificationSettings {
+  fixed: CostKeywordBucket;
+  production: CostKeywordBucket;
+  onetime: CostKeywordBucket;
+  directKeywords: string[];
+}
+
+export interface HealthThresholds {
+  cashRunwayMonths: {
+    healthyMin: number;
+    cautionMin: number;
+  };
+  grossMarginPct: {
+    healthyMin: number;
+    cautionMin: number;
+  };
+  revenueHHI: {
+    diversifiedMax: number;
+    moderateMax: number;
+  };
+  execToProdRatio: {
+    healthyMax: number;
+    cautionMax: number;
+  };
+  breakEvenGapPct: {
+    surplusMin: number;
+    nearMin: number;
+  };
+}
+
+export interface NumericRangeSetting {
+  default: number;
+  min: number;
+  max: number;
+  step: number;
+}
+
+export interface ScenarioSettings {
+  revenueTarget: NumericRangeSetting;
+  execSalaryAdjustmentPct: NumericRangeSetting;
+  productionCostAdjustmentPct: NumericRangeSetting;
+  projectionMonths: number;
+}
+
+export interface RefreshSourceConfig {
+  sheetId: string;
+  csvExportUrl: string;
+  fallbackOpeningBalance: number;
+}
+
+export interface DashboardSettings {
+  revenueSources: RevenueSourceMapping[];
+  costClassification: CostClassificationSettings;
+  healthThresholds: HealthThresholds;
+  scenario: ScenarioSettings;
+  refresh: RefreshSourceConfig;
 }

@@ -25,8 +25,11 @@ export default function Header({ onRefresh, refreshing, lastRefresh }: HeaderPro
           </span>
         )}
         <button className="refresh-btn" onClick={onRefresh} disabled={refreshing}>
-          {refreshing ? '↻ Refreshing...' : '↻ Refresh'}
+          {refreshing ? 'Refreshing...' : 'Refresh'}
         </button>
+        <Link href="/settings" className="backup-link">
+          Settings
+        </Link>
         <Link href="/backups" className="backup-link">
           Backups
         </Link>

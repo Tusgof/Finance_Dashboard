@@ -1,34 +1,37 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { fmt } from '@/lib/dataUtils';
-
-const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
-const LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+import { fmt, getAvailableMonths } from '@/lib/dataUtils';
 
 export default function CashFlowChart() {
   const { filteredData, rawData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
+  const months = useMemo(() => getAvailableMonths(rawData), [rawData]);
+  const labels = useMemo(
+    () => months.map((month) => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
+    [months]
+  );
+
   useEffect(() => {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const inflows = MONTHS.map(m => filteredData.filter(d => d.month === m && d.type === 'Inflow').reduce((s, d) => s + d.amount, 0));
-    const outflows = MONTHS.map(m => filteredData.filter(d => d.month === m && d.type === 'Outflow').reduce((s, d) => s + d.amount, 0));
-    const balances = MONTHS.map(m => {
-      const md = rawData.filter(d => d.month === m);
-      return md.length > 0 ? md[md.length - 1].balance : null;
+    const inflows = months.map((month) => filteredData.filter((d) => d.month === month && d.type === 'Inflow').reduce((s, d) => s + d.amount, 0));
+    const outflows = months.map((month) => filteredData.filter((d) => d.month === month && d.type === 'Outflow').reduce((s, d) => s + d.amount, 0));
+    const balances = months.map((month) => {
+      const monthData = rawData.filter((d) => d.month === month);
+      return monthData.length > 0 ? monthData[monthData.length - 1].balance : null;
     });
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'bar',
       data: {
-        labels: LABELS,
+        labels,
         datasets: [
           { label: 'Income', data: inflows, backgroundColor: 'rgba(22,163,74,0.72)', borderRadius: 10, barPercentage: 0.35, categoryPercentage: 0.7 },
           { label: 'Expenses', data: outflows, backgroundColor: 'rgba(220,38,38,0.72)', borderRadius: 10, barPercentage: 0.35, categoryPercentage: 0.7 },
@@ -59,7 +62,7 @@ export default function CashFlowChart() {
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [filteredData, rawData]);
+  }, [filteredData, rawData, months, labels]);
 
   return (
     <div className="chart-card full-width">
