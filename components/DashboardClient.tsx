@@ -85,35 +85,50 @@ export default function DashboardClient() {
       value={{ rawData, openingBalance, currentFilter, setCurrentFilter, filteredData, productionSummary, sponsorPipeline }}
     >
       <Header onRefresh={handleRefresh} refreshing={refreshing} lastRefresh={lastRefresh} />
-      <FilterBar />
 
       <div className="main">
-        <div className="workspace-nav">
-          <div className="workspace-nav-header">
-            <div>
-              <div className="workspace-title">{activeMeta.title}</div>
-              <div className="workspace-subtitle">{activeMeta.description}</div>
+        <div className="dashboard-shell">
+          <aside className="dashboard-sidebar" aria-label="Dashboard navigation">
+            <div className="sidebar-block">
+              <div className="sidebar-label">Pages</div>
+              <div className="workspace-tabs" role="tablist" aria-label="Dashboard pages">
+                {PAGES.map(page => (
+                  <button
+                    key={page.id}
+                    type="button"
+                    className={`workspace-tab${activePage === page.id ? ' active' : ''}`}
+                    onClick={() => setActivePage(page.id)}
+                  >
+                    <span>{page.label}</span>
+                    <span className="tab-helper">{page.title}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="workspace-tabs" role="tablist" aria-label="Dashboard pages">
-            {PAGES.map(page => (
-              <button
-                key={page.id}
-                type="button"
-                className={`workspace-tab${activePage === page.id ? ' active' : ''}`}
-                onClick={() => setActivePage(page.id)}
-              >
-                {page.label}
-              </button>
-            ))}
+
+            <div className="sidebar-block">
+              <div className="sidebar-label">Data Scope</div>
+              <FilterBar />
+            </div>
+          </aside>
+
+          <div className="dashboard-content">
+            <div className="workspace-nav">
+              <div className="workspace-nav-header">
+                <div>
+                  <div className="workspace-title">{activeMeta.title}</div>
+                  <div className="workspace-subtitle">{activeMeta.description}</div>
+                </div>
+              </div>
+            </div>
+
+            {activePage === 'cash' && <CashOverviewSection />}
+            {activePage === 'revenue' && <RevenueSponsorSection />}
+            {activePage === 'pnl' && <PnLCostSection />}
+            {activePage === 'scenario' && <ScenarioPlannerSection />}
+            {activePage === 'ledger' && <TransactionTable />}
           </div>
         </div>
-
-        {activePage === 'cash' && <CashOverviewSection />}
-        {activePage === 'revenue' && <RevenueSponsorSection />}
-        {activePage === 'pnl' && <PnLCostSection />}
-        {activePage === 'scenario' && <ScenarioPlannerSection />}
-        {activePage === 'ledger' && <TransactionTable />}
       </div>
     </DashboardContext.Provider>
   );
