@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { loadSettings } from '@/lib/settings';
-import type { DataFile, Transaction } from '@/lib/types';
+import type { DataFile, ProductionSummaryRow, SponsorPipelineDeal, Transaction } from '@/lib/types';
 
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
@@ -55,6 +55,15 @@ function headerIndex(header: string[], ...names: string[]): number {
   return names.map(name => lowered.indexOf(name)).find(index => index >= 0) ?? -1;
 }
 
+function parseNumber(value: string | undefined): number {
+  const parsed = Number(String(value ?? '').replace(/,/g, '').trim());
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function buildSheetCsvUrl(sheetId: string, sheetName: string): string {
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+}
+
 function parseCSV(csv: string, fallbackOpeningBalance: number): { rawData: Transaction[]; openingBalance: number } {
   const lines = csv.trim().split('\n');
   if (lines.length < 2) return { rawData: [], openingBalance: fallbackOpeningBalance };
@@ -99,8 +108,8 @@ function parseCSV(csv: string, fallbackOpeningBalance: number): { rawData: Trans
     const date = normalizeDate((cols[iDate] ?? '').trim());
     const dueDate = normalizeDate((cols[iDueDate] ?? '').trim());
     const month = deriveWorkMonth((cols[iMonth] ?? '').trim()) || deriveMonth(dueDate) || deriveMonth(date);
-    const amount = Number(String(cols[iAmount] ?? '0').replace(/,/g, '')) || 0;
-    const balance = Number(String(cols[iBalance] ?? '0').replace(/,/g, '')) || 0;
+    const amount = parseNumber(cols[iAmount]);
+    const balance = parseNumber(cols[iBalance]);
 
     rawData.push({
       date: date || dueDate,
@@ -114,7 +123,7 @@ function parseCSV(csv: string, fallbackOpeningBalance: number): { rawData: Trans
       subCategory: (cols[iSubCategory] ?? '').trim() || undefined,
       desc: (cols[iDesc] ?? '').trim(),
       amount,
-      originalForecast: iOriginalForecast >= 0 ? Number(String(cols[iOriginalForecast] ?? '0').replace(/,/g, '')) || undefined : undefined,
+      originalForecast: iOriginalForecast >= 0 ? parseNumber(cols[iOriginalForecast]) || undefined : undefined,
       person: (cols[iPerson] ?? '').trim() || undefined,
       costBehavior: ((cols[iCostBehavior] ?? '').trim() || undefined) as Transaction['costBehavior'],
       sponsor: (cols[iSponsor] ?? '').trim() || undefined,
@@ -127,6 +136,76 @@ function parseCSV(csv: string, fallbackOpeningBalance: number): { rawData: Trans
   return { rawData, openingBalance };
 }
 
+function parseProductionSummaryCSV(csv: string): ProductionSummaryRow[] {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const header = parseCsvLine(lines[0]);
+  const iWorkMonth = headerIndex(header, 'work month');
+  const iTotalContent = headerIndex(header, 'total content');
+  const iOrganicContent = headerIndex(header, 'organic content');
+  const iSponsoredContent = headerIndex(header, 'sponsored content');
+  const iSponsor = headerIndex(header, 'sponsor');
+  const iTotalCogs = headerIndex(header, 'total cogs');
+  const iCostPerContent = headerIndex(header, 'cost per content');
+
+  return lines.slice(1).map<ProductionSummaryRow | null>((line) => {
+    const cols = parseCsvLine(line);
+    const workMonth = (cols[iWorkMonth] ?? '').trim();
+    if (!workMonth) return null;
+    return {
+      workMonth,
+      totalContent: parseNumber(cols[iTotalContent]),
+      organicContent: parseNumber(cols[iOrganicContent]),
+      sponsoredContent: parseNumber(cols[iSponsoredContent]),
+      sponsor: (cols[iSponsor] ?? '').trim() || undefined,
+      totalCogs: parseNumber(cols[iTotalCogs]) || undefined,
+      costPerContent: parseNumber(cols[iCostPerContent]) || undefined,
+    } satisfies ProductionSummaryRow;
+  }).filter((row): row is ProductionSummaryRow => Boolean(row));
+}
+
+function parseSponsorPipelineCSV(csv: string): SponsorPipelineDeal[] {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const header = parseCsvLine(lines[0]);
+  const iSponsor = headerIndex(header, 'sponsor');
+  const iDealValue = headerIndex(header, 'deal value');
+  const iStatus = headerIndex(header, 'status');
+  const iProbability = headerIndex(header, 'probability');
+  const iExpectedDate = headerIndex(header, 'expected date');
+  const iWeightedValue = headerIndex(header, 'weighted value');
+  const iNote = headerIndex(header, 'note');
+
+  return lines.slice(1).map<SponsorPipelineDeal | null>((line) => {
+    const cols = parseCsvLine(line);
+    const sponsor = (cols[iSponsor] ?? '').trim();
+    if (!sponsor) return null;
+    const dealValue = parseNumber(cols[iDealValue]);
+    const probability = parseNumber(cols[iProbability]);
+    return {
+      sponsor,
+      dealValue,
+      status: (cols[iStatus] ?? '').trim() || 'Unknown',
+      probability,
+      expectedDate: normalizeDate((cols[iExpectedDate] ?? '').trim()) || undefined,
+      weightedValue: parseNumber(cols[iWeightedValue]) || dealValue * (probability / 100),
+      note: (cols[iNote] ?? '').trim() || undefined,
+    } satisfies SponsorPipelineDeal;
+  }).filter((row): row is SponsorPipelineDeal => Boolean(row));
+}
+
+async function fetchOptionalSheet<T>(
+  sheetId: string,
+  sheetName: string,
+  parser: (csv: string) => T[]
+): Promise<T[]> {
+  const response = await fetch(buildSheetCsvUrl(sheetId, sheetName));
+  if (!response.ok) return [];
+  return parser(await response.text());
+}
+
 export async function POST() {
   try {
     const settings = loadSettings();
@@ -137,11 +216,18 @@ export async function POST() {
 
     const csv = await csvResponse.text();
     const data = parseCSV(csv, settings.refresh.fallbackOpeningBalance);
+    const [productionSummary, sponsorPipeline] = await Promise.all([
+      fetchOptionalSheet(settings.refresh.sheetId, 'Monthly Production Summary', parseProductionSummaryCSV),
+      fetchOptionalSheet(settings.refresh.sheetId, 'Sponsor Pipeline', parseSponsorPipelineCSV),
+    ]);
 
     const dataDir = path.join(process.cwd(), 'data');
     const currentPath = path.join(dataDir, 'current.json');
+    const productionSummaryPath = path.join(process.cwd(), settings.refresh.productionSummaryPath);
+    const sponsorPipelinePath = path.join(process.cwd(), settings.refresh.sponsorPipelinePath);
     const backupDir = path.join(dataDir, 'backups');
 
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
     if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
     if (fs.existsSync(currentPath)) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -151,12 +237,19 @@ export async function POST() {
     const fileContent: DataFile = {
       rawData: data.rawData,
       openingBalance: data.openingBalance,
-      productionSummary: [],
-      sponsorPipeline: [],
+      productionSummary,
+      sponsorPipeline,
     };
     fs.writeFileSync(currentPath, JSON.stringify(fileContent, null, 2), 'utf-8');
+    fs.writeFileSync(productionSummaryPath, JSON.stringify(productionSummary, null, 2), 'utf-8');
+    fs.writeFileSync(sponsorPipelinePath, JSON.stringify(sponsorPipeline, null, 2), 'utf-8');
 
-    return NextResponse.json({ success: true, count: data.rawData.length });
+    return NextResponse.json({
+      success: true,
+      count: data.rawData.length,
+      productionSummaryCount: productionSummary.length,
+      sponsorPipelineCount: sponsorPipeline.length,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });
