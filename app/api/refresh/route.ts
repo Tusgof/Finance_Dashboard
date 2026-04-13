@@ -43,6 +43,13 @@ function deriveMonth(value: string): string {
   return date.length >= 7 ? date.slice(0, 7) : '';
 }
 
+function deriveWorkMonth(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^\d{4}-\d{2}$/.test(trimmed)) return trimmed;
+  return deriveMonth(trimmed);
+}
+
 function headerIndex(header: string[], ...names: string[]): number {
   const lowered = header.map(item => item.trim().replace(/^"|"$/g, '').toLowerCase());
   return names.map(name => lowered.indexOf(name)).find(index => index >= 0) ?? -1;
@@ -91,12 +98,12 @@ function parseCSV(csv: string, fallbackOpeningBalance: number): { rawData: Trans
 
     const date = normalizeDate((cols[iDate] ?? '').trim());
     const dueDate = normalizeDate((cols[iDueDate] ?? '').trim());
-    const month = dueDate ? deriveMonth(dueDate) : deriveMonth(date) || (cols[iMonth] ?? '').trim().slice(0, 7);
+    const month = deriveWorkMonth((cols[iMonth] ?? '').trim()) || deriveMonth(dueDate) || deriveMonth(date);
     const amount = Number(String(cols[iAmount] ?? '0').replace(/,/g, '')) || 0;
     const balance = Number(String(cols[iBalance] ?? '0').replace(/,/g, '')) || 0;
 
     rawData.push({
-      date: dueDate || date,
+      date: date || dueDate,
       dueDate: dueDate || undefined,
       workMonth: month || undefined,
       month: month || '',

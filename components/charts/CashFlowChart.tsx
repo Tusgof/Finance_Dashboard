@@ -21,10 +21,20 @@ export default function CashFlowChart() {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const inflows = months.map(month => filteredData.filter(d => d.month === month && d.type === 'Inflow').reduce((sum, row) => sum + row.amount, 0));
-    const outflows = months.map(month => filteredData.filter(d => d.month === month && d.type === 'Outflow').reduce((sum, row) => sum + row.amount, 0));
+    const inflows = months.map(month =>
+      filteredData
+        .filter(d => (d.workMonth || d.month) === month && d.type === 'Inflow')
+        .reduce((sum, row) => sum + row.amount, 0)
+    );
+
+    const outflows = months.map(month =>
+      filteredData
+        .filter(d => (d.workMonth || d.month) === month && d.type === 'Outflow')
+        .reduce((sum, row) => sum + row.amount, 0)
+    );
+
     const balances = months.map(month => {
-      const monthData = rawData.filter(d => d.month === month);
+      const monthData = rawData.filter(d => (d.workMonth || d.month) === month);
       return monthData.length > 0 ? monthData[monthData.length - 1].balance : null;
     });
 
@@ -43,9 +53,9 @@ export default function CashFlowChart() {
         plugins: {
           ...chartDefaults.plugins,
           tooltip: {
-            ...(chartDefaults.plugins as Record<string, unknown>)?.tooltip as object,
+            ...((chartDefaults.plugins as Record<string, unknown>)?.tooltip as object),
             callbacks: {
-              label: (ctx) => ` ${ctx.dataset.label}: ฿${fmt(Number((ctx.parsed as { y?: number }).y ?? ctx.raw))}`,
+              label: ctx => ` ${ctx.dataset.label}: ฿${fmt(Number((ctx.parsed as { y?: number }).y ?? ctx.raw))}`,
             },
           },
         },
@@ -53,7 +63,7 @@ export default function CashFlowChart() {
           ...chartDefaults.scales,
           y1: {
             position: 'right',
-            ticks: { color: '#667085', font: { family: 'Inter', size: 11 }, callback: (v) => '฿' + (Number(v) / 1000).toFixed(0) + 'K' },
+            ticks: { color: '#667085', font: { family: 'Inter', size: 11 }, callback: v => `฿${(Number(v) / 1000).toFixed(0)}K` },
             grid: { drawOnChartArea: false },
             border: { color: 'transparent' },
           },
@@ -61,7 +71,9 @@ export default function CashFlowChart() {
       } as ChartOptions,
     });
 
-    return () => { chartRef.current?.destroy(); };
+    return () => {
+      chartRef.current?.destroy();
+    };
   }, [filteredData, rawData, months, labels]);
 
   return (

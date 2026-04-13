@@ -14,7 +14,7 @@ export default function TransactionTable() {
   const s = search.toLowerCase().trim();
   const rows = useMemo(() => {
     return s
-      ? filteredData.filter((d) =>
+      ? filteredData.filter(d =>
           d.desc.toLowerCase().includes(s) ||
           d.category.toLowerCase().includes(s) ||
           (d.mainCategory ?? '').toLowerCase().includes(s) ||
@@ -40,7 +40,7 @@ export default function TransactionTable() {
     <div className="table-card">
       <div className="table-header">
         <div>
-          <h3>Transaction Details</h3>
+          <h3>Transaction Ledger</h3>
           <p className="table-caption">Paged ledger for quick checks without endless scrolling.</p>
         </div>
         <input
@@ -48,7 +48,7 @@ export default function TransactionTable() {
           className="search-box"
           placeholder="Search transactions..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={e => setSearch(e.target.value)}
         />
       </div>
 
@@ -100,13 +100,13 @@ export default function TransactionTable() {
                 </td>
               </tr>
             ))}
-            {pagedRows.length === 0 && (
+            {pagedRows.length === 0 ? (
               <tr>
                 <td colSpan={11} className="empty-state">
                   No transactions match the current search.
                 </td>
               </tr>
-            )}
+            ) : null}
           </tbody>
         </table>
       </div>
@@ -117,7 +117,7 @@ export default function TransactionTable() {
           <button
             type="button"
             className="ledger-page-btn"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={safePage <= 1}
           >
             Prev
@@ -128,7 +128,7 @@ export default function TransactionTable() {
           <button
             type="button"
             className="ledger-page-btn"
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+            onClick={() => setPage(p => Math.min(pageCount, p + 1))}
             disabled={safePage >= pageCount}
           >
             Next

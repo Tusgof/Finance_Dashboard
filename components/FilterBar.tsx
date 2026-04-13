@@ -9,16 +9,18 @@ export default function FilterBar() {
   const { rawData, currentFilter, setCurrentFilter } = useDashboard();
 
   const monthFilters = useMemo(
-    () => getAvailableMonths(rawData).map((month) => ({
-      label: formatMonthLabel(month),
-      value: month as FilterType,
-    })),
+    () =>
+      getAvailableMonths(rawData).map((month) => ({
+        label: formatMonthLabel(month),
+        value: month as FilterType,
+      })),
     [rawData]
   );
 
   const filters: { label: string; value: FilterType }[] = [
     { label: 'All Months', value: 'all' },
     { label: 'Actual Only', value: 'actual' },
+    { label: 'Committed Only', value: 'committed' },
     { label: 'Forecast Only', value: 'forecast' },
     ...monthFilters,
   ];
