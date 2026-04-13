@@ -7,12 +7,21 @@ import type { DataFile, FilterType, ProductionSummaryRow, SponsorPipelineDeal, T
 
 import Header from './Header';
 import FilterBar from './FilterBar';
-import KpiGrid from './KpiGrid';
 import TransactionTable from './TransactionTable';
 import CashOverviewSection from './sections/CashOverviewSection';
 import RevenueSponsorSection from './sections/RevenueSponsorSection';
 import PnLCostSection from './sections/PnLCostSection';
 import ScenarioPlannerSection from './sections/ScenarioPlannerSection';
+
+type DashboardPage = 'cash' | 'revenue' | 'pnl' | 'scenario' | 'ledger';
+
+const PAGES: { id: DashboardPage; label: string; title: string; description: string }[] = [
+  { id: 'cash', label: 'Cash', title: 'Cash Overview', description: 'Current cash position, runway, balance trend, and core alerts.' },
+  { id: 'revenue', label: 'Revenue', title: 'Revenue & Sponsor', description: 'Monthly sponsor revenue trend and committed pipeline.' },
+  { id: 'pnl', label: 'P&L', title: 'P&L & Cost', description: 'Monthly P&L, content cost, headcount ratio, and forecast accuracy.' },
+  { id: 'scenario', label: 'Scenario', title: 'Scenario Planner', description: 'Best/base/worst projection, break-even revenue, and what-if sliders.' },
+  { id: 'ledger', label: 'Ledger', title: 'Transaction Ledger', description: 'Paged source data for inspection and search.' },
+];
 
 export default function DashboardClient() {
   const [rawData, setRawData] = useState<Transaction[]>([]);
@@ -23,6 +32,7 @@ export default function DashboardClient() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activePage, setActivePage] = useState<DashboardPage>('cash');
 
   useEffect(() => {
     fetch('/api/data')
@@ -60,6 +70,8 @@ export default function DashboardClient() {
     }
   };
 
+  const activeMeta = PAGES.find(page => page.id === activePage) ?? PAGES[0];
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)', fontSize: 16 }}>
@@ -76,15 +88,32 @@ export default function DashboardClient() {
       <FilterBar />
 
       <div className="main">
-        <KpiGrid />
-
-        <div className="page-stack">
-          <CashOverviewSection />
-          <RevenueSponsorSection />
-          <PnLCostSection />
-          <ScenarioPlannerSection />
-          <TransactionTable />
+        <div className="workspace-nav">
+          <div className="workspace-nav-header">
+            <div>
+              <div className="workspace-title">{activeMeta.title}</div>
+              <div className="workspace-subtitle">{activeMeta.description}</div>
+            </div>
+          </div>
+          <div className="workspace-tabs" role="tablist" aria-label="Dashboard pages">
+            {PAGES.map(page => (
+              <button
+                key={page.id}
+                type="button"
+                className={`workspace-tab${activePage === page.id ? ' active' : ''}`}
+                onClick={() => setActivePage(page.id)}
+              >
+                {page.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {activePage === 'cash' && <CashOverviewSection />}
+        {activePage === 'revenue' && <RevenueSponsorSection />}
+        {activePage === 'pnl' && <PnLCostSection />}
+        {activePage === 'scenario' && <ScenarioPlannerSection />}
+        {activePage === 'ledger' && <TransactionTable />}
       </div>
     </DashboardContext.Provider>
   );

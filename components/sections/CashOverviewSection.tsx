@@ -46,7 +46,7 @@ export default function CashOverviewSection() {
     {
       label: 'Revenue Drop',
       active: alerts.revenueDrop,
-      text: alerts.revenueDrop ? 'Revenue dropped by more than the configured threshold.' : 'Revenue has not dropped beyond the warning threshold.',
+      text: alerts.revenueDrop ? 'Revenue dropped by more than 50% threshold.' : 'Revenue has not dropped beyond the warning threshold.',
     },
   ];
 

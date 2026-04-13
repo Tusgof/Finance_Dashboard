@@ -213,7 +213,7 @@ export function buildMonthlyPnLRows(
     const opEx = rows.filter(row => row.type === 'Outflow' && row.mainCategory === 'OpEx').reduce((sum, row) => sum + row.amount, 0);
     const capEx = rows.filter(row => row.type === 'Outflow' && row.mainCategory === 'CapEx').reduce((sum, row) => sum + row.amount, 0);
     const peopleCost = rows
-      .filter(row => row.type === 'Outflow' && row.person && resolved.costClassification.peopleCostKeywords.some(keyword => row.person.includes(keyword) || row.description.includes(keyword)))
+      .filter(row => row.type === 'Outflow' && row.person)
       .reduce((sum, row) => sum + row.amount, 0);
     const actualAmount = rows.filter(row => row.status === 'Actual').reduce((sum, row) => sum + row.amount * (row.type === 'Inflow' ? 1 : -1), 0);
     const originalForecast = rows.reduce((sum, row) => sum + row.originalForecast, 0);

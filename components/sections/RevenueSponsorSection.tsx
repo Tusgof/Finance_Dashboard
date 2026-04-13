@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useDashboard } from '../DashboardContext';
-import RevenueChart from '../charts/RevenueChart';
+import RevenueTrendChart from '../charts/RevenueTrendChart';
 import { fmt } from '@/lib/dataUtils';
 import { calculateWeightedPipeline } from '@/lib/dashboardMetrics';
 
@@ -27,21 +27,21 @@ export default function RevenueSponsorSection() {
           <div className="health-value">฿{fmt(weightedPipeline)}</div>
           <div className="health-status green">
             <span className="health-dot green"></span>
-            Sum of deal value × probability
+            Committed/forecast revenue weighted by probability
           </div>
         </div>
 
         <div className="health-card">
-          <div className="health-label">Open Sponsor Deals</div>
+          <div className="health-label">Pipeline Items</div>
           <div className="health-value">{sortedDeals.length}</div>
           <div className="health-status green">
             <span className="health-dot green"></span>
-            Pipeline rows loaded
+            Rows from Sponsor Pipeline tab
           </div>
         </div>
       </div>
 
-      <RevenueChart />
+      <RevenueTrendChart />
 
       <div className="table-card">
         <div className="table-header">
@@ -63,7 +63,7 @@ export default function RevenueSponsorSection() {
               {sortedDeals.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ color: 'var(--text-muted)' }}>
-                    No sponsor pipeline data yet. Add rows to `data/sponsor-pipeline.json` or wire a source later.
+                    No sponsor pipeline data yet.
                   </td>
                 </tr>
               ) : (
