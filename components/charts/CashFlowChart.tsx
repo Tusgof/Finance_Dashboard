@@ -7,7 +7,7 @@ import { chartDefaults } from '@/lib/chartDefaults';
 import { fmt, getAvailableMonths } from '@/lib/dataUtils';
 
 export default function CashFlowChart() {
-  const { filteredData, rawData } = useDashboard();
+  const { rawData, openingBalance } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -21,21 +21,23 @@ export default function CashFlowChart() {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
+    const activeRows = rawData.filter(d => d.status !== 'Cancelled');
     const inflows = months.map(month =>
-      filteredData
+      activeRows
         .filter(d => (d.workMonth || d.month) === month && d.type === 'Inflow')
         .reduce((sum, row) => sum + row.amount, 0)
     );
 
     const outflows = months.map(month =>
-      filteredData
+      activeRows
         .filter(d => (d.workMonth || d.month) === month && d.type === 'Outflow')
         .reduce((sum, row) => sum + row.amount, 0)
     );
 
-    const balances = months.map(month => {
-      const monthData = rawData.filter(d => (d.workMonth || d.month) === month);
-      return monthData.length > 0 ? monthData[monthData.length - 1].balance : null;
+    let runningBalance = openingBalance;
+    const balances = months.map((_, index) => {
+      runningBalance += inflows[index] - outflows[index];
+      return runningBalance;
     });
 
     chartRef.current = new Chart(canvasRef.current, {
@@ -74,7 +76,7 @@ export default function CashFlowChart() {
     return () => {
       chartRef.current?.destroy();
     };
-  }, [filteredData, rawData, months, labels]);
+  }, [rawData, openingBalance, months, labels]);
 
   return (
     <div className="chart-card full-width">

@@ -357,6 +357,13 @@ Key chart:
 
 - `components/charts/CashFlowChart.tsx`
 
+Cash Flow chart rules:
+
+- Income, expenses, and balance must use the same unfiltered active transaction set (`status != Cancelled`).
+- Do not use the ledger sidebar filter for this chart. The chart is the operating cash overview, not a filtered ledger view.
+- Running balance must be recalculated by sorted `Work Month` from `openingBalance` plus monthly net cash flow.
+- Do not derive monthly balance by taking the last raw row for a month. Rows can be interleaved by `Work Month`, so that produces false month-end balances.
+
 Key formulas:
 
 - `getCurrentCash`
