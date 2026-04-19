@@ -424,6 +424,7 @@ Purpose:
 - Show Base, Bull, and Bear ending cash.
 - Explain the scenario assumptions directly in the UI.
 - Show a line chart of Base, Bull, and Bear running balance by cash month.
+- Show a scenario insight rail with final spread, ending cash by case, first negative cash month, and lowest Bear balance.
 - Show projected running balance by cash month.
 
 Scenario logic:

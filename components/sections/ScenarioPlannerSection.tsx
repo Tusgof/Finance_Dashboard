@@ -18,6 +18,17 @@ type ProjectionRow = {
   bearBalance: number;
 };
 
+type CaseKey = 'base' | 'bull' | 'bear';
+
+type ScenarioCase = {
+  key: CaseKey;
+  label: string;
+  balance: number;
+  net: number;
+  status: string;
+  color: string;
+};
+
 const BULL_MONTHLY_NEW_CASH = 30000;
 const BULL_CREDIT_TERM_MONTHS = 2;
 
@@ -123,6 +134,17 @@ function monthLabel(month: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' }).format(new Date(`${month}-01`));
 }
 
+function firstNegativeMonth(projection: ProjectionRow[], key: CaseKey): string {
+  const field = `${key}Balance` as const;
+  return projection.find(row => row[field] < 0)?.month ?? 'No negative month';
+}
+
+function lowestBalance(projection: ProjectionRow[], key: CaseKey): number {
+  const field = `${key}Balance` as const;
+  if (projection.length === 0) return 0;
+  return Math.min(...projection.map(row => row[field]));
+}
+
 export default function ScenarioPlannerSection() {
   const { rawData, openingBalance } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -131,6 +153,33 @@ export default function ScenarioPlannerSection() {
   const projection = useMemo(() => buildScenarioProjection(normalized, openingBalance), [normalized, openingBalance]);
   const latest = projection.at(-1);
   const startingCash = getCurrentCash(normalized, openingBalance);
+  const finalGap = (latest?.bullBalance ?? startingCash) - (latest?.bearBalance ?? startingCash);
+  const caseSummaries: ScenarioCase[] = [
+    {
+      key: 'base',
+      label: 'Base',
+      balance: latest?.baseBalance ?? startingCash,
+      net: latest?.baseNet ?? 0,
+      status: 'Current forecast path',
+      color: '#d97706',
+    },
+    {
+      key: 'bull',
+      label: 'Bull',
+      balance: latest?.bullBalance ?? startingCash,
+      net: latest?.bullNet ?? 0,
+      status: 'New-client upside',
+      color: '#16a34a',
+    },
+    {
+      key: 'bear',
+      label: 'Bear',
+      balance: latest?.bearBalance ?? startingCash,
+      net: latest?.bearNet ?? 0,
+      status: 'Delayed client cash',
+      color: '#dc2626',
+    },
+  ];
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -178,12 +227,44 @@ export default function ScenarioPlannerSection() {
       },
       options: {
         ...chartDefaults,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
         plugins: {
           ...chartDefaults.plugins,
+          legend: {
+            labels: {
+              color: '#344054',
+              font: { family: 'Inter', size: 12, weight: 'bold' },
+              padding: 16,
+              usePointStyle: true,
+            },
+          },
           tooltip: {
             ...((chartDefaults.plugins as Record<string, unknown>)?.tooltip as object),
             callbacks: {
               label: ctx => ` ${ctx.dataset.label}: ${money(Number((ctx.parsed as { y?: number }).y ?? ctx.raw))}`,
+            },
+          },
+          annotation: {
+            annotations: {
+              zeroLine: {
+                type: 'line',
+                yMin: 0,
+                yMax: 0,
+                borderColor: 'rgba(220,38,38,0.45)',
+                borderWidth: 2,
+                borderDash: [6, 6],
+                label: {
+                  display: true,
+                  content: 'Zero cash',
+                  color: '#dc2626',
+                  backgroundColor: 'rgba(255,255,255,0.92)',
+                  borderColor: 'rgba(220,38,38,0.30)',
+                  borderWidth: 1,
+                },
+              },
             },
           },
         },
@@ -208,7 +289,7 @@ export default function ScenarioPlannerSection() {
 
   return (
     <div className="page-stack">
-      <div className="health-grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+      <div className="scenario-summary-grid">
         <div className="health-card">
           <div className="health-label">Starting Cash</div>
           <div className="health-value">{money(startingCash)}</div>
@@ -231,33 +312,68 @@ export default function ScenarioPlannerSection() {
         </div>
       </div>
 
-      <div className="scenario-panel">
-        <h3>Current Situation Cash Scenario</h3>
-        <div className="scenario-results">
-          <div className="scenario-result">
-            <div className="sr-label">Base case logic</div>
-            <div className="sr-value">Uses current forecast and committed rows as the expected running balance path.</div>
+      <div className="scenario-workspace">
+        <div className="chart-card scenario-chart-card">
+          <div className="chart-header">
+            <div>
+              <div className="chart-title">Scenario Running Balance</div>
+              <div className="chart-subtitle">Base, Bull, and Bear cash balance by cash month</div>
+            </div>
           </div>
-          <div className="scenario-result">
-            <div className="sr-label">Bull case logic</div>
-            <div className="sr-value">Assumes two new clients are closed each month, creating THB 30,000 cash in every month after a 2-month credit term.</div>
-          </div>
-          <div className="scenario-result">
-            <div className="sr-label">Bear case logic</div>
-            <div className="sr-value">Delays forecast sponsor/client inflows by 1 month. Ad revenue rows are not delayed.</div>
+          <div className="chart-wrapper scenario-chart-wrapper">
+            <canvas ref={canvasRef} />
           </div>
         </div>
+
+        <aside className="scenario-insights" aria-label="Scenario insights">
+          <div className="scenario-insight-block">
+            <div className="scenario-insight-label">Spread at final month</div>
+            <div className="scenario-insight-value">{money(finalGap)}</div>
+            <div className="scenario-insight-note">Bull ending cash minus Bear ending cash</div>
+          </div>
+
+          {caseSummaries.map(item => (
+            <div className="scenario-case-row" key={item.key}>
+              <div className="scenario-case-marker" style={{ background: item.color }} />
+              <div>
+                <div className="scenario-case-title">{item.label}</div>
+                <div className="scenario-case-detail">{item.status}</div>
+              </div>
+              <div className="scenario-case-number" style={{ color: tone(item.balance) }}>{money(item.balance)}</div>
+            </div>
+          ))}
+
+          <div className="scenario-risk-list">
+            <div className="scenario-risk-title">Cash risk check</div>
+            {caseSummaries.map(item => (
+              <div className="scenario-risk-row" key={`${item.key}-risk`}>
+                <span>{item.label}</span>
+                <strong>{firstNegativeMonth(projection, item.key)}</strong>
+              </div>
+            ))}
+            <div className="scenario-risk-row">
+              <span>Lowest Bear balance</span>
+              <strong style={{ color: tone(lowestBalance(projection, 'bear')) }}>{money(lowestBalance(projection, 'bear'))}</strong>
+            </div>
+          </div>
+        </aside>
       </div>
 
-      <div className="chart-card full-width">
-        <div className="chart-header">
-          <div>
-            <div className="chart-title">Scenario Running Balance</div>
-            <div className="chart-subtitle">Base, Bull, and Bear cash balance by cash month</div>
+      <div className="scenario-panel scenario-logic-panel">
+        <h3>Scenario Logic</h3>
+        <div className="scenario-results scenario-logic-grid">
+          <div className="scenario-result">
+            <div className="sr-label">Base case</div>
+            <div className="sr-value">Current committed and forecast rows drive the running balance path.</div>
           </div>
-        </div>
-        <div className="chart-wrapper tall">
-          <canvas ref={canvasRef} />
+          <div className="scenario-result">
+            <div className="sr-label">Bull case</div>
+            <div className="sr-value">Two new clients per month create THB 30,000 monthly cash after a 2-month credit term.</div>
+          </div>
+          <div className="scenario-result">
+            <div className="sr-label">Bear case</div>
+            <div className="sr-value">Forecast sponsor/client inflows move one month later. Ad revenue is kept on schedule.</div>
+          </div>
         </div>
       </div>
 
