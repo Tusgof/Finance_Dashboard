@@ -61,7 +61,10 @@ export default function DashboardClient() {
         return;
       }
 
-      const fresh: DataFile = await fetch('/api/data').then(r => r.json());
+      const refreshed = await res.json();
+      const fresh: DataFile = Array.isArray(refreshed.rawData)
+        ? refreshed
+        : await fetch('/api/data').then(r => r.json());
       setRawData(fresh.rawData);
       setOpeningBalance(fresh.openingBalance);
       setSnapshotMeta(fresh.snapshotMeta);

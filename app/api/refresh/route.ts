@@ -5,7 +5,7 @@ import { SHEET_GIDS } from '@/lib/settingsDefaults';
 import { loadSettings } from '@/lib/settings';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseProductionSummaryCSV, parseSponsorPipelineCSV, parseTransactionCsv } from '@/lib/transactionModel';
 import { createSnapshotMeta } from '@/lib/snapshotMeta';
-import type { ValidationIssue } from '@/lib/types';
+import type { DataFile, ProductionSummaryRow, SponsorPipelineDeal, ValidationIssue } from '@/lib/types';
 
 function resolveDataPath(configuredPath: string): string {
   return path.isAbsolute(configuredPath)
@@ -34,6 +34,42 @@ function buildSupportSheetFetchFailedIssue(sheetName: string, detail: string): V
     field: sheetName,
     value: detail,
   };
+}
+
+function shouldPersistRefreshSnapshot(): boolean {
+  return !process.env.VERCEL;
+}
+
+function persistRefreshSnapshot(
+  snapshotContent: DataFile,
+  productionSummaryRows: ProductionSummaryRow[],
+  sponsorPipelineRows: SponsorPipelineDeal[],
+  productionSummaryPath: string,
+  sponsorPipelinePath: string
+): { mode: 'filesystem' | 'stateless'; skippedReason?: string } {
+  if (!shouldPersistRefreshSnapshot()) {
+    return {
+      mode: 'stateless',
+      skippedReason: 'Vercel serverless filesystem is read-only; refreshed data is returned directly.',
+    };
+  }
+
+  const dataDir = path.join(process.cwd(), 'data');
+  const currentPath = path.join(dataDir, 'current.json');
+  const backupDir = path.join(dataDir, 'backups');
+
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+  if (fs.existsSync(currentPath)) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    fs.copyFileSync(currentPath, path.join(backupDir, `${timestamp}.json`));
+  }
+
+  fs.writeFileSync(currentPath, JSON.stringify(snapshotContent, null, 2), 'utf-8');
+  fs.writeFileSync(productionSummaryPath, JSON.stringify(productionSummaryRows, null, 2), 'utf-8');
+  fs.writeFileSync(sponsorPipelinePath, JSON.stringify(sponsorPipelineRows, null, 2), 'utf-8');
+
+  return { mode: 'filesystem' };
 }
 
 async function fetchOptionalSheet<T>(
@@ -109,18 +145,8 @@ export async function POST() {
       })(),
     ]);
 
-    const dataDir = path.join(process.cwd(), 'data');
-    const currentPath = path.join(dataDir, 'current.json');
     const productionSummaryPath = resolveDataPath(settings.refresh.productionSummaryPath);
     const sponsorPipelinePath = resolveDataPath(settings.refresh.sponsorPipelinePath);
-    const backupDir = path.join(dataDir, 'backups');
-
-    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
-    if (fs.existsSync(currentPath)) {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      fs.copyFileSync(currentPath, path.join(backupDir, `${timestamp}.json`));
-    }
 
     const fileContent = normalizeDataFile(
       {
@@ -142,17 +168,21 @@ export async function POST() {
       validationReport,
     };
 
-    fs.writeFileSync(currentPath, JSON.stringify(snapshotContent, null, 2), 'utf-8');
-    fs.writeFileSync(productionSummaryPath, JSON.stringify(productionSummaryResult.rows, null, 2), 'utf-8');
-    fs.writeFileSync(sponsorPipelinePath, JSON.stringify(sponsorPipelineResult.rows, null, 2), 'utf-8');
+    const persistence = persistRefreshSnapshot(
+      snapshotContent,
+      productionSummaryResult.rows,
+      sponsorPipelineResult.rows,
+      productionSummaryPath,
+      sponsorPipelinePath
+    );
 
     return NextResponse.json({
       success: true,
+      ...snapshotContent,
       count: snapshotContent.rawData.length,
       productionSummaryCount: productionSummaryResult.rows.length,
       sponsorPipelineCount: sponsorPipelineResult.rows.length,
-      snapshotMeta: snapshotContent.snapshotMeta,
-      validationReport,
+      persistence,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

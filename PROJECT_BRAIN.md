@@ -241,7 +241,7 @@ Client state owner:
 - `components/DashboardClient.tsx`
 - Fetches `/api/data` on mount.
 - Stores `rawData`, `openingBalance`, `snapshotMeta`, `validationReport`, `productionSummary`, `sponsorPipeline`, `currentFilter`, refresh state, and active page.
-- Calls `POST /api/refresh`, then reloads `/api/data`.
+- Calls `POST /api/refresh` and uses the returned snapshot directly when present. This is required on Vercel because refreshed data cannot be persisted to the serverless filesystem.
 - Provides state through `DashboardContext`.
 
 Context:
@@ -262,7 +262,7 @@ Navigation / page model:
 Server APIs:
 
 - `GET /api/data`: reads local JSON files, merges support data, normalizes data, returns dashboard-safe JSON.
-- `POST /api/refresh`: fetches Google Sheet CSV data, validates source rows, writes current snapshots, creates backup, and returns validation warnings.
+- `POST /api/refresh`: fetches Google Sheet CSV data, validates source rows, returns a full refreshed snapshot, and writes local snapshots/backups only when filesystem persistence is available.
 - `GET /api/settings`: returns normalized dashboard settings.
 - `POST /api/settings`: saves dashboard settings.
 - `GET /api/backups`: lists local backup snapshots.
@@ -722,19 +722,25 @@ Flow:
    - missing production summary warnings for COGS months
    - support-sheet fetch/header/empty warnings
    - lightweight Lists/dropdown integrity warnings
-7. Ensure `data/` and `data/backups/` exist.
-8. If `data/current.json` exists, copy it to `data/backups/{timestamp}.json`.
-9. Write:
+7. Build the refreshed dashboard snapshot in memory.
+8. If filesystem persistence is available, ensure `data/` and `data/backups/` exist.
+9. If filesystem persistence is available and `data/current.json` exists, copy it to `data/backups/{timestamp}.json`.
+10. If filesystem persistence is available, write:
    - `data/current.json`
    - `data/production-summary.json`
    - `data/sponsor-pipeline.json`
-10. Return counts, snapshot metadata, and validation report.
+11. On Vercel, skip filesystem writes and return the refreshed snapshot directly to the client.
+12. Return the full snapshot, counts, snapshot metadata, validation report, and persistence mode.
 
 Expected success response shape:
 
 ```json
 {
   "success": true,
+  "rawData": [],
+  "openingBalance": 124331.84,
+  "productionSummary": [],
+  "sponsorPipeline": [],
   "count": 106,
   "productionSummaryCount": 1,
   "sponsorPipelineCount": 1,
@@ -751,6 +757,10 @@ Expected success response shape:
     "renderingWarnings": [],
     "managementWarnings": [],
     "issues": []
+  },
+  "persistence": {
+    "mode": "stateless",
+    "skippedReason": "Vercel serverless filesystem is read-only; refreshed data is returned directly."
   }
 }
 ```
@@ -1255,7 +1265,15 @@ Before trusting dashboard numbers, verify:
 
 ### 19.1 Serverless Persistence
 
-The dashboard writes JSON snapshots to local disk. This is fine locally but not durable on Vercel. A stronger production architecture should use:
+Local refresh writes JSON snapshots to disk and creates local backups. On Vercel, `/api/refresh` must not write to `/var/task`; it skips filesystem persistence and returns the refreshed snapshot directly to the client.
+
+This fixes runtime errors such as:
+
+```text
+ENOENT: no such file or directory, mkdir '/var/task/data/backups'
+```
+
+A stronger long-term production architecture should use:
 
 - Google Sheet as live source of truth, or
 - durable object/blob/database storage for snapshots, or
