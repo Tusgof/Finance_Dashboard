@@ -454,7 +454,7 @@ function buildProductionSummaryValidationIssues(
   const issues: ValidationIssue[] = [];
   const cogsMonths = new Set(
     transactions
-      .filter(row => row.type === 'Outflow' && row.mainCategory === 'COGS' && Boolean(row.workMonth))
+      .filter(row => row.type === 'Outflow' && row.mainCategory === 'COGS' && row.status === 'Actual' && Boolean(row.workMonth))
       .map(row => row.workMonth)
       .filter((month): month is string => Boolean(month))
   );

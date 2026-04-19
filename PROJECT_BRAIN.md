@@ -569,6 +569,7 @@ Rules:
 - `workMonth` should be `YYYY-MM`.
 - `totalContent <= 0` means cost per content becomes `N/A`.
 - Current dashboard uses P&L COGS from transaction rows as numerator, not `totalCogs`, when calculating cost per content.
+- Validation requires a usable production summary only for months with `Actual` COGS rows. Forecast-only COGS months may leave content counts blank because no real clip count exists yet.
 
 ### 8.4 Sponsor Pipeline
 
@@ -719,7 +720,7 @@ Flow:
 5. Fetch the `Lists` tab by GID for validation only.
 6. Build a non-blocking validation report:
    - transaction row quality warnings
-   - missing production summary warnings for COGS months
+   - missing production summary warnings for months with `Actual` COGS rows
    - support-sheet fetch/header/empty warnings
    - lightweight Lists/dropdown integrity warnings
 7. Build the refreshed dashboard snapshot in memory.
@@ -1257,7 +1258,7 @@ Before trusting dashboard numbers, verify:
 - `Cost Behavior` is filled for outflows.
 - `Sponsor` is filled for sponsor revenue rows.
 - `Note` does not contain placeholders like `???`.
-- `Monthly Production Summary` has content counts for months where cost per content matters.
+- `Monthly Production Summary` has content counts for months where actual cost per content matters. Forecast-only months do not need real content counts.
 - `Sponsor Pipeline` has probability and expected date for forward-looking deals.
 - Ledger rows can explain every summary KPI.
 

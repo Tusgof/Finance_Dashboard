@@ -6,7 +6,7 @@ import path from 'node:path';
 import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
 import { buildMonthlyPnLRows, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
-import { buildSupportSheetValidationIssues, normalizeDataFile, parseTransactionCsv } from '../lib/transactionModel';
+import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseTransactionCsv } from '../lib/transactionModel';
 import type { ProductionSummaryRow, RawTransactionRow, SponsorPipelineDeal } from '../lib/types';
 
 function makeRow(overrides: Partial<RawTransactionRow> = {}): RawTransactionRow {
@@ -94,6 +94,38 @@ const tests: Array<[string, () => void]> = [
   assert.ok(codes.includes('missing-cost-behavior'));
   assert.ok(codes.includes('missing-person'));
   assert.ok(codes.includes('missing-sponsor'));
+    },
+  ],
+  [
+    'production summary validation ignores forecast-only COGS months',
+    () => {
+  const report = buildValidationReport(
+    [],
+    [
+      makeRow({
+        workMonth: '2026-05',
+        month: '2026-05',
+        type: 'Outflow',
+        status: 'Forecast',
+        mainCategory: 'COGS',
+        category: 'COGS',
+        amount: 100,
+      }),
+      makeRow({
+        workMonth: '2026-06',
+        month: '2026-06',
+        type: 'Outflow',
+        status: 'Actual',
+        mainCategory: 'COGS',
+        category: 'COGS',
+        amount: 100,
+      }),
+    ],
+    []
+  );
+
+  const missingSummaryWarnings = report.managementWarnings.filter(issue => issue.code === 'missing-production-summary');
+  assert.deepEqual(missingSummaryWarnings.map(issue => issue.workMonth), ['2026-06']);
     },
   ],
   [
