@@ -92,7 +92,7 @@ function buildScenarioProjection(data: NormalizedTransaction[], openingBalance: 
   const actualMonths = sortMonths(actualRows.map(scenarioMonth));
   const latestActualMonth = actualMonths.at(-1) ?? sortMonths(activeRows.map(scenarioMonth)).at(0) ?? monthKey(new Date());
   const currentCash = getScenarioStartingCash(data, openingBalance);
-  const futureRows = activeRows.filter(row => row.status !== 'Actual' && scenarioMonth(row) > latestActualMonth);
+  const futureRows = activeRows.filter(row => row.status !== 'Actual' && scenarioMonth(row) >= latestActualMonth);
   const baseMonths = sortMonths(futureRows.map(scenarioMonth));
   const fallbackStartMonth = nextMonth(latestActualMonth);
   const firstActualMonth = actualMonths[0] ?? latestActualMonth;
@@ -111,16 +111,16 @@ function buildScenarioProjection(data: NormalizedTransaction[], openingBalance: 
   return months.map((month) => {
     const isBeforeScenario = month < latestActualMonth;
     const isScenarioStart = month === latestActualMonth;
-    const baseNet = isBeforeScenario || isScenarioStart ? 0 : sumMonthNet(futureRows, month);
+    const baseNet = isBeforeScenario ? 0 : sumMonthNet(futureRows, month);
     const bullExtra = !isBeforeScenario && !isScenarioStart && month >= bullStartMonth ? BULL_MONTHLY_NEW_CASH : 0;
     const bullNet = baseNet + bullExtra;
-    const bearNet = isBeforeScenario || isScenarioStart ? 0 : futureRows.reduce((sum, row) => {
+    const bearNet = isBeforeScenario ? 0 : futureRows.reduce((sum, row) => {
       const rowMonth = scenarioMonth(row);
       const shiftedMonth = isShiftableCustomerInflow(row) ? nextMonth(rowMonth) : rowMonth;
       return shiftedMonth === month ? sum + signedAmount(row) : sum;
     }, 0);
 
-    if (!isBeforeScenario && !isScenarioStart) {
+    if (!isBeforeScenario) {
       baseBalance += baseNet;
       bullBalance += bullNet;
       bearBalance += bearNet;

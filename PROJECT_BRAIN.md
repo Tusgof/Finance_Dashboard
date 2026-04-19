@@ -1131,6 +1131,7 @@ Weighted Pipeline = SUM(weightedValue)
 ```text
 startingCash = latest actual running balance on the latest actual Work Month
 scenarioMonth = normalized Work Month, matching CashFlowChart
+futureRows = non-Actual rows from the latest actual Work Month onward
 
 Base Net = SUM(committed/forecast inflows) - SUM(committed/forecast outflows)
 Base Balance = previous Base Balance + Base Net
