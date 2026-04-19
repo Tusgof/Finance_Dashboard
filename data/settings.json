@@ -2,47 +2,119 @@
   "revenueSources": [
     {
       "label": "Eightcap",
-      "keywords": ["Eightcap"]
+      "keywords": [
+        "Eightcap"
+      ]
     },
     {
       "label": "InnovestX",
-      "keywords": ["InnovestX"]
+      "keywords": [
+        "InnovestX"
+      ]
     },
     {
       "label": "OceanLife",
-      "keywords": ["OceanLife"]
+      "keywords": [
+        "OceanLife"
+      ]
     },
     {
       "label": "เงินเทอร์โบ",
-      "keywords": ["เงินเทอร์โบ"]
+      "keywords": [
+        "เงินเทอร์โบ"
+      ]
     },
     {
       "label": "Webull",
-      "keywords": ["Webull"]
+      "keywords": [
+        "Webull"
+      ]
     },
     {
       "label": "Facebook Ads",
-      "keywords": ["Facebook", "Facebook Ads", "Meta"]
+      "keywords": [
+        "Facebook",
+        "Facebook Ads",
+        "Meta"
+      ]
     },
     {
       "label": "TikTok",
-      "keywords": ["TikTok"]
+      "keywords": [
+        "TikTok"
+      ]
+    },
+    {
+      "label": "TTB",
+      "keywords": [
+        "TTB"
+      ]
+    },
+    {
+      "label": "Insurverse",
+      "keywords": [
+        "Insurverse"
+      ]
     }
   ],
   "costClassification": {
     "fixed": {
       "label": "Fixed",
-      "keywords": ["เงินเดือน", "ChatGPT", "Gemini", "Claude", "บัญชี", "ธรรมเนียม"]
+      "keywords": [
+        "เงินเดือน",
+        "ChatGPT",
+        "Gemini",
+        "Claude",
+        "บัญชี",
+        "ธรรมเนียม"
+      ]
     },
     "production": {
       "label": "Production",
-      "keywords": ["ค่าจ้าง", "โบนัส", "พากย์เสียง", "เขียนบท", "ทำฟุตเทจ", "ตัดต่อ", "กราฟิกข่าว", "จัดหาข่าว", "ดูแลลูกค้า", "ดูแลคอมมูนิตี้"]
+      "keywords": [
+        "ค่าจ้าง",
+        "โบนัส",
+        "พากย์เสียง",
+        "เขียนบท",
+        "ทำฟุตเทจ",
+        "ตัดต่อ",
+        "กราฟิกข่าว",
+        "จัดหาข่าว",
+        "ดูแลลูกค้า",
+        "ดูแลคอมมูนิตี้"
+      ]
     },
     "onetime": {
       "label": "One-time",
-      "keywords": ["อุปกรณ์", "ไมค์", "จอมอนิเตอร์", "ฟอนต์", "Freepik", "Vecteezy", "ตัวจ้างงาน", "ภาษี"]
+      "keywords": [
+        "อุปกรณ์",
+        "ไมค์",
+        "จอมอนิเตอร์",
+        "ฟอนต์",
+        "Freepik",
+        "Vecteezy",
+        "ตัวจ้างงาน",
+        "ภาษี"
+      ]
     },
-    "directKeywords": ["พากย์เสียง", "เขียนบท", "ทำฟุตเทจ", "ตัดต่อ", "Production", "ค่าจ้าง", "ค่าจ้างจัดทำของ", "ค่าอุปกรณ์"]
+    "directKeywords": [
+      "พากย์เสียง",
+      "เขียนบท",
+      "ทำฟุตเทจ",
+      "ตัดต่อ",
+      "Production",
+      "ค่าจ้าง",
+      "ค่าจ้างจัดทำของ",
+      "ค่าอุปกรณ์"
+    ],
+    "peopleCostKeywords": [
+      "ค่าจ้าง",
+      "เงินเดือน",
+      "salary",
+      "wage",
+      "พี่บิว",
+      "พี่โจอี้"
+    ]
   },
   "healthThresholds": {
     "cashRunwayMonths": {
@@ -56,6 +128,13 @@
     "revenueHHI": {
       "diversifiedMax": 2500,
       "moderateMax": 5000
+    },
+    "revenueDropRatio": {
+      "warningMax": 0.5
+    },
+    "headcountCostRatio": {
+      "healthyMax": 0.5,
+      "cautionMax": 0.7
     },
     "execToProdRatio": {
       "healthyMax": 0.5,
@@ -85,11 +164,29 @@
       "max": 30,
       "step": 5
     },
-    "projectionMonths": 6
+    "variableCostReductionPct": {
+      "default": 0,
+      "min": -30,
+      "max": 30,
+      "step": 5
+    },
+    "newDealRevenue": {
+      "default": 0,
+      "min": 0,
+      "max": 100000,
+      "step": 1000
+    },
+    "bestCaseRevenueLiftPct": 20,
+    "worstCaseRevenueHaircutPct": 20,
+    "projectionMonths": 6,
+    "breakEvenLookbackMonths": 3,
+    "runwayLookbackMonths": 3
   },
   "refresh": {
     "sheetId": "1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8",
-    "csvExportUrl": "https://docs.google.com/spreadsheets/d/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8/export?format=csv",
+    "csvExportUrl": "https://docs.google.com/spreadsheets/d/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8/export?format=csv&gid=0",
+    "productionSummaryPath": "data/production-summary.json",
+    "sponsorPipelinePath": "data/sponsor-pipeline.json",
     "fallbackOpeningBalance": 124331.84
   }
 }

@@ -1,1 +1,34 @@
-[]
+[
+  {
+    "workMonth": "2026-01",
+    "totalContent": 13,
+    "organicContent": 12,
+    "sponsoredContent": 1,
+    "totalCogs": 28699,
+    "costPerContent": 2208
+  },
+  {
+    "workMonth": "2026-02",
+    "totalContent": 14,
+    "organicContent": 12,
+    "sponsoredContent": 2,
+    "totalCogs": 29670,
+    "costPerContent": 2119
+  },
+  {
+    "workMonth": "2026-03",
+    "totalContent": 13,
+    "organicContent": 11,
+    "sponsoredContent": 2,
+    "totalCogs": 37101,
+    "costPerContent": 2854
+  },
+  {
+    "workMonth": "2026-04",
+    "totalContent": 12,
+    "organicContent": 11,
+    "sponsoredContent": 1,
+    "totalCogs": 38836,
+    "costPerContent": 3236
+  }
+]

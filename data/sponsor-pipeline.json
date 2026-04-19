@@ -1,1 +1,110 @@
-[]
+[
+  {
+    "sponsor": "Webull",
+    "dealValue": 40000,
+    "status": "Committed",
+    "probability": 100,
+    "expectedDate": "2026-04-15",
+    "weightedValue": 40000,
+    "note": "Wating for Credit term"
+  },
+  {
+    "sponsor": "Facebook",
+    "dealValue": 3600,
+    "status": "Committed",
+    "probability": 100,
+    "expectedDate": "2026-04-21",
+    "weightedValue": 3600,
+    "note": "Wating for Credit term"
+  },
+  {
+    "sponsor": "Webull",
+    "dealValue": 20000,
+    "status": "Committed",
+    "probability": 100,
+    "expectedDate": "2026-05-15",
+    "weightedValue": 20000,
+    "note": "Wating for Credit term"
+  },
+  {
+    "sponsor": "Facebook",
+    "dealValue": 3600,
+    "status": "Forecast",
+    "probability": 100,
+    "expectedDate": "2026-05-21",
+    "weightedValue": 3600,
+    "note": "Forecast"
+  },
+  {
+    "sponsor": "Insurverse",
+    "dealValue": 19400,
+    "status": "Committed",
+    "probability": 100,
+    "expectedDate": "2026-06-09",
+    "weightedValue": 19400,
+    "note": "Wating for Credit term"
+  },
+  {
+    "sponsor": "Webull",
+    "dealValue": 10000,
+    "status": "Committed",
+    "probability": 100,
+    "expectedDate": "2026-06-15",
+    "weightedValue": 10000,
+    "note": "Wating for Credit term"
+  },
+  {
+    "sponsor": "TTB",
+    "dealValue": 15035,
+    "status": "Forecast",
+    "probability": 80,
+    "expectedDate": "2026-06-23",
+    "weightedValue": 12028,
+    "note": "Forecast"
+  },
+  {
+    "sponsor": "Facebook",
+    "dealValue": 3600,
+    "status": "Forecast",
+    "probability": 100,
+    "expectedDate": "2026-06-21",
+    "weightedValue": 3600,
+    "note": "Forecast"
+  },
+  {
+    "sponsor": "Webull",
+    "dealValue": 10000,
+    "status": "Forecast",
+    "probability": 100,
+    "expectedDate": "2026-07-15",
+    "weightedValue": 10000,
+    "note": "Forecast"
+  },
+  {
+    "sponsor": "Facebook",
+    "dealValue": 3600,
+    "status": "Forecast",
+    "probability": 100,
+    "expectedDate": "2026-07-21",
+    "weightedValue": 3600,
+    "note": "Forecast"
+  },
+  {
+    "sponsor": "Webull",
+    "dealValue": 10000,
+    "status": "Forecast",
+    "probability": 100,
+    "expectedDate": "2026-08-15",
+    "weightedValue": 10000,
+    "note": "Forecast"
+  },
+  {
+    "sponsor": "Facebook",
+    "dealValue": 3600,
+    "status": "Forecast",
+    "probability": 100,
+    "expectedDate": "2026-08-21",
+    "weightedValue": 3600,
+    "note": "Forecast"
+  }
+]
