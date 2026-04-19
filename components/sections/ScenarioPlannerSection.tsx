@@ -10,12 +10,13 @@ import type { NormalizedTransaction } from '@/lib/types';
 
 type ProjectionRow = {
   month: string;
+  actualBalance: number | null;
   baseNet: number;
   bullNet: number;
   bearNet: number;
-  baseBalance: number;
-  bullBalance: number;
-  bearBalance: number;
+  baseBalance: number | null;
+  bullBalance: number | null;
+  bearBalance: number | null;
 };
 
 type CaseKey = 'base' | 'bull' | 'bear';
@@ -55,12 +56,12 @@ function isAdRevenue(row: NormalizedTransaction): boolean {
   return text.includes('ad') || text.includes('ads') || text.includes('facebook') || text.includes('meta') || text.includes('tiktok');
 }
 
-function isShiftableForecastCustomerInflow(row: NormalizedTransaction): boolean {
-  return row.type === 'Inflow' && row.status === 'Forecast' && row.mainCategory === 'Revenue' && !isAdRevenue(row);
+function isShiftableCustomerInflow(row: NormalizedTransaction): boolean {
+  return row.type === 'Inflow' && row.mainCategory === 'Revenue' && !isAdRevenue(row);
 }
 
-function cashMonth(row: NormalizedTransaction): string {
-  return /^\d{4}-\d{2}/.test(row.date) ? row.date.slice(0, 7) : row.workMonth;
+function scenarioMonth(row: NormalizedTransaction): string {
+  return row.workMonth;
 }
 
 function signedAmount(row: NormalizedTransaction): number {
@@ -69,23 +70,36 @@ function signedAmount(row: NormalizedTransaction): number {
 
 function sumMonthNet(rows: NormalizedTransaction[], month: string): number {
   return rows
-    .filter(row => cashMonth(row) === month && row.status !== 'Cancelled')
+    .filter(row => scenarioMonth(row) === month && row.status !== 'Cancelled')
     .reduce((sum, row) => sum + signedAmount(row), 0);
+}
+
+function latestMonthBalance(rows: NormalizedTransaction[], month: string): number | null {
+  const monthRows = rows.filter(row => scenarioMonth(row) === month);
+  return monthRows.length > 0 ? monthRows[monthRows.length - 1].balance : null;
+}
+
+function getScenarioStartingCash(data: NormalizedTransaction[], openingBalance: number): number {
+  const actualRows = data.filter(row => row.status === 'Actual');
+  const latestActualMonth = sortMonths(actualRows.map(scenarioMonth)).at(-1);
+  if (!latestActualMonth) return getCurrentCash(data, openingBalance);
+  return latestMonthBalance(actualRows, latestActualMonth) ?? getCurrentCash(data, openingBalance);
 }
 
 function buildScenarioProjection(data: NormalizedTransaction[], openingBalance: number): ProjectionRow[] {
   const activeRows = data.filter(row => row.status !== 'Cancelled');
-  const actualMonths = sortMonths(activeRows.filter(row => row.status === 'Actual').map(cashMonth));
-  const latestActualMonth = actualMonths.at(-1) ?? sortMonths(activeRows.map(cashMonth)).at(0) ?? monthKey(new Date());
-  const currentCash = getCurrentCash(data, openingBalance);
-  const futureRows = activeRows.filter(row => row.status !== 'Actual' && cashMonth(row) >= latestActualMonth);
-  const baseMonths = sortMonths(futureRows.map(cashMonth));
+  const actualRows = activeRows.filter(row => row.status === 'Actual');
+  const actualMonths = sortMonths(actualRows.map(scenarioMonth));
+  const latestActualMonth = actualMonths.at(-1) ?? sortMonths(activeRows.map(scenarioMonth)).at(0) ?? monthKey(new Date());
+  const currentCash = getScenarioStartingCash(data, openingBalance);
+  const futureRows = activeRows.filter(row => row.status !== 'Actual' && scenarioMonth(row) > latestActualMonth);
+  const baseMonths = sortMonths(futureRows.map(scenarioMonth));
   const fallbackStartMonth = nextMonth(latestActualMonth);
-  const projectionStartMonth = baseMonths[0] ?? fallbackStartMonth;
-  const projectionEndMonth = addMonths((baseMonths.at(-1) ?? projectionStartMonth), 1);
+  const firstActualMonth = actualMonths[0] ?? latestActualMonth;
+  const forecastEndMonth = addMonths((baseMonths.at(-1) ?? fallbackStartMonth), 1);
 
   const months: string[] = [];
-  for (let month = projectionStartMonth; month <= projectionEndMonth; month = nextMonth(month)) {
+  for (let month = firstActualMonth; month <= forecastEndMonth; month = nextMonth(month)) {
     months.push(month);
   }
 
@@ -95,27 +109,32 @@ function buildScenarioProjection(data: NormalizedTransaction[], openingBalance: 
   let bearBalance = currentCash;
 
   return months.map((month) => {
-    const baseNet = sumMonthNet(futureRows, month);
-    const bullExtra = month >= bullStartMonth ? BULL_MONTHLY_NEW_CASH : 0;
+    const isBeforeScenario = month < latestActualMonth;
+    const isScenarioStart = month === latestActualMonth;
+    const baseNet = isBeforeScenario || isScenarioStart ? 0 : sumMonthNet(futureRows, month);
+    const bullExtra = !isBeforeScenario && !isScenarioStart && month >= bullStartMonth ? BULL_MONTHLY_NEW_CASH : 0;
     const bullNet = baseNet + bullExtra;
-    const bearNet = futureRows.reduce((sum, row) => {
-      const rowMonth = cashMonth(row);
-      const shiftedMonth = isShiftableForecastCustomerInflow(row) ? nextMonth(rowMonth) : rowMonth;
+    const bearNet = isBeforeScenario || isScenarioStart ? 0 : futureRows.reduce((sum, row) => {
+      const rowMonth = scenarioMonth(row);
+      const shiftedMonth = isShiftableCustomerInflow(row) ? nextMonth(rowMonth) : rowMonth;
       return shiftedMonth === month ? sum + signedAmount(row) : sum;
     }, 0);
 
-    baseBalance += baseNet;
-    bullBalance += bullNet;
-    bearBalance += bearNet;
+    if (!isBeforeScenario && !isScenarioStart) {
+      baseBalance += baseNet;
+      bullBalance += bullNet;
+      bearBalance += bearNet;
+    }
 
     return {
       month,
+      actualBalance: month <= latestActualMonth ? latestMonthBalance(actualRows, month) : null,
       baseNet,
       bullNet,
       bearNet,
-      baseBalance,
-      bullBalance,
-      bearBalance,
+      baseBalance: isBeforeScenario ? null : baseBalance,
+      bullBalance: isBeforeScenario ? null : bullBalance,
+      bearBalance: isBeforeScenario ? null : bearBalance,
     };
   });
 }
@@ -136,13 +155,14 @@ function monthLabel(month: string): string {
 
 function firstNegativeMonth(projection: ProjectionRow[], key: CaseKey): string {
   const field = `${key}Balance` as const;
-  return projection.find(row => row[field] < 0)?.month ?? 'No negative month';
+  return projection.find(row => row[field] !== null && row[field] < 0)?.month ?? 'No negative month';
 }
 
 function lowestBalance(projection: ProjectionRow[], key: CaseKey): number {
   const field = `${key}Balance` as const;
-  if (projection.length === 0) return 0;
-  return Math.min(...projection.map(row => row[field]));
+  const values = projection.map(row => row[field]).filter(value => value !== null);
+  if (values.length === 0) return 0;
+  return Math.min(...values);
 }
 
 export default function ScenarioPlannerSection() {
@@ -151,8 +171,9 @@ export default function ScenarioPlannerSection() {
   const chartRef = useRef<Chart | null>(null);
   const normalized = useMemo(() => normalizeTransactions(rawData), [rawData]);
   const projection = useMemo(() => buildScenarioProjection(normalized, openingBalance), [normalized, openingBalance]);
-  const latest = projection.at(-1);
-  const startingCash = getCurrentCash(normalized, openingBalance);
+  const scenarioProjection = projection.filter(row => row.baseBalance !== null);
+  const latest = scenarioProjection.at(-1);
+  const startingCash = getScenarioStartingCash(normalized, openingBalance);
   const finalGap = (latest?.bullBalance ?? startingCash) - (latest?.bearBalance ?? startingCash);
   const caseSummaries: ScenarioCase[] = [
     {
@@ -176,7 +197,7 @@ export default function ScenarioPlannerSection() {
       label: 'Bear',
       balance: latest?.bearBalance ?? startingCash,
       net: latest?.bearNet ?? 0,
-      status: 'Delayed client cash',
+      status: 'ลูกค้าเลื่อนจ่าย',
       color: '#dc2626',
     },
   ];
@@ -191,6 +212,18 @@ export default function ScenarioPlannerSection() {
         labels: projection.map(row => monthLabel(row.month)),
         datasets: [
           {
+            label: 'Actual History',
+            data: projection.map(row => row.actualBalance),
+            borderColor: '#64748b',
+            backgroundColor: 'rgba(100,116,139,0.10)',
+            pointBackgroundColor: '#64748b',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 3,
+            tension: 0.35,
+            spanGaps: false,
+          },
+          {
             label: 'Base Case',
             data: projection.map(row => row.baseBalance),
             borderColor: '#d97706',
@@ -200,6 +233,7 @@ export default function ScenarioPlannerSection() {
             pointHoverRadius: 6,
             borderWidth: 3,
             tension: 0.35,
+            spanGaps: false,
           },
           {
             label: 'Bull Case',
@@ -211,6 +245,7 @@ export default function ScenarioPlannerSection() {
             pointHoverRadius: 6,
             borderWidth: 3,
             tension: 0.35,
+            spanGaps: false,
           },
           {
             label: 'Bear Case',
@@ -222,6 +257,7 @@ export default function ScenarioPlannerSection() {
             pointHoverRadius: 6,
             borderWidth: 3,
             tension: 0.35,
+            spanGaps: false,
           },
         ],
       },
@@ -293,22 +329,22 @@ export default function ScenarioPlannerSection() {
         <div className="health-card">
           <div className="health-label">Starting Cash</div>
           <div className="health-value">{money(startingCash)}</div>
-          <div className="health-status green"><span className="health-dot green"></span>Latest actual running balance</div>
+          <div className="health-status green"><span className="health-dot green"></span>ยอดเงินจริงล่าสุด</div>
         </div>
         <div className="health-card">
           <div className="health-label">Base Case</div>
           <div className="health-value" style={{ color: tone(latest?.baseBalance ?? 0) }}>{money(latest?.baseBalance ?? startingCash)}</div>
-          <div className="health-status amber"><span className="health-dot amber"></span>Forecast running balance</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>เงินสดตามแผนปัจจุบัน</div>
         </div>
         <div className="health-card">
           <div className="health-label">Bull Case</div>
           <div className="health-value" style={{ color: tone(latest?.bullBalance ?? 0) }}>{money(latest?.bullBalance ?? startingCash)}</div>
-          <div className="health-status green"><span className="health-dot green"></span>+THB 30,000 monthly after credit term</div>
+          <div className="health-status green"><span className="health-dot green"></span>+THB 30,000 ต่อเดือนหลังเครดิตเทอม</div>
         </div>
         <div className="health-card">
           <div className="health-label">Bear Case</div>
           <div className="health-value" style={{ color: tone(latest?.bearBalance ?? 0) }}>{money(latest?.bearBalance ?? startingCash)}</div>
-          <div className="health-status red"><span className="health-dot red"></span>Forecast clients pay one month late</div>
+          <div className="health-status red"><span className="health-dot red"></span>ลูกค้าทั้งหมดเลื่อนจ่าย 1 เดือน ยกเว้น ad</div>
         </div>
       </div>
 
@@ -317,7 +353,7 @@ export default function ScenarioPlannerSection() {
           <div className="chart-header">
             <div>
               <div className="chart-title">Scenario Running Balance</div>
-              <div className="chart-subtitle">Base, Bull, and Bear cash balance by cash month</div>
+              <div className="chart-subtitle">ยอดเงินจริงย้อนหลัง และยอดเงินสดคาดการณ์ของแต่ละกรณี</div>
             </div>
           </div>
           <div className="chart-wrapper scenario-chart-wrapper">
@@ -329,7 +365,7 @@ export default function ScenarioPlannerSection() {
           <div className="scenario-insight-block">
             <div className="scenario-insight-label">Spread at final month</div>
             <div className="scenario-insight-value">{money(finalGap)}</div>
-            <div className="scenario-insight-note">Bull ending cash minus Bear ending cash</div>
+            <div className="scenario-insight-note">เงินปลายงวดของ Bull ลบ Bear</div>
           </div>
 
           {caseSummaries.map(item => (
@@ -344,7 +380,7 @@ export default function ScenarioPlannerSection() {
           ))}
 
           <div className="scenario-risk-list">
-            <div className="scenario-risk-title">Cash risk check</div>
+            <div className="scenario-risk-title">ตรวจความเสี่ยงเงินสด</div>
             {caseSummaries.map(item => (
               <div className="scenario-risk-row" key={`${item.key}-risk`}>
                 <span>{item.label}</span>
@@ -352,7 +388,7 @@ export default function ScenarioPlannerSection() {
               </div>
             ))}
             <div className="scenario-risk-row">
-              <span>Lowest Bear balance</span>
+              <span>ยอดต่ำสุดของ Bear</span>
               <strong style={{ color: tone(lowestBalance(projection, 'bear')) }}>{money(lowestBalance(projection, 'bear'))}</strong>
             </div>
           </div>
@@ -360,20 +396,38 @@ export default function ScenarioPlannerSection() {
       </div>
 
       <div className="scenario-panel scenario-logic-panel">
-        <h3>Scenario Logic</h3>
-        <div className="scenario-results scenario-logic-grid">
-          <div className="scenario-result">
-            <div className="sr-label">Base case</div>
-            <div className="sr-value">Current committed and forecast rows drive the running balance path.</div>
-          </div>
-          <div className="scenario-result">
-            <div className="sr-label">Bull case</div>
-            <div className="sr-value">Two new clients per month create THB 30,000 monthly cash after a 2-month credit term.</div>
-          </div>
-          <div className="scenario-result">
-            <div className="sr-label">Bear case</div>
-            <div className="sr-value">Forecast sponsor/client inflows move one month later. Ad revenue is kept on schedule.</div>
-          </div>
+        <h3>วิธีคิด Scenario</h3>
+        <div className="table-scroll">
+          <table className="scenario-logic-table">
+            <thead>
+              <tr>
+                <th>กรณี</th>
+                <th>นับอะไร</th>
+                <th>ปรับอะไรเพิ่ม</th>
+                <th>ใช้ดูอะไร</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ฐาน</td>
+                <td>Committed + Forecast ที่ไม่ Cancelled</td>
+                <td>ไม่ปรับเพิ่ม</td>
+                <td>เงินสดตามแผนปัจจุบัน</td>
+              </tr>
+              <tr>
+                <td>ดี</td>
+                <td>เหมือนกรณีฐาน</td>
+                <td>เพิ่มเงินเข้า THB 30,000 ต่อเดือน หลังเครดิตเทอม 2 เดือน</td>
+                <td>ถ้าปิดลูกค้าใหม่ได้ต่อเนื่อง</td>
+              </tr>
+              <tr>
+                <td>แย่</td>
+                <td>เหมือนกรณีฐาน</td>
+                <td>เลื่อนรายได้ลูกค้าทั้งหมดออกไป 1 เดือน ยกเว้นรายได้ ad</td>
+                <td>ถ้าลูกค้าจ่ายช้ากว่าแผน</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -395,18 +449,18 @@ export default function ScenarioPlannerSection() {
               </tr>
             </thead>
             <tbody>
-              {projection.map(row => (
+              {scenarioProjection.map(row => (
                 <tr key={row.month}>
                   <td>{row.month}</td>
                   <td style={{ color: tone(row.baseNet) }}>{money(row.baseNet)}</td>
-                  <td style={{ color: tone(row.baseBalance) }}>{money(row.baseBalance)}</td>
+                  <td style={{ color: tone(row.baseBalance ?? 0) }}>{money(row.baseBalance ?? 0)}</td>
                   <td style={{ color: tone(row.bullNet) }}>{money(row.bullNet)}</td>
-                  <td style={{ color: tone(row.bullBalance) }}>{money(row.bullBalance)}</td>
+                  <td style={{ color: tone(row.bullBalance ?? 0) }}>{money(row.bullBalance ?? 0)}</td>
                   <td style={{ color: tone(row.bearNet) }}>{money(row.bearNet)}</td>
-                  <td style={{ color: tone(row.bearBalance) }}>{money(row.bearBalance)}</td>
+                  <td style={{ color: tone(row.bearBalance ?? 0) }}>{money(row.bearBalance ?? 0)}</td>
                 </tr>
               ))}
-              {projection.length === 0 ? (
+              {scenarioProjection.length === 0 ? (
                 <tr>
                   <td colSpan={7}>No forecast rows available.</td>
                 </tr>

@@ -1283,6 +1283,22 @@ tr:hover td {
   border-radius: 8px;
 }
 
+.scenario-logic-table {
+  min-width: 760px;
+}
+
+.scenario-logic-table th,
+.scenario-logic-table td {
+  vertical-align: top;
+  white-space: normal;
+  line-height: 1.45;
+}
+
+.scenario-logic-table td:first-child {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
 .scenario-logic-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

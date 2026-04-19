@@ -423,16 +423,17 @@ Purpose:
 - Show current-situation cash projection based on the ledger's forecast running balance.
 - Show Base, Bull, and Bear ending cash.
 - Explain the scenario assumptions directly in the UI.
-- Show a line chart of Base, Bull, and Bear running balance by cash month.
+- Show a line chart with Actual History first, then Base, Bull, and Bear running balance.
 - Show a scenario insight rail with final spread, ending cash by case, first negative cash month, and lowest Bear balance.
-- Show projected running balance by cash month.
+- Show projected running balance by the same month basis used by `CashFlowChart`: transaction `Work Month`, falling back to `month` during normalization.
 
 Scenario logic:
 
 - `Base case`: uses current `Committed` and `Forecast` rows as the expected cash path.
 - `Bull case`: adds THB 30,000 cash inflow every month starting two months after the latest actual cash month, representing two new clients closed per month with a two-month credit term.
-- `Bear case`: shifts forecast sponsor/client inflows by one month while leaving ad revenue timing unchanged.
-- All scenario rows use cash month from transaction `Date` where available, falling back to `Work Month`.
+- `Bear case`: shifts all future non-ad customer revenue inflows by one month while leaving ad revenue timing unchanged.
+- Scenario chart month basis must match `CashFlowChart`: use normalized `Work Month`, not transaction `Date`.
+- Scenario UI should explain Base, Bull, and Bear in a short comparison table, not long paragraphs.
 - The old break-even/slider based Scenario Plan and What-If Cash Scenario Analysis were removed because they were less useful for this operating model.
 
 ### 7.5 Ledger
@@ -1128,8 +1129,8 @@ Weighted Pipeline = SUM(weightedValue)
 ### 14.13 Current Situation Cash Scenario
 
 ```text
-startingCash = latest actual running balance
-cashMonth = transaction Date month, falling back to Work Month
+startingCash = latest actual running balance on the latest actual Work Month
+scenarioMonth = normalized Work Month, matching CashFlowChart
 
 Base Net = SUM(committed/forecast inflows) - SUM(committed/forecast outflows)
 Base Balance = previous Base Balance + Base Net
@@ -1137,7 +1138,7 @@ Base Balance = previous Base Balance + Base Net
 Bull Net = Base Net + 30000 starting two months after latest actual cash month
 Bull Balance = previous Bull Balance + Bull Net
 
-Bear Net = Base Net with forecast sponsor/client inflows shifted one month later
+Bear Net = Base Net with all future non-ad customer revenue inflows shifted one month later
 Bear Balance = previous Bear Balance + Bear Net
 ```
 
