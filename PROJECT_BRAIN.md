@@ -423,6 +423,7 @@ Purpose:
 - Show current-situation cash projection based on the ledger's forecast running balance.
 - Show Base, Bull, and Bear ending cash.
 - Explain the scenario assumptions directly in the UI.
+- Show a line chart of Base, Bull, and Bear running balance by cash month.
 - Show projected running balance by cash month.
 
 Scenario logic:
@@ -1157,6 +1158,7 @@ Currently active/newer charts:
 
 - `CashFlowChart`
 - `RevenueTrendChart`
+- Scenario running balance chart inside `components/sections/ScenarioPlannerSection.tsx`
 
 Legacy chart components have been removed from the source tree after import checks and a build pass.
 

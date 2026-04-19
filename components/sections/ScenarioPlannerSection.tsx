@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { fmt } from '@/lib/dataUtils';
+import { chartDefaults } from '@/lib/chartDefaults';
 import { getCurrentCash, normalizeTransactions } from '@/lib/dashboardMetrics';
 import type { NormalizedTransaction } from '@/lib/types';
 
@@ -117,12 +119,92 @@ function tone(value: number): string {
   return 'var(--text-muted)';
 }
 
+function monthLabel(month: string): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' }).format(new Date(`${month}-01`));
+}
+
 export default function ScenarioPlannerSection() {
   const { rawData, openingBalance } = useDashboard();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<Chart | null>(null);
   const normalized = useMemo(() => normalizeTransactions(rawData), [rawData]);
   const projection = useMemo(() => buildScenarioProjection(normalized, openingBalance), [normalized, openingBalance]);
   const latest = projection.at(-1);
   const startingCash = getCurrentCash(normalized, openingBalance);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    chartRef.current?.destroy();
+
+    chartRef.current = new Chart(canvasRef.current, {
+      type: 'line',
+      data: {
+        labels: projection.map(row => monthLabel(row.month)),
+        datasets: [
+          {
+            label: 'Base Case',
+            data: projection.map(row => row.baseBalance),
+            borderColor: '#d97706',
+            backgroundColor: 'rgba(217,119,6,0.10)',
+            pointBackgroundColor: '#d97706',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 3,
+            tension: 0.35,
+          },
+          {
+            label: 'Bull Case',
+            data: projection.map(row => row.bullBalance),
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22,163,74,0.10)',
+            pointBackgroundColor: '#16a34a',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 3,
+            tension: 0.35,
+          },
+          {
+            label: 'Bear Case',
+            data: projection.map(row => row.bearBalance),
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220,38,38,0.10)',
+            pointBackgroundColor: '#dc2626',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 3,
+            tension: 0.35,
+          },
+        ],
+      },
+      options: {
+        ...chartDefaults,
+        plugins: {
+          ...chartDefaults.plugins,
+          tooltip: {
+            ...((chartDefaults.plugins as Record<string, unknown>)?.tooltip as object),
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${money(Number((ctx.parsed as { y?: number }).y ?? ctx.raw))}`,
+            },
+          },
+        },
+        scales: {
+          ...(chartDefaults.scales as Record<string, unknown>),
+          y: {
+            ...((chartDefaults.scales as Record<string, unknown>)?.y as object),
+            ticks: {
+              color: '#344054',
+              font: { family: 'Inter', size: 11 },
+              callback: value => `THB ${Number(value) >= 1000 ? `${(Number(value) / 1000).toFixed(0)}K` : value}`,
+            },
+          },
+        },
+      } as ChartOptions,
+    });
+
+    return () => {
+      chartRef.current?.destroy();
+    };
+  }, [projection]);
 
   return (
     <div className="page-stack">
@@ -164,6 +246,18 @@ export default function ScenarioPlannerSection() {
             <div className="sr-label">Bear case logic</div>
             <div className="sr-value">Delays forecast sponsor/client inflows by 1 month. Ad revenue rows are not delayed.</div>
           </div>
+        </div>
+      </div>
+
+      <div className="chart-card full-width">
+        <div className="chart-header">
+          <div>
+            <div className="chart-title">Scenario Running Balance</div>
+            <div className="chart-subtitle">Base, Bull, and Bear cash balance by cash month</div>
+          </div>
+        </div>
+        <div className="chart-wrapper tall">
+          <canvas ref={canvasRef} />
         </div>
       </div>
 
