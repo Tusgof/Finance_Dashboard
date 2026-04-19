@@ -400,6 +400,13 @@ Purpose:
 - Show monthly P&L table.
 - Show monthly production summary table.
 
+KPI card selection rules:
+
+- `Cost per Content` uses the latest month that has a usable production count. It does not blindly use the latest future forecast month.
+- `Headcount Cost Ratio` uses the latest month with both revenue and tracked people cost.
+- `Forecast Accuracy` remains `N/A` until forecast rows become actual rows that preserve `Original Forecast`.
+- `Latest Cash After CapEx` uses the latest month with actual transactions, falling back to the latest P&L row only if there are no actual months.
+
 Key formulas:
 
 - `buildMonthlyPnLRows`
@@ -1063,6 +1070,8 @@ People Cost = SUM(outflow amount where person is not blank)
 Headcount Cost Ratio = People Cost / Revenue
 ```
 
+The P&L KPI card shows the latest month where both revenue and people cost are present, so future forecast months without complete attribution do not display as a misleading `0.0%`.
+
 ### 14.9 Actual Vs Forecast Variance
 
 ```text
@@ -1095,6 +1104,8 @@ If no actual rows with original forecast:
 Forecast Accuracy = N/A
 ```
 
+This is expected during the initial rollout of `Original Forecast`. The metric starts once a forecasted row is converted to actual while keeping its original forecast amount.
+
 ### 14.11 Cost Per Content
 
 ```text
@@ -1104,6 +1115,8 @@ if summary missing or totalContent <= 0:
 else:
   Cost per Content = pnlRow.cogs / summary.totalContent
 ```
+
+The P&L KPI card searches for the latest month with a usable production count instead of using the latest chronological month.
 
 ### 14.12 Weighted Pipeline
 

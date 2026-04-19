@@ -21,10 +21,20 @@ export default function PnLCostSection() {
 
   const normalized = useMemo(() => normalizeTransactions(rawData, settings), [rawData, settings]);
   const pnlRows = useMemo(() => buildMonthlyPnLRows(normalized, settings), [normalized, settings]);
-  const latestRow = pnlRows.at(-1);
+  const actualMonths = useMemo(
+    () => new Set(normalized.filter(row => row.status === 'Actual').map(row => row.workMonth)),
+    [normalized]
+  );
+  const latestActualRow = [...pnlRows].reverse().find(row => actualMonths.has(row.month)) ?? pnlRows.at(-1);
+  const latestCostPerContentRow = [...pnlRows]
+    .reverse()
+    .find(row => calculateCostPerContent(row, productionSummary) !== null);
+  const latestHeadcountRow = [...pnlRows]
+    .reverse()
+    .find(row => row.revenue > 0 && row.peopleCost > 0);
   const forecastAccuracy = calculateForecastAccuracy(normalized);
-  const latestCostPerContent = latestRow ? calculateCostPerContent(latestRow, productionSummary) : null;
-  const latestCashAfterCapEx = latestRow ? latestRow.cashAfterCapEx : 0;
+  const latestCostPerContent = latestCostPerContentRow ? calculateCostPerContent(latestCostPerContentRow, productionSummary) : null;
+  const latestCashAfterCapEx = latestActualRow ? latestActualRow.cashAfterCapEx : 0;
 
   return (
     <div className="page-stack">
@@ -32,24 +42,24 @@ export default function PnLCostSection() {
         <div className="health-card">
           <div className="health-label">Cost per Content</div>
           <div className="health-value">{latestCostPerContent !== null ? `฿${fmt(latestCostPerContent)}` : 'N/A'}</div>
-          <div className="health-status amber"><span className="health-dot amber"></span>Latest month with production count</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>{latestCostPerContentRow ? `${latestCostPerContentRow.month} with production count` : 'Requires a production count'}</div>
         </div>
         <div className="health-card">
           <div className="health-label">Headcount Cost Ratio</div>
-          <div className="health-value">{latestRow?.headcountCostRatio !== null && latestRow?.headcountCostRatio !== undefined ? `${(latestRow.headcountCostRatio * 100).toFixed(1)}%` : 'N/A'}</div>
-          <div className="health-status green"><span className="health-dot green"></span>Total people cost / revenue</div>
+          <div className="health-value">{latestHeadcountRow?.headcountCostRatio !== null && latestHeadcountRow?.headcountCostRatio !== undefined ? `${(latestHeadcountRow.headcountCostRatio * 100).toFixed(1)}%` : 'N/A'}</div>
+          <div className="health-status green"><span className="health-dot green"></span>{latestHeadcountRow ? `${latestHeadcountRow.month} people cost / revenue` : 'Requires revenue and people cost'}</div>
         </div>
         <div className="health-card">
           <div className="health-label">Forecast Accuracy</div>
           <div className="health-value">{forecastAccuracy !== null ? `${(forecastAccuracy * 100).toFixed(1)}%` : 'N/A'}</div>
-          <div className="health-status amber"><span className="health-dot amber"></span>Requires actual rows with original forecast</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>{forecastAccuracy !== null ? 'Actual rows with original forecast' : 'Starts after forecast rows become actual'}</div>
         </div>
         <div className="health-card">
           <div className="health-label">Latest Cash After CapEx</div>
           <div className="health-value" style={{ color: latestCashAfterCapEx >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
             ฿{fmt(latestCashAfterCapEx)}
           </div>
-          <div className="health-status amber"><span className="health-dot amber"></span>Operating profit less CapEx</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>{latestActualRow ? `${latestActualRow.month} operating profit less CapEx` : 'Operating profit less CapEx'}</div>
         </div>
       </div>
 
