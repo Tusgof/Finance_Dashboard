@@ -552,7 +552,7 @@
       "balance": 130131.19999999998
     },
     {
-      "date": "2569-02-15",
+      "date": "2026-02-15",
       "workMonth": "2026-02",
       "month": "2026-02",
       "type": "Inflow",
@@ -2395,7 +2395,7 @@
       "balance": 66297.76000000002
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2414,7 +2414,7 @@
       "balance": 53297.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2433,7 +2433,7 @@
       "balance": 45297.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2452,7 +2452,7 @@
       "balance": 40297.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2471,7 +2471,7 @@
       "balance": 32297.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2490,7 +2490,7 @@
       "balance": 30497.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2509,7 +2509,7 @@
       "balance": 25297.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2528,7 +2528,7 @@
       "balance": 24097.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2547,7 +2547,7 @@
       "balance": 21497.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2566,7 +2566,7 @@
       "balance": 19597.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2585,7 +2585,7 @@
       "balance": 12322.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2604,7 +2604,7 @@
       "balance": 3592.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2623,7 +2623,7 @@
       "balance": 2574.760000000024
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2642,7 +2642,7 @@
       "balance": 634.7600000000239
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2661,7 +2661,7 @@
       "balance": -1838.2399999999761
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2680,7 +2680,7 @@
       "balance": -4748.239999999976
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2699,7 +2699,7 @@
       "balance": -5401.509999999977
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2718,7 +2718,7 @@
       "balance": -6054.779999999977
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2737,7 +2737,7 @@
       "balance": -6708.049999999977
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-07-01",
       "workMonth": "2026-06",
       "month": "2026-06",
       "type": "Outflow",
@@ -2959,13 +2959,13 @@
     }
   ],
   "snapshotMeta": {
-    "capturedAt": "2026-04-19T12:04:50.591Z",
+    "capturedAt": "2026-04-19T14:07:17.934Z",
     "sourceLabel": "Google Sheets export snapshot",
     "sourceKind": "snapshot",
-    "sourceUrl": "https://doc-04-2c-sheets.googleusercontent.com/export/54bogvaave6cua4cdnls17ksc4/89tf33k5g9tu3l086nso22ereg/1776600290000/100561210597187986812/*/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8?format=csv&gid=0"
+    "sourceUrl": "https://doc-04-2c-sheets.googleusercontent.com/export/54bogvaave6cua4cdnls17ksc4/9j9oam4njn06vjg9pruibam5k8/1776607635000/100561210597187986812/*/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8?format=csv&gid=0"
   },
   "validationReport": {
-    "generatedAt": "2026-04-19T12:04:50.595Z",
+    "generatedAt": "2026-04-19T14:07:17.947Z",
     "renderingReady": true,
     "managementReady": true,
     "renderingWarnings": [],
