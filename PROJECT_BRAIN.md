@@ -309,7 +309,6 @@ components/
   Header.tsx
   HealthCards.tsx
   KpiGrid.tsx
-  ScenarioPanel.tsx
   TransactionTable.tsx
   VideoProductionSection.tsx
 
@@ -421,19 +420,18 @@ Component:
 
 Purpose:
 
-- Show break-even revenue.
-- Show best/base/worst ending cash.
-- Show scenario forecast chart.
-- Show what-if sliders.
+- Show current-situation cash projection based on the ledger's forecast running balance.
+- Show Base, Bull, and Bear ending cash.
+- Explain the scenario assumptions directly in the UI.
+- Show projected running balance by cash month.
 
-Key components:
+Scenario logic:
 
-- `components/charts/ScenarioForecastChart.tsx`
-- `components/ScenarioPanel.tsx`
-
-Key formula:
-
-- `buildScenarioForecast`
+- `Base case`: uses current `Committed` and `Forecast` rows as the expected cash path.
+- `Bull case`: adds THB 30,000 cash inflow every month starting two months after the latest actual cash month, representing two new clients closed per month with a two-month credit term.
+- `Bear case`: shifts forecast sponsor/client inflows by one month while leaving ad revenue timing unchanged.
+- All scenario rows use cash month from transaction `Date` where available, falling back to `Work Month`.
+- The old break-even/slider based Scenario Plan and What-If Cash Scenario Analysis were removed because they were less useful for this operating model.
 
 ### 7.5 Ledger
 
@@ -1125,26 +1123,25 @@ weightedValue = explicit weightedValue OR dealValue * probability / 100
 Weighted Pipeline = SUM(weightedValue)
 ```
 
-### 14.13 Scenario Forecast
+### 14.13 Current Situation Cash Scenario
 
 ```text
-monthlyRows = buildMonthlyPnLRows(...)
-recent = last scenario.breakEvenLookbackMonths rows
-avgOutflow = AVG(COGS + OpEx + CapEx)
-avgRevenue = AVG(Revenue)
-currentCash = getCurrentCash(...)
+startingCash = latest actual running balance
+cashMonth = transaction Date month, falling back to Work Month
 
-breakEvenRevenue = avgOutflow
+Base Net = SUM(committed/forecast inflows) - SUM(committed/forecast outflows)
+Base Balance = previous Base Balance + Base Net
 
-baseMonthlyNet = avgRevenue - avgOutflow
-baseEndingCash = currentCash + baseMonthlyNet * projectionMonths
+Bull Net = Base Net + 30000 starting two months after latest actual cash month
+Bull Balance = previous Bull Balance + Bull Net
 
-bestInflow = avgRevenue * (1 + bestCaseRevenueLiftPct / 100)
-bestEndingCash = currentCash + (bestInflow - avgOutflow) * projectionMonths
-
-worstInflow = avgRevenue * (1 - worstCaseRevenueHaircutPct / 100)
-worstEndingCash = currentCash + (worstInflow - avgOutflow) * projectionMonths
+Bear Net = Base Net with forecast sponsor/client inflows shifted one month later
+Bear Balance = previous Bear Balance + Bear Net
 ```
+
+Bear case exclusion:
+
+- Ad revenue timing is not shifted. Rows whose sponsor/subcategory/description/note include ad-related terms such as `ad`, `ads`, `facebook`, `meta`, or `tiktok` remain in their original cash month.
 
 ## 15. Chart Inventory
 
@@ -1160,7 +1157,6 @@ Currently active/newer charts:
 
 - `CashFlowChart`
 - `RevenueTrendChart`
-- `ScenarioForecastChart`
 
 Legacy chart components have been removed from the source tree after import checks and a build pass.
 

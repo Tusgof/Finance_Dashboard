@@ -278,28 +278,3 @@ export function calculateCostPerContent(
 export function calculateWeightedPipeline(deals: SponsorPipelineDeal[]): number {
   return deals.reduce((sum, deal) => sum + (deal.weightedValue ?? deal.dealValue * (deal.probability / 100)), 0);
 }
-
-export function buildScenarioForecast(
-  data: NormalizedTransaction[],
-  openingBalance: number,
-  settings?: DashboardSettings | null
-) {
-  const resolved = resolveSettings(settings);
-  const monthlyRows = buildMonthlyPnLRows(data, resolved);
-  const recent = monthlyRows.slice(-resolved.scenario.breakEvenLookbackMonths);
-  const avgOutflow = recent.length > 0 ? recent.reduce((sum, row) => sum + row.cogs + row.opEx + row.capEx, 0) / recent.length : 0;
-  const avgRevenue = recent.length > 0 ? recent.reduce((sum, row) => sum + row.revenue, 0) / recent.length : 0;
-  const currentCash = getCurrentCash(data, openingBalance);
-
-  const baseInflow = avgRevenue;
-  const baseOutflow = avgOutflow;
-  const bestInflow = avgRevenue * (1 + resolved.scenario.bestCaseRevenueLiftPct / 100);
-  const worstInflow = avgRevenue * (1 - resolved.scenario.worstCaseRevenueHaircutPct / 100);
-
-  return {
-    breakEvenRevenue: avgOutflow,
-    base: { monthlyNet: baseInflow - baseOutflow, endingCash: currentCash + (baseInflow - baseOutflow) * resolved.scenario.projectionMonths },
-    best: { monthlyNet: bestInflow - baseOutflow, endingCash: currentCash + (bestInflow - baseOutflow) * resolved.scenario.projectionMonths },
-    worst: { monthlyNet: worstInflow - baseOutflow, endingCash: currentCash + (worstInflow - baseOutflow) * resolved.scenario.projectionMonths },
-  };
-}
