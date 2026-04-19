@@ -24,7 +24,7 @@ export default function PnLCostSection() {
   const latestRow = pnlRows.at(-1);
   const forecastAccuracy = calculateForecastAccuracy(normalized);
   const latestCostPerContent = latestRow ? calculateCostPerContent(latestRow, productionSummary) : null;
-  const latestNetProfit = latestRow ? latestRow.operatingProfit - latestRow.capEx : 0;
+  const latestCashAfterCapEx = latestRow ? latestRow.cashAfterCapEx : 0;
 
   return (
     <div className="page-stack">
@@ -45,17 +45,17 @@ export default function PnLCostSection() {
           <div className="health-status amber"><span className="health-dot amber"></span>Requires actual rows with original forecast</div>
         </div>
         <div className="health-card">
-          <div className="health-label">Latest Net Profit</div>
-          <div className="health-value" style={{ color: latestNetProfit >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
-            ฿{fmt(latestNetProfit)}
+          <div className="health-label">Latest Cash After CapEx</div>
+          <div className="health-value" style={{ color: latestCashAfterCapEx >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+            ฿{fmt(latestCashAfterCapEx)}
           </div>
-          <div className="health-status amber"><span className="health-dot amber"></span>Operating profit minus CapEx</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>Operating profit less CapEx</div>
         </div>
       </div>
 
       <div className="table-card">
         <div className="table-header">
-          <h3>Monthly P&amp;L</h3>
+          <h3>Monthly Cash P&amp;L</h3>
         </div>
         <div className="table-scroll">
           <table>
@@ -68,35 +68,33 @@ export default function PnLCostSection() {
                 <th>Gross Margin</th>
                 <th>OpEx</th>
                 <th>CapEx</th>
-                <th>Net Profit</th>
-                <th>Net Margin</th>
+                <th>Cash After CapEx</th>
+                <th>Cash Margin</th>
                 <th>Headcount Ratio</th>
-                <th>Variance %</th>
+                <th>Revenue Var %</th>
+                <th>Cost Var %</th>
               </tr>
             </thead>
             <tbody>
-              {pnlRows.map(row => {
-                const netProfit = row.operatingProfit - row.capEx;
-                const netMargin = row.revenue > 0 ? (netProfit / row.revenue) * 100 : null;
-                return (
-                  <tr key={row.month}>
-                    <td>{row.month}</td>
-                    <td>฿{fmt(row.revenue)}</td>
-                    <td>฿{fmt(row.cogs)}</td>
-                    <td>฿{fmt(row.grossProfit)}</td>
-                    <td>{row.grossMarginPct !== null ? `${row.grossMarginPct.toFixed(1)}%` : 'N/A'}</td>
-                    <td>฿{fmt(row.opEx)}</td>
-                    <td>฿{fmt(row.capEx)}</td>
-                    <td style={{ color: netProfit >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>฿{fmt(netProfit)}</td>
-                    <td>{netMargin !== null ? `${netMargin.toFixed(1)}%` : 'N/A'}</td>
-                    <td>{row.headcountCostRatio !== null ? `${(row.headcountCostRatio * 100).toFixed(1)}%` : 'N/A'}</td>
-                    <td>{row.variancePct !== null ? `${row.variancePct.toFixed(1)}%` : 'N/A'}</td>
-                  </tr>
-                );
-              })}
+              {pnlRows.map(row => (
+                <tr key={row.month}>
+                  <td>{row.month}</td>
+                  <td>฿{fmt(row.revenue)}</td>
+                  <td>฿{fmt(row.cogs)}</td>
+                  <td>฿{fmt(row.grossProfit)}</td>
+                  <td>{row.grossMarginPct !== null ? `${row.grossMarginPct.toFixed(1)}%` : 'N/A'}</td>
+                  <td>฿{fmt(row.opEx)}</td>
+                  <td>฿{fmt(row.capEx)}</td>
+                  <td style={{ color: row.cashAfterCapEx >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>฿{fmt(row.cashAfterCapEx)}</td>
+                  <td>{row.cashMarginPct !== null ? `${row.cashMarginPct.toFixed(1)}%` : 'N/A'}</td>
+                  <td>{row.headcountCostRatio !== null ? `${(row.headcountCostRatio * 100).toFixed(1)}%` : 'N/A'}</td>
+                  <td>{row.revenueVariancePct !== null ? `${row.revenueVariancePct.toFixed(1)}%` : 'N/A'}</td>
+                  <td>{row.costVariancePct !== null ? `${row.costVariancePct.toFixed(1)}%` : 'N/A'}</td>
+                </tr>
+              ))}
               {pnlRows.length === 0 ? (
                 <tr>
-                  <td colSpan={11}>No transaction data available.</td>
+                  <td colSpan={12}>No transaction data available.</td>
                 </tr>
               ) : null}
             </tbody>

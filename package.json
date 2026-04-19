@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:finance": "tsc -p tsconfig.test.json && node .test-dist/tests/financeDashboard.test.js"
   },
   "dependencies": {
     "next": "14.2.5",

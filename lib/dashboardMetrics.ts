@@ -6,7 +6,7 @@ import type {
   NormalizedTransaction,
   ProductionSummaryRow,
   SponsorPipelineDeal,
-  Transaction,
+  RawTransactionRow,
   TransactionStatus,
 } from './types';
 
@@ -28,7 +28,7 @@ function normalizeStatus(value?: string): TransactionStatus {
   return 'Forecast';
 }
 
-function inferMainCategory(tx: Transaction): MainCategory {
+function inferMainCategory(tx: RawTransactionRow): MainCategory {
   if (tx.mainCategory) return tx.mainCategory;
 
   const legacy = (tx.category || '').toLowerCase();
@@ -38,7 +38,7 @@ function inferMainCategory(tx: Transaction): MainCategory {
   return 'OpEx';
 }
 
-function inferCostBehavior(tx: Transaction, settings: DashboardSettings): CostBehavior {
+function inferCostBehavior(tx: RawTransactionRow, settings: DashboardSettings): CostBehavior {
   if (tx.costBehavior === 'Fixed' || tx.costBehavior === 'Variable') return tx.costBehavior;
   const desc = tx.desc || tx.subCategory || '';
   const bucket = settings.costClassification;
@@ -46,21 +46,21 @@ function inferCostBehavior(tx: Transaction, settings: DashboardSettings): CostBe
   return 'Variable';
 }
 
-function inferSponsor(tx: Transaction, settings: DashboardSettings): string {
+function inferSponsor(tx: RawTransactionRow, settings: DashboardSettings): string {
   if (tx.sponsor?.trim()) return tx.sponsor.trim();
   if (tx.type !== 'Inflow') return '';
   const label = getRevenueSourceLabel(tx.desc || '', settings);
   return label === 'Other' ? '' : label;
 }
 
-function inferPerson(tx: Transaction, settings: DashboardSettings): string {
+function inferPerson(tx: RawTransactionRow, settings: DashboardSettings): string {
   if (tx.person?.trim()) return tx.person.trim();
   const desc = tx.desc || '';
   return settings.costClassification.peopleCostKeywords.some(keyword => desc.includes(keyword)) ? desc : '';
 }
 
 export function normalizeTransactions(
-  rawData: Transaction[],
+  rawData: RawTransactionRow[],
   settings?: DashboardSettings | null
 ): NormalizedTransaction[] {
   const resolved = resolveSettings(settings);
@@ -185,7 +185,13 @@ export function getCashAlerts(
 export interface MonthlyPnLRow {
   month: string;
   revenue: number;
+  revenueForecast: number;
+  revenueVariance: number;
+  revenueVariancePct: number | null;
   cogs: number;
+  costForecast: number;
+  costVariance: number;
+  costVariancePct: number | null;
   grossProfit: number;
   grossMarginPct: number | null;
   opEx: number;
@@ -194,9 +200,8 @@ export interface MonthlyPnLRow {
   capEx: number;
   peopleCost: number;
   headcountCostRatio: number | null;
-  actualAmount: number;
-  originalForecast: number;
-  variancePct: number | null;
+  cashAfterCapEx: number;
+  cashMarginPct: number | null;
 }
 
 export function buildMonthlyPnLRows(
@@ -208,6 +213,13 @@ export function buildMonthlyPnLRows(
 
   return Object.keys(byMonth).sort().map((month) => {
     const rows = byMonth[month].filter(row => row.status !== 'Cancelled');
+    const actualRows = rows.filter(row => row.status === 'Actual');
+    const actualRevenueRows = actualRows.filter(row => row.type === 'Inflow');
+    const actualCostRows = actualRows.filter(row => row.type === 'Outflow');
+    const actualRevenue = actualRevenueRows.reduce((sum, row) => sum + row.amount, 0);
+    const actualCost = actualCostRows.reduce((sum, row) => sum + row.amount, 0);
+    const revenueForecast = actualRevenueRows.reduce((sum, row) => sum + (Number(row.originalForecast) || 0), 0);
+    const costForecast = actualCostRows.reduce((sum, row) => sum + (Number(row.originalForecast) || 0), 0);
     const revenue = rows.filter(row => row.type === 'Inflow').reduce((sum, row) => sum + row.amount, 0);
     const cogs = rows.filter(row => row.type === 'Outflow' && row.mainCategory === 'COGS').reduce((sum, row) => sum + row.amount, 0);
     const opEx = rows.filter(row => row.type === 'Outflow' && row.mainCategory === 'OpEx').reduce((sum, row) => sum + row.amount, 0);
@@ -215,15 +227,22 @@ export function buildMonthlyPnLRows(
     const peopleCost = rows
       .filter(row => row.type === 'Outflow' && row.person)
       .reduce((sum, row) => sum + row.amount, 0);
-    const actualAmount = rows.filter(row => row.status === 'Actual').reduce((sum, row) => sum + row.amount * (row.type === 'Inflow' ? 1 : -1), 0);
-    const originalForecast = rows.reduce((sum, row) => sum + row.originalForecast, 0);
     const grossProfit = revenue - cogs;
     const operatingProfit = grossProfit - opEx;
+    const cashAfterCapEx = operatingProfit - capEx;
 
     return {
       month,
       revenue,
+      revenueForecast,
+      revenueVariance: actualRevenue - revenueForecast,
+      revenueVariancePct: revenueForecast > 0 ? ((actualRevenue - revenueForecast) / revenueForecast) * 100 : null,
       cogs,
+      costForecast,
+      costVariance: actualCost - costForecast,
+      costVariancePct: costForecast > 0
+        ? ((actualCost - costForecast) / costForecast) * 100
+        : null,
       grossProfit,
       grossMarginPct: revenue > 0 ? (grossProfit / revenue) * 100 : null,
       opEx,
@@ -232,9 +251,8 @@ export function buildMonthlyPnLRows(
       capEx,
       peopleCost,
       headcountCostRatio: revenue > 0 ? peopleCost / revenue : null,
-      actualAmount,
-      originalForecast,
-      variancePct: originalForecast > 0 ? ((actualAmount - originalForecast) / originalForecast) * 100 : null,
+      cashAfterCapEx,
+      cashMarginPct: revenue > 0 ? (cashAfterCapEx / revenue) * 100 : null,
     };
   });
 }

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import SettingsClient from './SettingsClient';
 
 export const metadata: Metadata = {
-  title: 'Settings | EasyMoneyConcept',
+  title: 'Settings | Finance Dashboard',
   description: 'Edit dashboard rules, thresholds, and scenario defaults.',
 };
 

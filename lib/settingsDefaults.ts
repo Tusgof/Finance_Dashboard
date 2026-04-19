@@ -1,9 +1,15 @@
 import type { DashboardSettings } from './types';
 
 export const SHEET_ID = '1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8';
+export const SHEET_GIDS = {
+  transactions: '0',
+  monthlyProductionSummary: '1557377060',
+  sponsorPipeline: '931890610',
+  lists: '601994452',
+} as const;
 
-export function buildCsvExportUrl(sheetId: string): string {
-  return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+export function buildCsvExportUrl(sheetId: string, gid = SHEET_GIDS.transactions): string {
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 }
 
 export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {

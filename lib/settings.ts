@@ -207,7 +207,11 @@ function normalizeRefreshConfig(value: unknown, fallback: RefreshSourceConfig): 
   }
 
   const sheetId = normalizeString(value.sheetId, fallback.sheetId || SHEET_ID);
-  const csvExportUrl = normalizeString(value.csvExportUrl, buildCsvExportUrl(sheetId));
+  const legacyDefaultCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+  const rawCsvExportUrl = normalizeString(value.csvExportUrl, buildCsvExportUrl(sheetId));
+  const csvExportUrl = rawCsvExportUrl === legacyDefaultCsvUrl
+    ? buildCsvExportUrl(sheetId)
+    : rawCsvExportUrl;
 
   return {
     sheetId,
@@ -246,6 +250,10 @@ function writeSettingsFile(settings: DashboardSettings): void {
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
 }
 
+function shouldPersistNormalizedSettings(): boolean {
+  return process.env.NEXT_PHASE !== 'phase-production-build';
+}
+
 export function loadSettings(): DashboardSettings {
   try {
     if (!fs.existsSync(SETTINGS_PATH)) {
@@ -261,7 +269,14 @@ export function loadSettings(): DashboardSettings {
       return defaults;
     }
 
-    return normalizeSettings(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const normalized = normalizeSettings(parsed);
+
+    if (shouldPersistNormalizedSettings() && JSON.stringify(parsed) !== JSON.stringify(normalized)) {
+      writeSettingsFile(normalized);
+    }
+
+    return normalized;
   } catch {
     const defaults = getDefaultSettings();
     try {

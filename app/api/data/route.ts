@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { loadSettings } from '@/lib/settings';
 import { normalizeDataFile } from '@/lib/transactionModel';
+import { buildLegacySnapshotMeta } from '@/lib/snapshotMeta';
 
 function readJson(filePath: string): unknown {
   if (!fs.existsSync(filePath)) return undefined;
@@ -13,6 +14,14 @@ function resolveDataPath(configuredPath: string): string {
   return path.isAbsolute(configuredPath)
     ? configuredPath
     : path.join(process.cwd(), configuredPath);
+}
+
+function buildFallbackSnapshotMeta(filePath: string) {
+  if (!fs.existsSync(filePath)) {
+    return buildLegacySnapshotMeta(filePath, 'Empty snapshot');
+  }
+
+  return buildLegacySnapshotMeta(filePath, 'Legacy snapshot file');
 }
 
 export async function GET() {
@@ -35,9 +44,10 @@ export async function GET() {
       ...record,
       productionSummary: readJson(productionSummaryPath) ?? record.productionSummary ?? [],
       sponsorPipeline: readJson(sponsorPipelinePath) ?? record.sponsorPipeline ?? [],
+      snapshotMeta: record.snapshotMeta ?? buildFallbackSnapshotMeta(currentPath),
     };
 
-    return NextResponse.json(normalizeDataFile(merged, settings));
+    return NextResponse.json(normalizeDataFile(merged, settings, buildFallbackSnapshotMeta(currentPath)));
   } catch {
     return NextResponse.json(
       normalizeDataFile(
@@ -46,8 +56,10 @@ export async function GET() {
           openingBalance: settings.refresh.fallbackOpeningBalance,
           productionSummary: [],
           sponsorPipeline: [],
+          snapshotMeta: buildFallbackSnapshotMeta(currentPath),
         },
-        settings
+        settings,
+        buildFallbackSnapshotMeta(currentPath)
       )
     );
   }

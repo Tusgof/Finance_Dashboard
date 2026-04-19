@@ -118,13 +118,13 @@ select {
   border: 1px solid transparent;
 }
 
-.status-live {
+.status-snapshot {
   background: var(--accent-green-bg);
   color: var(--accent-green);
   border-color: rgba(22, 163, 74, 0.18);
 }
 
-.status-live::before {
+.status-snapshot::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -134,12 +134,26 @@ select {
 
 .filters-bar {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
   flex-wrap: wrap;
   padding: 14px 32px;
   background: rgba(255, 255, 255, 0.97);
   border-bottom: 1px solid rgba(207, 216, 227, 0.85);
+}
+
+.filters-bar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filters-bar-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 
 .filter-btn {
@@ -202,6 +216,109 @@ select {
   min-width: 0;
   display: grid;
   gap: 20px;
+}
+
+.validation-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(217, 119, 6, 0.22);
+  background: rgba(255, 250, 243, 0.98);
+  box-shadow: var(--shadow-sm);
+}
+
+.validation-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.validation-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-amber);
+}
+
+.validation-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.validation-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.validation-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.validation-badge.ok {
+  color: var(--accent-green);
+  border-color: rgba(22, 163, 74, 0.22);
+  background: var(--accent-green-bg);
+}
+
+.validation-badge.warn {
+  color: var(--accent-amber);
+  border-color: rgba(217, 119, 6, 0.22);
+  background: var(--accent-amber-bg);
+}
+
+.validation-list {
+  display: grid;
+  gap: 8px;
+}
+
+.validation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.validation-more {
+  padding-left: 0;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.validation-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex: 0 0 auto;
+}
+
+.validation-pill.rendering {
+  color: var(--accent-blue);
+  background: var(--accent-blue-bg);
+}
+
+.validation-pill.management {
+  color: var(--accent-amber);
+  background: var(--accent-amber-bg);
 }
 
 .sidebar-block {

@@ -1,12 +1,17 @@
 import type {
   DashboardSettings,
   DataFile,
+  DataSnapshotMeta,
   ProductionSummaryRow,
   SponsorPipelineDeal,
+  ValidationIssue,
+  ValidationReport,
+  RawTransactionRow,
   Transaction,
   TransactionStatus,
   TransactionType,
 } from './types';
+import { normalizeSnapshotMeta } from './snapshotMeta';
 
 type RawRecord = Record<string, unknown>;
 
@@ -18,6 +23,9 @@ const VALID_ENTITIES: NonNullable<Transaction['entity']>[] = [
   'Finance',
   'Marketing',
 ];
+
+const VALID_STATUS_VALUES: TransactionStatus[] = ['Actual', 'Committed', 'Forecast', 'Cancelled'];
+const VALID_MAIN_CATEGORIES: NonNullable<Transaction['mainCategory']>[] = ['Revenue', 'COGS', 'OpEx', 'CapEx'];
 
 const CAPEX_KEYWORDS = ['capex', 'capital', 'asset', 'equipment', 'อุปกรณ์', 'ลงทุน'];
 const MARKETING_KEYWORDS = ['marketing', 'ads', 'facebook', 'meta', 'tiktok', 'โฆษณา'];
@@ -109,8 +117,37 @@ function normalizeMonth(value: unknown): string {
   return text.length >= 7 ? text.slice(0, 7) : '';
 }
 
+function isCanonicalDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isCanonicalMonth(value: string): boolean {
+  return /^\d{4}-\d{2}$/.test(value);
+}
+
 function containsAny(text: string, keywords: string[]): boolean {
   return keywords.some(keyword => keyword && text.includes(keyword.toLowerCase()));
+}
+
+function pushValidationIssue(issues: ValidationIssue[], issue: ValidationIssue): void {
+  issues.push(issue);
+}
+
+function buildManagementSupportIssue(
+  code: string,
+  sheetName: string,
+  message: string,
+  field?: string,
+  value?: string
+): ValidationIssue {
+  return {
+    code,
+    scope: 'management',
+    severity: 'warning',
+    message,
+    field: field || sheetName,
+    value,
+  };
 }
 
 function canonicalMainCategory(value: string): Transaction['mainCategory'] | undefined {
@@ -210,6 +247,59 @@ function normalizeCostBehavior(
   return 'Fixed';
 }
 
+function normalizeValidationReport(value: unknown): ValidationReport | undefined {
+  if (!isRecord(value)) return undefined;
+
+  const generatedAt = normalizeText(field(value, ['generatedAt', 'generated at'])) || new Date().toISOString();
+  const renderingWarnings = Array.isArray(field(value, ['renderingWarnings', 'rendering warnings']))
+    ? (field(value, ['renderingWarnings', 'rendering warnings']) as unknown[])
+        .filter(isRecord)
+        .map((item) => {
+          const row = item as RawRecord;
+          return {
+            code: normalizeText(row.code),
+            scope: 'rendering' as const,
+            severity: normalizeText(row.severity) === 'error' ? 'error' : 'warning',
+            message: normalizeText(row.message),
+            rowIndex: typeof row.rowIndex === 'number' ? row.rowIndex : undefined,
+            workMonth: normalizeText(row.workMonth) || undefined,
+            field: normalizeText(row.field) || undefined,
+            value: normalizeText(row.value) || undefined,
+          } satisfies ValidationIssue;
+        })
+        .filter(issue => issue.code && issue.message)
+    : [];
+
+  const managementWarnings = Array.isArray(field(value, ['managementWarnings', 'management warnings']))
+    ? (field(value, ['managementWarnings', 'management warnings']) as unknown[])
+        .filter(isRecord)
+        .map((item) => {
+          const row = item as RawRecord;
+          return {
+            code: normalizeText(row.code),
+            scope: 'management' as const,
+            severity: normalizeText(row.severity) === 'error' ? 'error' : 'warning',
+            message: normalizeText(row.message),
+            rowIndex: typeof row.rowIndex === 'number' ? row.rowIndex : undefined,
+            workMonth: normalizeText(row.workMonth) || undefined,
+            field: normalizeText(row.field) || undefined,
+            value: normalizeText(row.value) || undefined,
+          } satisfies ValidationIssue;
+        })
+        .filter(issue => issue.code && issue.message)
+    : [];
+
+  const issues = [...renderingWarnings, ...managementWarnings];
+  return {
+    generatedAt,
+    renderingReady: renderingWarnings.length === 0,
+    managementReady: managementWarnings.length === 0,
+    renderingWarnings,
+    managementWarnings,
+    issues,
+  };
+}
+
 function field(record: RawRecord, names: string[]): unknown {
   for (const name of names) {
     if (name in record) return record[name];
@@ -219,11 +309,300 @@ function field(record: RawRecord, names: string[]): unknown {
   return undefined;
 }
 
+function buildTransactionValidationIssues(
+  record: RawRecord,
+  normalized: Transaction,
+  rowIndex: number,
+  settings: DashboardSettings
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const dateRaw = normalizeText(field(record, ['Date', 'date']));
+  const dueDateRaw = normalizeText(field(record, ['Due Date', 'dueDate', 'due date']));
+  const workMonthRaw = normalizeText(field(record, ['Work Month', 'workMonth', 'work month', 'Month', 'month', 'month-year']));
+  const statusRaw = normalizeText(field(record, ['Status', 'status']));
+  const mainCategoryRaw = normalizeText(field(record, ['Main Category', 'mainCategory', 'main category', 'Category', 'category']));
+  const amountRaw = field(record, ['Amount', 'amount']);
+  const sponsorRaw = normalizeText(field(record, ['Sponsor', 'sponsor']));
+  const personRaw = normalizeText(field(record, ['Person', 'person']));
+  const costBehaviorRaw = normalizeText(field(record, ['Cost Behavior', 'costBehavior', 'cost behavior']));
+  const descriptionRaw = normalizeText(field(record, ['Description', 'description', 'Desc', 'desc']));
+  const subCategoryRaw = normalizeText(field(record, ['Sub Category', 'subCategory', 'sub category']));
+  const noteRaw = normalizeText(field(record, ['Note', 'note']));
+  const entityRaw = normalizeText(field(record, ['Entity', 'entity']));
+
+  const joinedText = [descriptionRaw, subCategoryRaw, sponsorRaw, personRaw, noteRaw, entityRaw]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (dateRaw && !isCanonicalDate(normalizeDate(dateRaw))) {
+    pushValidationIssue(issues, {
+      code: 'unsupported-date',
+      scope: 'rendering',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Date "${dateRaw}" is not in a supported format.`,
+      rowIndex,
+      field: 'Date',
+      value: dateRaw,
+    });
+  }
+
+  if (dueDateRaw && !isCanonicalDate(normalizeDate(dueDateRaw))) {
+    pushValidationIssue(issues, {
+      code: 'unsupported-date',
+      scope: 'rendering',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Due Date "${dueDateRaw}" is not in a supported format.`,
+      rowIndex,
+      field: 'Due Date',
+      value: dueDateRaw,
+    });
+  }
+
+  if (!workMonthRaw || !isCanonicalMonth(normalizeMonth(workMonthRaw))) {
+    pushValidationIssue(issues, {
+      code: 'missing-work-month',
+      scope: 'rendering',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Work Month is missing or not normalized to YYYY-MM.`,
+      rowIndex,
+      field: 'Work Month',
+      value: workMonthRaw || undefined,
+    });
+  }
+
+  const normalizedStatus = normalizeKey(statusRaw);
+  if (!normalizedStatus || !VALID_STATUS_VALUES.some(status => normalizeKey(status) === normalizedStatus)) {
+    pushValidationIssue(issues, {
+      code: 'invalid-status',
+      scope: 'management',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Status "${statusRaw || '(blank)'}" is not one of Actual, Committed, Forecast, or Cancelled.`,
+      rowIndex,
+      field: 'Status',
+      value: statusRaw || undefined,
+    });
+  }
+
+  const canonicalMainCategoryValue = canonicalMainCategory(mainCategoryRaw);
+  if (!canonicalMainCategoryValue || !VALID_MAIN_CATEGORIES.includes(canonicalMainCategoryValue)) {
+    pushValidationIssue(issues, {
+      code: 'invalid-main-category',
+      scope: 'management',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Main Category "${mainCategoryRaw || '(blank)'}" should be Revenue, COGS, OpEx, or CapEx.`,
+      rowIndex,
+      field: 'Main Category',
+      value: mainCategoryRaw || undefined,
+    });
+  }
+
+  if (normalized.type === 'Outflow' && !costBehaviorRaw) {
+    pushValidationIssue(issues, {
+      code: 'missing-cost-behavior',
+      scope: 'management',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Outflow rows should include a Cost Behavior before inference is used.`,
+      rowIndex,
+      field: 'Cost Behavior',
+    });
+  }
+
+  const parsedAmount = parseNumber(amountRaw, NaN);
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    pushValidationIssue(issues, {
+      code: 'invalid-amount',
+      scope: 'rendering',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Amount is blank or zero.`,
+      rowIndex,
+      field: 'Amount',
+      value: normalizeText(amountRaw),
+    });
+  }
+
+  if (normalized.mainCategory === 'Revenue' && !sponsorRaw) {
+    pushValidationIssue(issues, {
+      code: 'missing-sponsor',
+      scope: 'management',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Revenue rows should include a Sponsor.`,
+      rowIndex,
+      field: 'Sponsor',
+    });
+  }
+
+  const peopleCostKeywords = settings.costClassification.peopleCostKeywords.map(keyword => keyword.toLowerCase());
+  if (normalized.type === 'Outflow' && peopleCostKeywords.some(keyword => keyword && joinedText.includes(keyword)) && !personRaw) {
+    pushValidationIssue(issues, {
+      code: 'missing-person',
+      scope: 'management',
+      severity: 'warning',
+      message: `Row ${rowIndex}: People-cost outflows should include a Person.`,
+      rowIndex,
+      field: 'Person',
+    });
+  }
+
+  return issues;
+}
+
+function buildProductionSummaryValidationIssues(
+  transactions: Transaction[],
+  productionSummary: ProductionSummaryRow[]
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const cogsMonths = new Set(
+    transactions
+      .filter(row => row.type === 'Outflow' && row.mainCategory === 'COGS' && Boolean(row.workMonth))
+      .map(row => row.workMonth)
+      .filter((month): month is string => Boolean(month))
+  );
+  const summaryMonths = new Map(productionSummary.map(row => [row.workMonth, row]));
+
+  Array.from(cogsMonths).sort().forEach((month) => {
+    const summary = summaryMonths.get(month);
+    if (!summary || summary.totalContent <= 0) {
+      pushValidationIssue(issues, {
+        code: 'missing-production-summary',
+        scope: 'management',
+        severity: 'warning',
+        message: `Month ${month} has COGS rows but no usable Monthly Production Summary row.`,
+        workMonth: month,
+        field: 'Monthly Production Summary',
+      });
+    }
+  });
+
+  return issues;
+}
+
+type SupportSheetKind = 'production-summary' | 'sponsor-pipeline' | 'lists';
+
+function parseNonEmptyCsvRows(csv: string): string[][] {
+  return csv
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(parseCsvLine);
+}
+
+function hasHeaderFields(header: string[], requiredFields: string[]): boolean {
+  const headerSet = new Set(header.map(value => normalizeKey(value)));
+  return requiredFields.every(field => headerSet.has(normalizeKey(field)));
+}
+
+function buildSupportSheetHeaderIssue(sheetName: string, expectedShape: string): ValidationIssue {
+  return buildManagementSupportIssue(
+    'support-sheet-invalid-header',
+    sheetName,
+    `${sheetName} has an unexpected header. Expected ${expectedShape}.`,
+    sheetName
+  );
+}
+
+function buildSupportSheetEmptyIssue(sheetName: string, detail: string): ValidationIssue {
+  return buildManagementSupportIssue(
+    'support-sheet-empty',
+    sheetName,
+    `${sheetName} looks empty or incomplete: ${detail}.`,
+    sheetName
+  );
+}
+
+export function buildSupportSheetValidationIssues(
+  sheetName: string,
+  csv: string,
+  kind: SupportSheetKind
+): ValidationIssue[] {
+  const rows = parseNonEmptyCsvRows(csv);
+  if (rows.length === 0) {
+    return [buildSupportSheetEmptyIssue(sheetName, 'no usable rows were returned')];
+  }
+
+  const header = rows[0].map(value => normalizeText(value));
+  if (kind === 'production-summary') {
+    const expected = ['Work Month', 'Total Content', 'Organic Content', 'Sponsored Content'];
+    if (!hasHeaderFields(header, expected)) {
+      return [buildSupportSheetHeaderIssue(sheetName, expected.join(', '))];
+    }
+    const dataRows = rows.slice(1).filter(row => row.some(cell => normalizeText(cell)));
+    if (dataRows.length === 0) {
+      return [buildSupportSheetEmptyIssue(sheetName, 'no data rows were found after the header')];
+    }
+    return [];
+  }
+
+  if (kind === 'sponsor-pipeline') {
+    const expected = ['Sponsor', 'Deal Value', 'Status', 'Probability'];
+    if (!hasHeaderFields(header, expected)) {
+      return [buildSupportSheetHeaderIssue(sheetName, expected.join(', '))];
+    }
+    const dataRows = rows.slice(1).filter(row => row.some(cell => normalizeText(cell)));
+    if (dataRows.length === 0) {
+      return [buildSupportSheetEmptyIssue(sheetName, 'no sponsor pipeline entries were found after the header')];
+    }
+    return [];
+  }
+
+  const normalizedFirstRow = header.slice(0, 4).map(value => normalizeKey(value));
+  const matchesGenericHeader = ['a', 'b', 'c', 'd'].every((expected, index) => normalizedFirstRow[index] === expected);
+  const matchesCategoryHeader = ['revenue', 'cogs', 'opex', 'capex'].every((expected, index) => normalizedFirstRow[index] === expected);
+  if (!matchesGenericHeader && !matchesCategoryHeader) {
+    return [buildSupportSheetHeaderIssue(sheetName, 'A, B, C, D or Revenue, COGS, OpEx, CapEx')];
+  }
+
+  const optionStartIndex = matchesGenericHeader ? 2 : 1;
+  const optionCounts = [0, 0, 0, 0];
+  rows.slice(optionStartIndex).forEach((row) => {
+    optionCounts.forEach((count, index) => {
+      if (normalizeText(row[index])) {
+        optionCounts[index] = count + 1;
+      }
+    });
+  });
+
+  const missingColumns = optionCounts
+    .map((count, index) => (count > 0 ? '' : ['Revenue', 'COGS', 'OpEx', 'CapEx'][index]))
+    .filter(Boolean);
+  if (missingColumns.length > 0) {
+    return [buildSupportSheetEmptyIssue(sheetName, `no options were found under ${missingColumns.join(', ')}`)];
+  }
+
+  return [];
+}
+
+export function buildValidationReport(
+  transactionIssues: ValidationIssue[],
+  transactions: Transaction[],
+  productionSummary: ProductionSummaryRow[],
+  extraIssues: ValidationIssue[] = []
+): ValidationReport {
+  const issues = [
+    ...transactionIssues,
+    ...buildProductionSummaryValidationIssues(transactions, productionSummary),
+    ...extraIssues,
+  ];
+  const renderingWarnings = issues.filter(issue => issue.scope === 'rendering');
+  const managementWarnings = issues.filter(issue => issue.scope === 'management');
+
+  return {
+    generatedAt: new Date().toISOString(),
+    renderingReady: renderingWarnings.length === 0,
+    managementReady: managementWarnings.length === 0,
+    renderingWarnings,
+    managementWarnings,
+    issues,
+  };
+}
+
 export function normalizeTransactionRow(
   record: unknown,
   settings: DashboardSettings,
   fallbackStatus: TransactionStatus = 'Forecast'
-): Transaction | null {
+): RawTransactionRow | null {
   if (!isRecord(record)) return null;
 
   const dateRaw = field(record, ['Date', 'date']);
@@ -291,7 +670,7 @@ export function normalizeTransactionRow(
   };
 }
 
-function recomputeRunningBalances(transactions: Transaction[], openingBalance: number): Transaction[] {
+function recomputeRunningBalances(transactions: RawTransactionRow[], openingBalance: number): RawTransactionRow[] {
   let balance = openingBalance;
   return transactions.map(transaction => {
     if (transaction.status !== 'Cancelled') {
@@ -301,7 +680,7 @@ function recomputeRunningBalances(transactions: Transaction[], openingBalance: n
   });
 }
 
-function normalizeTransactions(value: unknown, settings: DashboardSettings): Transaction[] {
+function normalizeTransactions(value: unknown, settings: DashboardSettings): RawTransactionRow[] {
   if (!Array.isArray(value)) return [];
   const rows = value
     .map(item => normalizeTransactionRow(item, settings))
@@ -339,7 +718,77 @@ function normalizeSponsorPipelineDeal(value: unknown): SponsorPipelineDeal | nul
   };
 }
 
-export function normalizeDataFile(value: unknown, settings: DashboardSettings): DataFile {
+export function parseProductionSummaryCSV(csv: string): ProductionSummaryRow[] {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const header = parseCsvLine(lines[0]);
+  const headerMap = buildHeaderMap(header);
+  const iWorkMonth = headerIndex(headerMap, 'work month');
+  const iTotalContent = headerIndex(headerMap, 'total content');
+  const iOrganicContent = headerIndex(headerMap, 'organic content');
+  const iSponsoredContent = headerIndex(headerMap, 'sponsored content');
+  const iSponsor = headerIndex(headerMap, 'sponsor');
+  const iTotalCogs = headerIndex(headerMap, 'total cogs');
+  const iCostPerContent = headerIndex(headerMap, 'cost per content');
+
+  return lines.slice(1).map<ProductionSummaryRow | null>((line) => {
+    const cols = parseCsvLine(line);
+    const workMonth = (cols[iWorkMonth] ?? '').trim();
+    if (!workMonth) return null;
+    return {
+      workMonth,
+      totalContent: parseNumber(cols[iTotalContent]),
+      organicContent: parseNumber(cols[iOrganicContent]),
+      sponsoredContent: parseNumber(cols[iSponsoredContent]),
+      sponsor: (cols[iSponsor] ?? '').trim() || undefined,
+      totalCogs: parseNumber(cols[iTotalCogs]) || undefined,
+      costPerContent: parseNumber(cols[iCostPerContent]) || undefined,
+    } satisfies ProductionSummaryRow;
+  }).filter((row): row is ProductionSummaryRow => Boolean(row));
+}
+
+export function parseSponsorPipelineCSV(csv: string): SponsorPipelineDeal[] {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const header = parseCsvLine(lines[0]);
+  const headerMap = buildHeaderMap(header);
+  const iSponsor = headerIndex(headerMap, 'sponsor');
+  const iDealValue = headerIndex(headerMap, 'deal value');
+  const iStatus = headerIndex(headerMap, 'status');
+  const iProbability = headerIndex(headerMap, 'probability');
+  const iExpectedDate = headerIndex(headerMap, 'expected date');
+  const iWeightedValue = headerIndex(headerMap, 'weighted value');
+  const iNote = headerIndex(headerMap, 'note');
+
+  return lines.slice(1).map<SponsorPipelineDeal | null>((line) => {
+    const cols = parseCsvLine(line);
+    const sponsor = (cols[iSponsor] ?? '').trim();
+    if (!sponsor) return null;
+    const dealValue = parseNumber(cols[iDealValue]);
+    const probability = parseNumber(cols[iProbability]);
+    return {
+      sponsor,
+      dealValue,
+      status: (cols[iStatus] ?? '').trim() || 'Unknown',
+      probability,
+      expectedDate: normalizeDate((cols[iExpectedDate] ?? '').trim()) || undefined,
+      weightedValue: parseNumber(cols[iWeightedValue]) || dealValue * (probability / 100),
+      note: (cols[iNote] ?? '').trim() || undefined,
+    } satisfies SponsorPipelineDeal;
+  }).filter((row): row is SponsorPipelineDeal => Boolean(row));
+}
+
+export interface ParseTransactionCsvOptions {
+  requireExplicitTransactionMarkers?: boolean;
+}
+
+export function normalizeDataFile(
+  value: unknown,
+  settings: DashboardSettings,
+  snapshotMetaFallback?: DataSnapshotMeta
+): DataFile {
   const record = isRecord(value) ? value : {};
   const openingBalance = parseNumber(
     field(record, ['openingBalance', 'opening balance']),
@@ -368,6 +817,10 @@ export function normalizeDataFile(value: unknown, settings: DashboardSettings): 
     openingBalance,
     productionSummary,
     sponsorPipeline,
+    snapshotMeta:
+      normalizeSnapshotMeta(field(record, ['snapshotMeta', 'snapshot meta', 'refreshMeta', 'refresh meta'])) ??
+      snapshotMetaFallback,
+    validationReport: normalizeValidationReport(field(record, ['validationReport', 'validation report'])),
   };
 }
 
@@ -415,8 +868,10 @@ function headerIndex(map: Map<string, number>, ...names: string[]): number {
 
 export function parseTransactionCsv(
   csv: string,
-  settings: DashboardSettings
-): DataFile {
+  settings: DashboardSettings,
+  options: ParseTransactionCsvOptions = {}
+): { dataFile: DataFile; rowIssues: ValidationIssue[] } {
+  const requireExplicitTransactionMarkers = options.requireExplicitTransactionMarkers ?? false;
   const lines = csv
     .replace(/^\uFEFF/, '')
     .trim()
@@ -424,10 +879,13 @@ export function parseTransactionCsv(
 
   if (lines.length < 2) {
     return {
-      rawData: [],
-      openingBalance: settings.refresh.fallbackOpeningBalance,
-      productionSummary: [],
-      sponsorPipeline: [],
+      dataFile: {
+        rawData: [],
+        openingBalance: settings.refresh.fallbackOpeningBalance,
+        productionSummary: [],
+        sponsorPipeline: [],
+      },
+      rowIssues: [],
     };
   }
 
@@ -455,6 +913,7 @@ export function parseTransactionCsv(
 
   let openingBalance = settings.refresh.fallbackOpeningBalance;
   const rows: Transaction[] = [];
+  const rowIssues: ValidationIssue[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -478,6 +937,13 @@ export function parseTransactionCsv(
       const parsed = parseNumber(cols[idx.openingBalance], NaN);
       if (!Number.isNaN(parsed)) openingBalance = parsed;
       continue;
+    }
+
+    if (requireExplicitTransactionMarkers) {
+      const explicitType = normalizeText(cols[idx.type]);
+      const explicitStatus = normalizeText(cols[idx.status]);
+      if (explicitType !== 'Inflow' && explicitType !== 'Outflow') continue;
+      if (!explicitStatus) continue;
     }
 
     const normalized = normalizeTransactionRow(
@@ -505,12 +971,16 @@ export function parseTransactionCsv(
 
     if (!normalized) continue;
     rows.push(normalized);
+    rowIssues.push(...buildTransactionValidationIssues(row, normalized, i + 1, settings));
   }
 
   return {
-    rawData: recomputeRunningBalances(rows, openingBalance),
-    openingBalance,
-    productionSummary: [],
-    sponsorPipeline: [],
+    dataFile: {
+      rawData: recomputeRunningBalances(rows, openingBalance),
+      openingBalance,
+      productionSummary: [],
+      sponsorPipeline: [],
+    },
+    rowIssues,
   };
 }

@@ -56,10 +56,10 @@ export default function ScenarioPanel() {
 
   return (
     <div className="scenario-panel">
-      <h3>What-If Scenario Analysis</h3>
+      <h3>What-If Cash Scenario Analysis</h3>
       <div className="slider-grid">
         <div className="slider-group">
-          <label>Monthly Revenue Target</label>
+          <label>Monthly Cash In Target</label>
           <div className="slider-value">฿{fmt(revenueTarget)}</div>
           <input
             type="range"
@@ -85,7 +85,7 @@ export default function ScenarioPanel() {
         </div>
 
         <div className="slider-group">
-          <label>COGS Adjustment</label>
+          <label>Production Cost Adjustment</label>
           <div className="slider-value">{prodAdj >= 0 ? '+' : ''}{prodAdj}%</div>
           <input
             type="range"
@@ -100,7 +100,7 @@ export default function ScenarioPanel() {
 
       <div className="scenario-results">
         <div className="scenario-result">
-          <div className="sr-label">Monthly Burn Rate</div>
+          <div className="sr-label">Monthly Cash Burn</div>
           <div className="sr-value" style={{ color: 'var(--accent-red)' }}>฿{fmt(newBurn)}</div>
         </div>
         <div className="scenario-result">
@@ -120,11 +120,11 @@ export default function ScenarioPanel() {
           </div>
         </div>
         <div className="scenario-result">
-          <div className="sr-label">Break-Even Revenue</div>
+          <div className="sr-label">Cash Break-Even Revenue</div>
           <div className="sr-value" style={{ color: 'var(--accent-blue)' }}>฿{fmt(newBurn)}</div>
         </div>
         <div className="scenario-result">
-          <div className="sr-label">Balance at Month {projectionMonths}</div>
+          <div className="sr-label">Cash Balance at Month {projectionMonths}</div>
           <div className="sr-value" style={{ color: balAtProjection >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
             ฿{fmt(balAtProjection)}
           </div>

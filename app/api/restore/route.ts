@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { ensureSnapshotMeta } from '@/lib/snapshotMeta';
 
 export async function POST(request: Request) {
   try {
@@ -29,7 +30,9 @@ export async function POST(request: Request) {
       fs.copyFileSync(currentPath, path.join(dataDir, 'backups', `${timestamp}.json`));
     }
 
-    fs.copyFileSync(backupPath, currentPath);
+    const restored = ensureSnapshotMeta(JSON.parse(fs.readFileSync(backupPath, 'utf-8')), backupPath);
+
+    fs.writeFileSync(currentPath, JSON.stringify(restored, null, 2), 'utf-8');
 
     return NextResponse.json({ success: true });
   } catch (err) {

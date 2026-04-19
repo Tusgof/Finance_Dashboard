@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'EasyMoneyConcept | Financial Dashboard',
-  description: 'Financial Dashboard Jan – Jun 2026',
+  title: 'Finance Dashboard',
+  description: 'Finance Dashboard for Jan-Jun 2026.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

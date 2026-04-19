@@ -2,8 +2,42 @@ export type TransactionType = 'Inflow' | 'Outflow';
 export type TransactionStatus = 'Actual' | 'Committed' | 'Forecast' | 'Cancelled';
 export type MainCategory = 'Revenue' | 'COGS' | 'OpEx' | 'CapEx';
 export type CostBehavior = 'Fixed' | 'Variable';
+export type ValidationScope = 'rendering' | 'management';
+export type ValidationSeverity = 'warning' | 'error';
 
-export interface Transaction {
+export interface DataSnapshotMeta {
+  capturedAt: string;
+  sourceLabel: string;
+  sourceKind: 'snapshot' | 'legacy';
+  sourceUrl?: string;
+}
+
+export interface ValidationIssue {
+  code: string;
+  scope: ValidationScope;
+  severity: ValidationSeverity;
+  message: string;
+  rowIndex?: number;
+  workMonth?: string;
+  field?: string;
+  value?: string;
+}
+
+export interface ValidationReport {
+  generatedAt: string;
+  renderingReady: boolean;
+  managementReady: boolean;
+  renderingWarnings: ValidationIssue[];
+  managementWarnings: ValidationIssue[];
+  issues: ValidationIssue[];
+}
+
+/**
+ * Persisted transaction row shape as it appears in source files and snapshots.
+ * This keeps legacy compatibility fields because the dashboard still reads a
+ * mixed historical dataset.
+ */
+export interface RawTransactionRow {
   date: string;
   dueDate?: string;
   workMonth?: string;
@@ -24,6 +58,12 @@ export interface Transaction {
   entity?: 'Revenue' | 'Video Production' | 'News Production' | 'Administrative' | 'Finance' | 'Marketing';
   balance: number;
 }
+
+/**
+ * Backwards-compatible alias for the persisted row shape.
+ * New code should prefer RawTransactionRow when it is dealing with source data.
+ */
+export type Transaction = RawTransactionRow;
 
 export interface ProductionSummaryRow {
   workMonth: string;
@@ -46,10 +86,12 @@ export interface SponsorPipelineDeal {
 }
 
 export interface DashboardDataFile {
-  rawData: Transaction[];
+  rawData: RawTransactionRow[];
   openingBalance: number;
   productionSummary: ProductionSummaryRow[];
   sponsorPipeline: SponsorPipelineDeal[];
+  snapshotMeta?: DataSnapshotMeta;
+  validationReport?: ValidationReport;
 }
 
 export type DataFile = DashboardDataFile;
@@ -57,8 +99,10 @@ export type DataFile = DashboardDataFile;
 export type FilterType = 'all' | 'actual' | 'committed' | 'forecast' | 'cancelled' | `${number}-${number}`;
 
 export interface DashboardContextType {
-  rawData: Transaction[];
+  rawData: RawTransactionRow[];
   openingBalance: number;
+  snapshotMeta?: DataSnapshotMeta | null;
+  validationReport?: ValidationReport | null;
   currentFilter: FilterType;
   setCurrentFilter: (f: FilterType) => void;
   filteredData: Transaction[];
