@@ -6,23 +6,25 @@ Use this file before changing code, data schema, Google Sheet structure, scenari
 
 ## Project Definition
 
-- Purpose: provide an internal finance management dashboard for Easymoneyconcept / Fin Friend Media.
-- Primary users: founder/operator, finance/admin operator, and future developer/AI agents maintaining the dashboard.
-- Problem: finance data lives in Google Sheets and can be hard to interpret quickly for cash, runway, sponsor revenue, content cost, forecast risk, and transaction-level audit.
-- Desired outcome: a dashboard that lets the operator see current cash, monthly inflow/outflow, running balance, revenue quality, cost structure, forecast variance, sponsor pipeline, and cash scenarios without manually rebuilding reports.
+- Purpose: provide a lean internal finance management dashboard for Easymoneyconcept / Fin Friend Media.
+- Primary users: founder/operator first. Future maintainers and AI agents are secondary users, not the product target.
+- Problem: finance data lives in Google Sheets and can be hard to interpret quickly for weekly/monthly cash, revenue, cost, scenario, and decision risk.
+- Desired outcome: a dashboard that helps the operator make weekly and monthly management decisions from a clear business overview, with Cash Flow & Running Balance as the main truth.
 - In scope:
   - Google Sheet-backed transaction dashboard.
   - Cash overview, Cash Flow & Running Balance chart, Revenue & Sponsor view, Cash P&L view, Scenario Planner, Ledger.
   - Refresh from Google Sheets into local JSON snapshots.
-  - Validation warnings for data that is renderable but risky for management decisions.
-  - Scenario planning for Base, Bull, and Bear cash paths.
-  - Support sheets for production summary and sponsor pipeline.
+  - Validation warnings classified by severity for data that is renderable but risky for management decisions.
+  - Scenario planning for Base, Bull, and Bear cash paths with short plain-language logic.
+  - Support sheets for production summary and sponsor pipeline only where they support cash/business decisions.
 - Out of scope:
   - Double-entry accounting system.
+  - Full accounting system behavior.
   - Tax filing automation.
   - Formal audited financial statements.
-  - Payroll execution.
-  - CRM replacement.
+  - Payroll or bonus calculation system.
+  - CRM or sponsor management system.
+  - Multi-user permission/admin system.
   - Permanent database replacement while Google Sheets remains the source of truth.
 
 ## Success Criteria
@@ -36,6 +38,8 @@ The project is considered usable when:
 - Validation issues distinguish rendering blockers from management warnings.
 - Cash Flow & Running Balance uses a coherent monthly basis and does not depend on raw row order.
 - Scenario Planner explains Base, Bull, and Bear assumptions clearly enough for non-technical operation.
+- The first screen supports weekly/monthly business decisions without requiring the user to inspect raw transactions first.
+- Secondary metrics do not distract from cash and scenario decision-making when their input data is incomplete.
 
 The project is considered production-ready when:
 
@@ -53,6 +57,7 @@ Quality success means:
 - The UI favors operational clarity over decorative complexity.
 - Chart labels and scenario logic use wording the operator can act on.
 - Code changes stay local to the relevant module unless a shared invariant requires broader edits.
+- Lean product scope is preserved: avoid adding accounting, CRM, payroll, or permission-system behavior into this dashboard.
 
 Reliability success means:
 
@@ -113,23 +118,55 @@ Reliability success means:
 - Google Sheet remains source of truth until a durable production store is explicitly introduced.
 - Explicit sheet fields beat Thai keyword inference. Inference is only fallback and should trigger management warnings when important fields are missing.
 - UI copy should be operational and plain. Avoid long scenario explanations in the UI.
+- Cash decision first: Cash Flow & Running Balance is the main page truth; Scenario Planner is the main decision companion.
+- Keep Health Cards as supporting warnings/checks, not the primary management surface.
+- Hide or reduce metrics whose source data is not mature enough for reliable decisions.
 - Keep charts aligned with their business question:
   - Cash Flow chart is operating cash overview and ignores ledger sidebar filters.
   - Ledger filter is for ledger inspection, not for changing top-level management cash truth.
 - Do not hide data-quality risk. Warnings are better than silent inference for management use.
+- Use severity groups for validation: Critical, Management, and Info.
 - Preserve backward compatibility for existing sheet headers where practical.
 - Avoid destructive operations on snapshots/backups unless the user explicitly requests them.
 - Do not commit build artifacts, local logs, `.next`, `node_modules`, or transient dev-server files.
 - For non-trivial project work, the primary agent acts as project brain and delegates implementation to worker agents when the user explicitly permits subagents.
 
+## Lean Product Direction
+
+Latest user calibration: 2026-04-23.
+
+Confirmed direction:
+
+- Product shape: business overview dashboard, not a narrow cash-only tool and not a full accounting system.
+- Main user: founder/operator.
+- Source of truth: Google Sheet.
+- First-priority surface: Cash Flow & Running Balance.
+- Scenario depth: Base/Bull/Bear running balance plus a short logic table in plain language.
+- Forecast Accuracy: remove or hide for now because `Original Forecast` data is not mature enough.
+- Production Metrics: medium importance. Use `Cost per Content` only for months with actual content count and usable Monthly Production Summary data.
+- Health Cards: keep as secondary warnings/checks.
+- Validation: classify warnings as Critical, Management, and Info.
+- Google Sheet schema: keep flexible but require clear fields for important cash logic.
+- Language/data model: normalize internally to stable English keys while supporting Thai display and mixed Thai/English sheet values.
+- Release target: usable for weekly and monthly management decision meetings.
+- First metric to reduce: Forecast Accuracy.
+- Operating model: dashboard has manual refresh and keeps the latest snapshot.
+- Cashflow debugging: add or preserve monthly transaction drilldown as the preferred first diagnostic level.
+- Out of scope now: accounting system, CRM/sponsor management system, payroll/bonus system, multi-user permission/admin system.
+- Documentation structure: user prefers a split-document model, but the user will handle that organization separately.
+- Next improvement themes: lean cleanup, data reliability, UX clarity, and Google Sheet workflow.
+
+Confirmed secondary metrics:
+
+- Production Metrics are useful as a secondary signal, but they must not block core cash/scenario decisions. `Cost per Content` should only show for months with actual content count; forecast-only production months should not be treated as complete production performance.
+
 ## Current Verified State
 
-- Last verified: 2026-04-23, by local git/status inspection.
+- Last verified: 2026-04-23, by local git/status inspection after GitHub push.
 - Current branch: `main`.
-- Latest known pushed commit: `8abf17e Refresh dashboard snapshot`.
-- Git state before this document rewrite: `main...origin/main`, clean.
-- Git state after this triage work: local worktree has uncommitted documentation, helper, chart, scenario, settings, validation, and test changes.
-- Current milestone: management dashboard has working pages, Google Sheet refresh, support sheets, scenario chart, Cash Flow running balance fix, and pushed refreshed snapshot.
+- Latest known pushed commit: `b7460c5 Address finance dashboard improvement triage`.
+- Git state before this lean-direction update: `main...origin/main`, clean.
+- Current milestone: management dashboard has working pages, Google Sheet refresh, support sheets, scenario chart, Cash Flow running balance fix, focused tests, and pushed improvement-triage work.
 - Completed:
   - Replaced old scenario planner with current-situation Base/Bull/Bear cash cases.
   - Added scenario running balance chart with Actual History plus Base/Bull/Bear.
@@ -144,8 +181,10 @@ Reliability success means:
   - Moved Bull scenario assumptions into normalized scenario settings.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - Review and commit/push the 2026-04-23 improvement-triage changes if the user wants this batch published.
+  - None after this document update.
 - Pending:
+  - Decide whether to hide/remove Forecast Accuracy from the visible dashboard now.
+  - Consider monthly transaction drilldown for Cash Flow debugging if not already sufficient.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
@@ -156,21 +195,16 @@ Reliability success means:
 
 ## Next Safe Action
 
-- Action: commit and push the reviewed 2026-04-23 improvement-triage changes if the user approves publishing this batch.
+- Action: use the lean product direction to prune or de-emphasize dashboard surfaces that do not support weekly/monthly cash and business decisions.
 - Preconditions:
-  - `npm.cmd run test:finance` has passed.
-  - `npm.cmd run build` has passed.
-  - `git diff --check` has passed.
-  - Review confirms worker changes match file ownership and project guardrails.
+  - Confirm whether Forecast Accuracy should be removed from UI or only hidden until enough `Original Forecast` data exists.
 - Stop if:
-  - A new diff appears outside the reviewed files.
-  - Tests/build fail.
-  - The user wants more review before publishing.
+  - A proposed change removes information the user uses in weekly/monthly meetings.
+  - A proposed change changes Google Sheet schema without explicit user approval.
 - Verify with:
-  - `git status --short --branch`.
-  - `git log -1 --oneline` after commit.
-  - GitHub push success.
-  - Optional deployed Vercel smoke check after redeploy.
+  - `npm.cmd run test:finance`.
+  - `npm.cmd run build`.
+  - Manual review that Cash Flow remains the main truth and Scenario remains the decision companion.
 
 ## Improvement Triage
 
@@ -237,11 +271,14 @@ User-overridden fixed scope from 2026-04-23:
   - Bulk-edit Thai keyword arrays through lossy terminal encoding.
   - Revert user changes or unrelated agent changes without explicit request.
   - Commit `node_modules`, `.next`, local dev logs, or backup noise.
+  - Expand this dashboard into accounting, CRM, payroll, or multi-user admin unless the user explicitly changes scope.
 - Always:
   - Use `Work Month` as the month basis for Cash Flow and Scenario charts unless the user explicitly changes the operating model.
   - Use `Date` as transaction timing/audit metadata, not as the primary monthly chart grouping for these views.
   - Prefer explicit sheet columns: `Main Category`, `Cost Behavior`, `Sponsor`, `Person`, `Status`.
   - Keep `Original Forecast` when a forecast becomes actual if forecast accuracy is needed.
+  - Treat Forecast Accuracy as optional/hidden until there is enough `Original Forecast` history.
+  - Keep production/content metrics secondary and calculate them only for months with actual content count.
   - Run focused verification after changing KPI/chart logic.
   - Update this brain when a decision changes project direction.
 - Requires approval or explicit user instruction:
@@ -338,8 +375,12 @@ git status --short --branch
   - First response: add/fix production summary for actual month.
 - Symptom: Forecast accuracy is `N/A`.
   - Cause: actual rows lack `Original Forecast`.
-  - Impact: forecast accuracy cannot be computed historically.
-  - First response: preserve original forecast when converting forecast rows to actual.
+  - Impact: forecast accuracy cannot be computed historically and may distract from cash decisions.
+  - First response: hide or de-emphasize Forecast Accuracy until enough original forecast history exists.
+- Symptom: Dashboard feels too busy for weekly/monthly decisions.
+  - Cause: secondary metrics and diagnostics competing with Cash Flow and Scenario.
+  - Impact: operator spends attention interpreting dashboard mechanics instead of making decisions.
+  - First response: keep Cash Flow first, Scenario second, and move incomplete/immature metrics into secondary diagnostics.
 - Symptom: Thai text appears mojibake in console.
   - Cause: terminal encoding mismatch.
   - Impact: accidental corruption risk if editing Thai text through lossy commands.
@@ -396,6 +437,14 @@ git status --short --branch
 5. Run `npm.cmd run test:finance` and `npm.cmd run build`.
 6. Update this brain and any operator notes.
 
+### If the dashboard becomes too broad
+
+1. Check whether the requested feature supports weekly/monthly management decisions.
+2. Check whether it belongs to accounting, CRM, payroll, or permission administration.
+3. If it belongs to an out-of-scope system, document the need but do not implement it here.
+4. If it supports cash/scenario decisions, keep the smallest useful version.
+5. Verify the first screen still makes Cash Flow & Running Balance easy to read.
+
 ### If data snapshot is bad after refresh
 
 1. Do not commit immediately.
@@ -415,6 +464,8 @@ git status --short --branch
 - 2026-04-19: Cash Flow & Running Balance must recompute monthly running balance from opening balance and sorted monthly net. It must not take the last raw row per month.
 - 2026-04-23: This `PROJECT_BRAIN.md` was rewritten into a concise operational brain with explicit success criteria, guardrails, playbooks, and next safe action.
 - 2026-04-23: User overrode the score threshold to fix IP12, IP16, IP18, and IP20 despite total score `2`; fixes stayed scoped to production-summary validation, source/docs mojibake cleanup, Bull scenario settings, and focused tests.
+- 2026-04-23: User calibrated product direction toward a lean business overview dashboard for weekly/monthly decisions. Cash Flow & Running Balance is the main truth, Scenario is the decision companion, Forecast Accuracy should be reduced/removed for now, Google Sheet remains source of truth, and accounting/CRM/payroll/multi-user admin are out of scope.
+- 2026-04-23: User confirmed Production Metrics option B: keep as medium-priority secondary metrics, with `Cost per Content` shown only when actual content count exists.
 
 ## Document Map
 
@@ -437,7 +488,7 @@ git status --short --branch
 ## Roles
 
 - Owner: user/operator.
-- Product direction: user/operator decides business assumptions, Google Sheet structure, and management meaning.
+- Product direction: user/operator decides business assumptions, Google Sheet structure, management meaning, and what is useful in weekly/monthly meetings.
 - Project brain / architect: primary AI agent maintains system understanding, plans work, reviews tradeoffs, and updates this file when direction changes.
 - Implementer: primary AI agent for small changes; worker subagents for larger implementation when explicitly authorized by the user.
 - Reviewer: primary AI agent must review diffs, run verification, and check against guardrails before reporting completion.
@@ -452,6 +503,6 @@ git status --short --branch
 - Verified by: Codex primary agent.
 - Verification source:
   - Located `PROJECT_BRAIN.md` in `D:\Fogust\Workspace\Easymoneyconcept\02-Finance\Finance_Dashboard`.
-  - `git status --short --branch` reported `## main...origin/main` before this rewrite.
-  - `git log -5 --oneline` showed latest pushed commits through `8abf17e Refresh dashboard snapshot`.
-  - `package.json` confirmed scripts and dependency versions.
+  - `git status --short --branch` reported `## main...origin/main` before this lean-direction update.
+  - Previous GitHub push reported `8abf17e..b7460c5 main -> main`.
+  - User's calibration answers were incorporated into `Lean Product Direction`.
