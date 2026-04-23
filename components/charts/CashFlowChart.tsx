@@ -4,14 +4,17 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { fmt, getAvailableMonths } from '@/lib/dataUtils';
+import { fmt } from '@/lib/dataUtils';
+import { buildMonthlyCashFlowRows, normalizeTransactions } from '@/lib/dashboardMetrics';
 
 export default function CashFlowChart() {
   const { rawData, openingBalance } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
-  const months = useMemo(() => getAvailableMonths(rawData), [rawData]);
+  const normalized = useMemo(() => normalizeTransactions(rawData), [rawData]);
+  const monthlyCashFlow = useMemo(() => buildMonthlyCashFlowRows(normalized, openingBalance), [normalized, openingBalance]);
+  const months = useMemo(() => monthlyCashFlow.map(row => row.month), [monthlyCashFlow]);
   const labels = useMemo(
     () => months.map(month => new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${month}-01`))),
     [months]
@@ -21,24 +24,9 @@ export default function CashFlowChart() {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const activeRows = rawData.filter(d => d.status !== 'Cancelled');
-    const inflows = months.map(month =>
-      activeRows
-        .filter(d => (d.workMonth || d.month) === month && d.type === 'Inflow')
-        .reduce((sum, row) => sum + row.amount, 0)
-    );
-
-    const outflows = months.map(month =>
-      activeRows
-        .filter(d => (d.workMonth || d.month) === month && d.type === 'Outflow')
-        .reduce((sum, row) => sum + row.amount, 0)
-    );
-
-    let runningBalance = openingBalance;
-    const balances = months.map((_, index) => {
-      runningBalance += inflows[index] - outflows[index];
-      return runningBalance;
-    });
+    const inflows = monthlyCashFlow.map(row => row.inflow);
+    const outflows = monthlyCashFlow.map(row => row.outflow);
+    const balances = monthlyCashFlow.map(row => row.balance);
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'bar',
@@ -76,7 +64,7 @@ export default function CashFlowChart() {
     return () => {
       chartRef.current?.destroy();
     };
-  }, [rawData, openingBalance, months, labels]);
+  }, [monthlyCashFlow, labels]);
 
   return (
     <div className="chart-card full-width">

@@ -1,23 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart, type ChartOptions } from 'chart.js';
 import { useDashboard } from '../DashboardContext';
-import { fmt } from '@/lib/dataUtils';
+import { DEFAULT_DASHBOARD_SETTINGS, fmt, loadDashboardSettings } from '@/lib/dataUtils';
 import { chartDefaults } from '@/lib/chartDefaults';
-import { getCurrentCash, normalizeTransactions } from '@/lib/dashboardMetrics';
-import type { NormalizedTransaction } from '@/lib/types';
-
-type ProjectionRow = {
-  month: string;
-  actualBalance: number | null;
-  baseNet: number;
-  bullNet: number;
-  bearNet: number;
-  baseBalance: number | null;
-  bullBalance: number | null;
-  bearBalance: number | null;
-};
+import { buildScenarioProjection, getCurrentCash, normalizeTransactions, type ScenarioProjectionRow } from '@/lib/dashboardMetrics';
 
 type CaseKey = 'base' | 'bull' | 'bear';
 
@@ -29,115 +17,6 @@ type ScenarioCase = {
   status: string;
   color: string;
 };
-
-const BULL_MONTHLY_NEW_CASH = 30000;
-const BULL_CREDIT_TERM_MONTHS = 2;
-
-function monthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function addMonths(month: string, offset: number): string {
-  const [year, rawMonth] = month.split('-').map(Number);
-  if (!year || !rawMonth) return month;
-  return monthKey(new Date(year, rawMonth - 1 + offset, 1));
-}
-
-function nextMonth(month: string): string {
-  return addMonths(month, 1);
-}
-
-function sortMonths(months: Iterable<string>): string[] {
-  return Array.from(new Set(months)).filter(Boolean).sort();
-}
-
-function isAdRevenue(row: NormalizedTransaction): boolean {
-  const text = [row.sponsor, row.subCategory, row.description, row.note].join(' ').toLowerCase();
-  return text.includes('ad') || text.includes('ads') || text.includes('facebook') || text.includes('meta') || text.includes('tiktok');
-}
-
-function isShiftableCustomerInflow(row: NormalizedTransaction): boolean {
-  return row.type === 'Inflow' && row.mainCategory === 'Revenue' && !isAdRevenue(row);
-}
-
-function scenarioMonth(row: NormalizedTransaction): string {
-  return row.workMonth;
-}
-
-function signedAmount(row: NormalizedTransaction): number {
-  return row.type === 'Inflow' ? row.amount : -row.amount;
-}
-
-function sumMonthNet(rows: NormalizedTransaction[], month: string): number {
-  return rows
-    .filter(row => scenarioMonth(row) === month && row.status !== 'Cancelled')
-    .reduce((sum, row) => sum + signedAmount(row), 0);
-}
-
-function latestMonthBalance(rows: NormalizedTransaction[], month: string): number | null {
-  const monthRows = rows.filter(row => scenarioMonth(row) === month);
-  return monthRows.length > 0 ? monthRows[monthRows.length - 1].balance : null;
-}
-
-function getScenarioStartingCash(data: NormalizedTransaction[], openingBalance: number): number {
-  const actualRows = data.filter(row => row.status === 'Actual');
-  const latestActualMonth = sortMonths(actualRows.map(scenarioMonth)).at(-1);
-  if (!latestActualMonth) return getCurrentCash(data, openingBalance);
-  return latestMonthBalance(actualRows, latestActualMonth) ?? getCurrentCash(data, openingBalance);
-}
-
-function buildScenarioProjection(data: NormalizedTransaction[], openingBalance: number): ProjectionRow[] {
-  const activeRows = data.filter(row => row.status !== 'Cancelled');
-  const actualRows = activeRows.filter(row => row.status === 'Actual');
-  const actualMonths = sortMonths(actualRows.map(scenarioMonth));
-  const latestActualMonth = actualMonths.at(-1) ?? sortMonths(activeRows.map(scenarioMonth)).at(0) ?? monthKey(new Date());
-  const currentCash = getScenarioStartingCash(data, openingBalance);
-  const futureRows = activeRows.filter(row => row.status !== 'Actual' && scenarioMonth(row) >= latestActualMonth);
-  const baseMonths = sortMonths(futureRows.map(scenarioMonth));
-  const fallbackStartMonth = nextMonth(latestActualMonth);
-  const firstActualMonth = actualMonths[0] ?? latestActualMonth;
-  const forecastEndMonth = addMonths((baseMonths.at(-1) ?? fallbackStartMonth), 1);
-
-  const months: string[] = [];
-  for (let month = firstActualMonth; month <= forecastEndMonth; month = nextMonth(month)) {
-    months.push(month);
-  }
-
-  const bullStartMonth = addMonths(latestActualMonth, BULL_CREDIT_TERM_MONTHS);
-  let baseBalance = currentCash;
-  let bullBalance = currentCash;
-  let bearBalance = currentCash;
-
-  return months.map((month) => {
-    const isBeforeScenario = month < latestActualMonth;
-    const isScenarioStart = month === latestActualMonth;
-    const baseNet = isBeforeScenario ? 0 : sumMonthNet(futureRows, month);
-    const bullExtra = !isBeforeScenario && !isScenarioStart && month >= bullStartMonth ? BULL_MONTHLY_NEW_CASH : 0;
-    const bullNet = baseNet + bullExtra;
-    const bearNet = isBeforeScenario ? 0 : futureRows.reduce((sum, row) => {
-      const rowMonth = scenarioMonth(row);
-      const shiftedMonth = isShiftableCustomerInflow(row) ? nextMonth(rowMonth) : rowMonth;
-      return shiftedMonth === month ? sum + signedAmount(row) : sum;
-    }, 0);
-
-    if (!isBeforeScenario) {
-      baseBalance += baseNet;
-      bullBalance += bullNet;
-      bearBalance += bearNet;
-    }
-
-    return {
-      month,
-      actualBalance: month <= latestActualMonth ? latestMonthBalance(actualRows, month) : null,
-      baseNet,
-      bullNet,
-      bearNet,
-      baseBalance: isBeforeScenario ? null : baseBalance,
-      bullBalance: isBeforeScenario ? null : bullBalance,
-      bearBalance: isBeforeScenario ? null : bearBalance,
-    };
-  });
-}
 
 function money(value: number): string {
   return `THB ${fmt(value)}`;
@@ -153,12 +32,12 @@ function monthLabel(month: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' }).format(new Date(`${month}-01`));
 }
 
-function firstNegativeMonth(projection: ProjectionRow[], key: CaseKey): string {
+function firstNegativeMonth(projection: ScenarioProjectionRow[], key: CaseKey): string {
   const field = `${key}Balance` as const;
   return projection.find(row => row[field] !== null && row[field] < 0)?.month ?? 'No negative month';
 }
 
-function lowestBalance(projection: ProjectionRow[], key: CaseKey): number {
+function lowestBalance(projection: ScenarioProjectionRow[], key: CaseKey): number {
   const field = `${key}Balance` as const;
   const values = projection.map(row => row[field]).filter(value => value !== null);
   if (values.length === 0) return 0;
@@ -169,12 +48,26 @@ export default function ScenarioPlannerSection() {
   const { rawData, openingBalance } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
+  const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
   const normalized = useMemo(() => normalizeTransactions(rawData), [rawData]);
-  const projection = useMemo(() => buildScenarioProjection(normalized, openingBalance), [normalized, openingBalance]);
+  useEffect(() => {
+    let active = true;
+    void loadDashboardSettings().then(next => {
+      if (active) setSettings(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const projection = useMemo(() => buildScenarioProjection(normalized, openingBalance, settings), [normalized, openingBalance, settings]);
   const scenarioProjection = projection.filter(row => row.baseBalance !== null);
   const latest = scenarioProjection.at(-1);
-  const startingCash = getScenarioStartingCash(normalized, openingBalance);
+  const startingCash = scenarioProjection[0]?.baseBalance !== null && scenarioProjection[0]?.baseBalance !== undefined
+    ? scenarioProjection[0].baseBalance - scenarioProjection[0].baseNet
+    : getCurrentCash(normalized, openingBalance);
   const finalGap = (latest?.bullBalance ?? startingCash) - (latest?.bearBalance ?? startingCash);
+  const bullMonthlyCashLabel = `THB ${settings.scenario.bullMonthlyCash.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  const bullCreditTermMonths = settings.scenario.bullCreditTermMonths;
   const caseSummaries: ScenarioCase[] = [
     {
       key: 'base',
@@ -189,7 +82,7 @@ export default function ScenarioPlannerSection() {
       label: 'Bull',
       balance: latest?.bullBalance ?? startingCash,
       net: latest?.bullNet ?? 0,
-      status: 'New-client upside',
+      status: `+${bullMonthlyCashLabel} ต่อเดือนหลังเครดิตเทอม ${bullCreditTermMonths} เดือน`,
       color: '#16a34a',
     },
     {
@@ -339,7 +232,7 @@ export default function ScenarioPlannerSection() {
         <div className="health-card">
           <div className="health-label">Bull Case</div>
           <div className="health-value" style={{ color: tone(latest?.bullBalance ?? 0) }}>{money(latest?.bullBalance ?? startingCash)}</div>
-          <div className="health-status green"><span className="health-dot green"></span>+THB 30,000 ต่อเดือนหลังเครดิตเทอม</div>
+          <div className="health-status green"><span className="health-dot green"></span>{`+${bullMonthlyCashLabel} ต่อเดือนหลังเครดิตเทอม ${bullCreditTermMonths} เดือน`}</div>
         </div>
         <div className="health-card">
           <div className="health-label">Bear Case</div>
@@ -417,7 +310,7 @@ export default function ScenarioPlannerSection() {
               <tr>
                 <td>ดี</td>
                 <td>เหมือนกรณีฐาน</td>
-                <td>เพิ่มเงินเข้า THB 30,000 ต่อเดือน หลังเครดิตเทอม 2 เดือน</td>
+                <td>{`เพิ่มเงินเข้า ${bullMonthlyCashLabel} ต่อเดือน หลังเครดิตเทอม ${bullCreditTermMonths} เดือน`}</td>
                 <td>ถ้าปิดลูกค้าใหม่ได้ต่อเนื่อง</td>
               </tr>
               <tr>

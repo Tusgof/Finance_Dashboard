@@ -4,7 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
-import { buildMonthlyPnLRows, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
+import { normalizeSettings } from '../lib/settings';
+import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseTransactionCsv } from '../lib/transactionModel';
 import type { ProductionSummaryRow, RawTransactionRow, SponsorPipelineDeal } from '../lib/types';
@@ -126,6 +127,43 @@ const tests: Array<[string, () => void]> = [
 
   const missingSummaryWarnings = report.managementWarnings.filter(issue => issue.code === 'missing-production-summary');
   assert.deepEqual(missingSummaryWarnings.map(issue => issue.workMonth), ['2026-06']);
+    },
+  ],
+  [
+    'production summary validation cross-checks actual cogs totals and per-content cost',
+    () => {
+  const report = buildValidationReport(
+    [],
+    [
+      makeRow({
+        workMonth: '2026-07',
+        month: '2026-07',
+        type: 'Outflow',
+        status: 'Actual',
+        mainCategory: 'COGS',
+        category: 'COGS',
+        amount: 100,
+      }),
+      makeRow({
+        workMonth: '2026-08',
+        month: '2026-08',
+        type: 'Outflow',
+        status: 'Forecast',
+        mainCategory: 'COGS',
+        category: 'COGS',
+        amount: 250,
+      }),
+    ],
+    [
+      { workMonth: '2026-07', totalContent: 4, organicContent: 2, sponsoredContent: 2, totalCogs: 120, costPerContent: 29 },
+      { workMonth: '2026-08', totalContent: 5, organicContent: 3, sponsoredContent: 2, totalCogs: 500, costPerContent: 100 },
+    ]
+  );
+
+  const codes = issueCodes(report.managementWarnings);
+  assert.ok(codes.includes('production-summary-total-cogs-mismatch'));
+  assert.ok(codes.includes('production-summary-cost-per-content-mismatch'));
+  assert.equal(report.managementWarnings.filter(issue => issue.workMonth === '2026-08').length, 0);
     },
   ],
   [
@@ -346,6 +384,179 @@ const tests: Array<[string, () => void]> = [
     { sponsor: 'Sponsor B', dealValue: 400, status: 'Forecast', probability: 25 },
   ];
   assert.equal(calculateWeightedPipeline(pipeline), 400);
+    },
+  ],
+  [
+    'cash flow monthly balance is derived from monthly net, not the last row balance',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-04-01',
+      workMonth: '2026-04',
+      month: '2026-04',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-05-01',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 40,
+      balance: 1140,
+    }),
+    makeRow({
+      date: '2026-05-15',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Outflow',
+      status: 'Forecast',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 20,
+      balance: 9999,
+    }),
+    makeRow({
+      date: '2026-05-20',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Outflow',
+      status: 'Actual',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 10,
+      balance: 7777,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const series = buildMonthlyCashFlowRows(normalized, 1000);
+
+  assert.equal(series.find(row => row.month === '2026-05')?.balance, 1110);
+    },
+  ],
+  [
+    'scenario includes non-Actual rows from the latest actual work month onward',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-04-01',
+      workMonth: '2026-04',
+      month: '2026-04',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-05-01',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1200,
+    }),
+    makeRow({
+      date: '2026-05-10',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Outflow',
+      status: 'Forecast',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 60,
+      balance: 1140,
+    }),
+    makeRow({
+      date: '2026-06-01',
+      workMonth: '2026-06',
+      month: '2026-06',
+      type: 'Inflow',
+      status: 'Forecast',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 80,
+      balance: 1220,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const projection = buildScenarioProjection(normalized, 1000);
+  const may = projection.find(row => row.month === '2026-05');
+
+  assert.equal(may?.baseNet, -60);
+  assert.equal(may?.baseBalance, 1140);
+    },
+  ],
+  [
+    'scenario bull defaults normalize when legacy settings omit the new fields',
+    () => {
+      const { bullMonthlyCash: _bullMonthlyCash, bullCreditTermMonths: _bullCreditTermMonths, ...legacyScenario } = DEFAULT_DASHBOARD_SETTINGS.scenario;
+      const normalizedSettings = normalizeSettings({ scenario: legacyScenario });
+
+      assert.equal(normalizedSettings.scenario.bullMonthlyCash, 30000);
+      assert.equal(normalizedSettings.scenario.bullCreditTermMonths, 2);
+
+      const rawRows: RawTransactionRow[] = [
+        makeRow({
+          date: '2026-04-01',
+          workMonth: '2026-04',
+          month: '2026-04',
+          type: 'Inflow',
+          status: 'Actual',
+          mainCategory: 'Revenue',
+          category: 'Revenue',
+          amount: 100,
+          balance: 1100,
+        }),
+        makeRow({
+          date: '2026-05-01',
+          workMonth: '2026-05',
+          month: '2026-05',
+          type: 'Inflow',
+          status: 'Actual',
+          mainCategory: 'Revenue',
+          category: 'Revenue',
+          amount: 100,
+          balance: 1200,
+        }),
+        makeRow({
+          date: '2026-06-01',
+          workMonth: '2026-06',
+          month: '2026-06',
+          type: 'Inflow',
+          status: 'Forecast',
+          mainCategory: 'Revenue',
+          category: 'Revenue',
+          amount: 80,
+          balance: 1280,
+        }),
+      ];
+
+      const customSettings = {
+        ...DEFAULT_DASHBOARD_SETTINGS,
+        scenario: {
+          ...DEFAULT_DASHBOARD_SETTINGS.scenario,
+          bullMonthlyCash: 45000,
+          bullCreditTermMonths: 1,
+        },
+      };
+      const projection = buildScenarioProjection(normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS), 1000, customSettings);
+      const june = projection.find(row => row.month === '2026-06');
+
+      assert.equal(june?.bullNet, 45080);
     },
   ],
 ];

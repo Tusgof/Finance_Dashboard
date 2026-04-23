@@ -76,6 +76,8 @@ export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
     productionCostAdjustmentPct: { default: 0, min: -30, max: 30, step: 5 },
     variableCostReductionPct: { default: 0, min: -30, max: 30, step: 5 },
     newDealRevenue: { default: 0, min: 0, max: 100000, step: 1000 },
+    bullMonthlyCash: 30000,
+    bullCreditTermMonths: 2,
     bestCaseRevenueLiftPct: 20,
     worstCaseRevenueHaircutPct: 20,
     projectionMonths: 6,

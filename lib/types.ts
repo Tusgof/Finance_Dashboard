@@ -178,6 +178,8 @@ export interface ScenarioSettings {
   productionCostAdjustmentPct: NumericRangeSetting;
   variableCostReductionPct: NumericRangeSetting;
   newDealRevenue: NumericRangeSetting;
+  bullMonthlyCash: number;
+  bullCreditTermMonths: number;
   bestCaseRevenueLiftPct: number;
   worstCaseRevenueHaircutPct: number;
   projectionMonths: number;

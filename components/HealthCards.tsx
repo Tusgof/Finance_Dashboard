@@ -26,8 +26,7 @@ export default function HealthCards() {
   const avgBurn = totalOutflow / numMonths;
   const lastBalance = sortedData.length > 0 ? sortedData[sortedData.length - 1].balance : openingBalance;
   const runway = avgBurn > 0 ? lastBalance / avgBurn : 99;
-
-  const cogs = sortedData.filter(d => d.type === 'Outflow' && d.category === 'เธ•เนเธเธ—เธธเธเธชเธดเธเธเนเธฒ').reduce((sum, row) => sum + row.amount, 0);
+  const cogs = sortedData.filter(d => d.type === 'Outflow' && (d.mainCategory || d.category) === 'COGS').reduce((sum, row) => sum + row.amount, 0);
   const grossMargin = totalInflow > 0 ? ((totalInflow - cogs) / totalInflow) * 100 : -999;
   const hhi = calculateHHI(sortedData, settings);
 

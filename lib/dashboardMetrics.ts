@@ -21,6 +21,24 @@ function normalizeMonth(value?: string): string {
   return value;
 }
 
+function monthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function addMonths(month: string, offset: number): string {
+  const [year, rawMonth] = month.split('-').map(Number);
+  if (!year || !rawMonth) return month;
+  return monthKey(new Date(year, rawMonth - 1 + offset, 1));
+}
+
+function nextMonth(month: string): string {
+  return addMonths(month, 1);
+}
+
+function sortMonths(months: Iterable<string>): string[] {
+  return Array.from(new Set(months)).filter(Boolean).sort();
+}
+
 function normalizeStatus(value?: string): TransactionStatus {
   if (value === 'Committed' || value === 'Forecast' || value === 'Cancelled' || value === 'Actual') {
     return value;
@@ -204,6 +222,63 @@ export interface MonthlyPnLRow {
   cashMarginPct: number | null;
 }
 
+export interface MonthlyCashFlowRow {
+  month: string;
+  inflow: number;
+  outflow: number;
+  balance: number;
+}
+
+export interface ScenarioProjectionRow {
+  month: string;
+  actualBalance: number | null;
+  baseNet: number;
+  bullNet: number;
+  bearNet: number;
+  baseBalance: number | null;
+  bullBalance: number | null;
+  bearBalance: number | null;
+}
+
+function signedAmount(row: NormalizedTransaction): number {
+  return row.type === 'Inflow' ? row.amount : -row.amount;
+}
+
+function accumulateBalances(startingBalance: number, monthlyNet: number[]): number[] {
+  let runningBalance = startingBalance;
+  return monthlyNet.map(net => {
+    runningBalance += net;
+    return runningBalance;
+  });
+}
+
+function latestMonthBalance(rows: NormalizedTransaction[], month: string): number | null {
+  const monthRows = rows.filter(row => row.workMonth === month);
+  return monthRows.length > 0 ? monthRows[monthRows.length - 1].balance : null;
+}
+
+function getScenarioStartingCash(data: NormalizedTransaction[], openingBalance: number): number {
+  const actualRows = data.filter(row => row.status === 'Actual');
+  const latestActualMonth = sortMonths(actualRows.map(row => row.workMonth)).at(-1);
+  if (!latestActualMonth) return getCurrentCash(data, openingBalance);
+  return latestMonthBalance(actualRows, latestActualMonth) ?? getCurrentCash(data, openingBalance);
+}
+
+function isAdRevenue(row: NormalizedTransaction): boolean {
+  const text = [row.sponsor, row.subCategory, row.description, row.note].join(' ').toLowerCase();
+  return text.includes('ad') || text.includes('ads') || text.includes('facebook') || text.includes('meta') || text.includes('tiktok');
+}
+
+function isShiftableCustomerInflow(row: NormalizedTransaction): boolean {
+  return row.type === 'Inflow' && row.mainCategory === 'Revenue' && !isAdRevenue(row);
+}
+
+function sumMonthNet(rows: NormalizedTransaction[], month: string): number {
+  return rows
+    .filter(row => row.workMonth === month && row.status !== 'Cancelled')
+    .reduce((sum, row) => sum + signedAmount(row), 0);
+}
+
 export function buildMonthlyPnLRows(
   data: NormalizedTransaction[],
   settings?: DashboardSettings | null
@@ -255,6 +330,87 @@ export function buildMonthlyPnLRows(
       cashMarginPct: revenue > 0 ? (cashAfterCapEx / revenue) * 100 : null,
     };
   });
+}
+
+export function buildMonthlyCashFlowRows(
+  data: NormalizedTransaction[],
+  openingBalance: number
+): MonthlyCashFlowRow[] {
+  const activeRows = data.filter(row => row.status !== 'Cancelled');
+  const months = getMonths(data);
+  const inflows = months.map(month =>
+    activeRows
+      .filter(row => row.workMonth === month && row.type === 'Inflow')
+      .reduce((sum, row) => sum + row.amount, 0)
+  );
+  const outflows = months.map(month =>
+    activeRows
+      .filter(row => row.workMonth === month && row.type === 'Outflow')
+      .reduce((sum, row) => sum + row.amount, 0)
+  );
+  const balances = accumulateBalances(openingBalance, inflows.map((value, index) => value - outflows[index]));
+
+  return months.map((month, index) => ({
+    month,
+    inflow: inflows[index],
+    outflow: outflows[index],
+    balance: balances[index],
+  }));
+}
+
+export function buildScenarioProjection(
+  data: NormalizedTransaction[],
+  openingBalance: number,
+  settings?: DashboardSettings | null
+): ScenarioProjectionRow[] {
+  const resolved = resolveSettings(settings);
+  const activeRows = data.filter(row => row.status !== 'Cancelled');
+  const actualRows = activeRows.filter(row => row.status === 'Actual');
+  const actualMonths = sortMonths(actualRows.map(row => row.workMonth));
+  const latestActualMonth = actualMonths.at(-1) ?? sortMonths(activeRows.map(row => row.workMonth)).at(0) ?? monthKey(new Date());
+  const currentCash = getScenarioStartingCash(data, openingBalance);
+  const futureRows = activeRows.filter(row => row.status !== 'Actual' && row.workMonth >= latestActualMonth);
+  const baseMonths = sortMonths(futureRows.map(row => row.workMonth));
+  const fallbackStartMonth = nextMonth(latestActualMonth);
+  const firstActualMonth = actualMonths[0] ?? latestActualMonth;
+  const forecastEndMonth = addMonths(baseMonths.at(-1) ?? fallbackStartMonth, 1);
+
+  const months: string[] = [];
+  for (let month = firstActualMonth; month <= forecastEndMonth; month = nextMonth(month)) {
+    months.push(month);
+  }
+
+  const bullStartMonth = addMonths(latestActualMonth, resolved.scenario.bullCreditTermMonths);
+  const baseNetByMonth = months.map(month => (month < latestActualMonth ? 0 : sumMonthNet(futureRows, month)));
+  const bullNetByMonth = baseNetByMonth.map((baseNet, index) => {
+    const month = months[index];
+    const isBeforeScenario = month < latestActualMonth;
+    const isScenarioStart = month === latestActualMonth;
+    const bullExtra = !isBeforeScenario && !isScenarioStart && month >= bullStartMonth ? resolved.scenario.bullMonthlyCash : 0;
+    return baseNet + bullExtra;
+  });
+  const bearNetByMonth = months.map(month => {
+    if (month < latestActualMonth) return 0;
+    return futureRows.reduce((sum, row) => {
+      const shiftedMonth = isShiftableCustomerInflow(row) ? nextMonth(row.workMonth) : row.workMonth;
+      return shiftedMonth === month ? sum + signedAmount(row) : sum;
+    }, 0);
+  });
+
+  const baseBalances = accumulateBalances(currentCash, baseNetByMonth);
+  const bullBalances = accumulateBalances(currentCash, bullNetByMonth);
+  const bearBalances = accumulateBalances(currentCash, bearNetByMonth);
+
+  return months.map((month, index) => ({
+    month,
+    actualBalance: month <= latestActualMonth ? latestMonthBalance(actualRows, month) : null,
+    baseNet: baseNetByMonth[index],
+    bullNet: bullNetByMonth[index],
+    bearNet: bearNetByMonth[index],
+    baseBalance: month < latestActualMonth ? null : baseBalances[index],
+    bullBalance: month < latestActualMonth ? null : bullBalances[index],
+    bearBalance: month < latestActualMonth ? null : bearBalances[index],
+  }));
 }
 
 export function calculateForecastAccuracy(data: NormalizedTransaction[]): number | null {

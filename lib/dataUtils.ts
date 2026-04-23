@@ -1,4 +1,4 @@
-﻿import type { DashboardSettings, FilterType, Transaction } from './types';
+import type { DashboardSettings, FilterType, Transaction } from './types';
 import { DEFAULT_DASHBOARD_SETTINGS as SETTINGS_DEFAULTS } from './settingsDefaults';
 
 export const DEFAULT_DASHBOARD_SETTINGS = SETTINGS_DEFAULTS;
@@ -96,7 +96,7 @@ export function getCostType(
   const mainCategory = normalizeText(d.mainCategory || d.category);
   const isProductionCost =
     mainCategory === 'COGS' ||
-    /เธ•เนเธเธ—เธธเธ|production|video|content|เธเธฒเธเธขเน|เธ•เธฑเธ”เธ•เนเธญ|เน€เธเธตเธขเธเธเธ—|เธเธฃเธฒเธเธดเธ|เธเธฑเธ”เธ—เธณ/i.test(text) ||
+    /ต้นทุน|production|video|content|พากย์|ตัดต่อ|เขียนบท|กราฟิก|จัดทำ/i.test(text) ||
     d.entity === 'Video Production';
 
   if (!isProductionCost) return null;
@@ -117,5 +117,3 @@ export async function loadDashboardSettings(): Promise<DashboardSettings> {
     return DEFAULT_DASHBOARD_SETTINGS;
   }
 }
-
-

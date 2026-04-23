@@ -459,6 +459,7 @@ function buildProductionSummaryValidationIssues(
       .filter((month): month is string => Boolean(month))
   );
   const summaryMonths = new Map(productionSummary.map(row => [row.workMonth, row]));
+  const tolerance = 0.01;
 
   Array.from(cogsMonths).sort().forEach((month) => {
     const summary = summaryMonths.get(month);
@@ -471,6 +472,38 @@ function buildProductionSummaryValidationIssues(
         workMonth: month,
         field: 'Monthly Production Summary',
       });
+      return;
+    }
+
+    const actualCogsTotal = transactions
+      .filter(row => row.workMonth === month && row.type === 'Outflow' && row.mainCategory === 'COGS' && row.status === 'Actual')
+      .reduce((sum, row) => sum + row.amount, 0);
+
+    if (typeof summary.totalCogs === 'number' && Math.abs(summary.totalCogs - actualCogsTotal) > tolerance) {
+      pushValidationIssue(issues, {
+        code: 'production-summary-total-cogs-mismatch',
+        scope: 'management',
+        severity: 'warning',
+        message: `Month ${month}: Monthly Production Summary totalCogs (${summary.totalCogs}) does not match actual COGS outflows (${actualCogsTotal}).`,
+        workMonth: month,
+        field: 'Total COGS',
+        value: `${summary.totalCogs}`,
+      });
+    }
+
+    if (typeof summary.costPerContent === 'number' && summary.totalContent > 0) {
+      const expectedCostPerContent = summary.totalCogs === undefined ? undefined : summary.totalCogs / summary.totalContent;
+      if (typeof expectedCostPerContent === 'number' && Math.abs(summary.costPerContent - expectedCostPerContent) > tolerance) {
+        pushValidationIssue(issues, {
+          code: 'production-summary-cost-per-content-mismatch',
+          scope: 'management',
+          severity: 'warning',
+          message: `Month ${month}: Monthly Production Summary costPerContent (${summary.costPerContent}) does not match totalCogs / totalContent (${expectedCostPerContent}).`,
+          workMonth: month,
+          field: 'Cost per Content',
+          value: `${summary.costPerContent}`,
+        });
+      }
     }
   });
 
