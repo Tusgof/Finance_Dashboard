@@ -162,12 +162,15 @@ Confirmed secondary metrics:
 
 ## Current Verified State
 
-- Last verified: 2026-04-23, by local git/status inspection after GitHub push.
+- Last verified: 2026-04-23, by local git/status inspection before M1 closeout commit.
 - Current branch: `main`.
-- Latest known pushed commit: `b7460c5 Address finance dashboard improvement triage`.
-- Git state before this lean-direction update: `main...origin/main`, clean.
-- Current milestone: management dashboard has working pages, Google Sheet refresh, support sheets, scenario chart, Cash Flow running balance fix, focused tests, and pushed improvement-triage work.
+- Latest known pushed commit before this update: `8bb043b Update project brain lean direction`.
+- Git state before M1 closeout: `main...origin/main` with documentation changes for `PROJECT_BRAIN.md` and new `IMPLEMENT_PLAN.md`.
+- Current milestone: Milestone 2 - Google Sheet Contract and Refresh Reliability.
 - Completed:
+  - Milestone 1 - Scope Lock and Baseline Freeze completed.
+  - Added `IMPLEMENT_PLAN.md` with the milestone path to lean production readiness.
+  - Recorded M1 completion artifacts: scope checklist, metric meaning map, excluded features, and owner-only decisions.
   - Replaced old scenario planner with current-situation Base/Bull/Bear cash cases.
   - Added scenario running balance chart with Actual History plus Base/Bull/Bear.
   - Bear case shifts all future non-ad customer revenue inflows by one month; ad revenue stays on schedule.
@@ -181,10 +184,13 @@ Confirmed secondary metrics:
   - Moved Bull scenario assumptions into normalized scenario settings.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - None after this document update.
+  - Milestone 2 - Google Sheet Contract and Refresh Reliability.
 - Pending:
-  - Decide whether to hide/remove Forecast Accuracy from the visible dashboard now.
-  - Consider monthly transaction drilldown for Cash Flow debugging if not already sufficient.
+  - Audit current parser/header aliases against the active Google Sheet tabs.
+  - Document the active field contract for `Transactions`, `Monthly Production Summary`, `Sponsor Pipeline`, and `Lists`.
+  - Verify local refresh behavior and failed-refresh snapshot safety.
+  - Confirm serverless refresh remains stateless and does not depend on durable `data/backups` writes.
+  - Review validation severity gaps for core fields only.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
@@ -195,16 +201,17 @@ Confirmed secondary metrics:
 
 ## Next Safe Action
 
-- Action: use the lean product direction to prune or de-emphasize dashboard surfaces that do not support weekly/monthly cash and business decisions.
+- Action: execute Milestone 2 by auditing the active Google Sheet contract and refresh behavior before changing parser or schema assumptions.
 - Preconditions:
-  - Confirm whether Forecast Accuracy should be removed from UI or only hidden until enough `Original Forecast` data exists.
+  - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
+  - Use the active Google Sheet tabs as observed truth, but do not change their schema without approval.
 - Stop if:
-  - A proposed change removes information the user uses in weekly/monthly meetings.
   - A proposed change changes Google Sheet schema without explicit user approval.
+  - A proposed validation rule cannot point to a clear operator action.
 - Verify with:
   - `npm.cmd run test:finance`.
   - `npm.cmd run build`.
-  - Manual review that Cash Flow remains the main truth and Scenario remains the decision companion.
+  - Manual review that refresh behavior preserves the last usable snapshot on failure.
 
 ## Improvement Triage
 
@@ -466,10 +473,12 @@ git status --short --branch
 - 2026-04-23: User overrode the score threshold to fix IP12, IP16, IP18, and IP20 despite total score `2`; fixes stayed scoped to production-summary validation, source/docs mojibake cleanup, Bull scenario settings, and focused tests.
 - 2026-04-23: User calibrated product direction toward a lean business overview dashboard for weekly/monthly decisions. Cash Flow & Running Balance is the main truth, Scenario is the decision companion, Forecast Accuracy should be reduced/removed for now, Google Sheet remains source of truth, and accounting/CRM/payroll/multi-user admin are out of scope.
 - 2026-04-23: User confirmed Production Metrics option B: keep as medium-priority secondary metrics, with `Cost per Content` shown only when actual content count exists.
+- 2026-04-23: Milestone 1 was closed with `IMPLEMENT_PLAN.md` and explicit completion artifacts. Milestone 2 started with Google Sheet contract and refresh reliability as the active workstream.
 
 ## Document Map
 
 - `PROJECT_BRAIN.md`: central operating memory, project definition, guardrails, playbooks, next action.
+- `IMPLEMENT_PLAN.md`: milestone path from current state to lean production-ready dashboard.
 - `OPERATOR_MANUAL.md`: day-to-day operator guide for sheet entry, refresh, charts, scenario, warnings, and release checks.
 - `README.md`: general project entry point if present.
 - `package.json`: runnable scripts and dependency versions.
@@ -503,6 +512,6 @@ git status --short --branch
 - Verified by: Codex primary agent.
 - Verification source:
   - Located `PROJECT_BRAIN.md` in `D:\Fogust\Workspace\Easymoneyconcept\02-Finance\Finance_Dashboard`.
-  - `git status --short --branch` reported `## main...origin/main` before this lean-direction update.
-  - Previous GitHub push reported `8abf17e..b7460c5 main -> main`.
-  - User's calibration answers were incorporated into `Lean Product Direction`.
+  - `IMPLEMENT_PLAN.md` now records Milestone 1 completion and Milestone 2 start.
+  - `git status --short --branch` reported `## main...origin/main` with documentation changes before M1 closeout commit.
+  - Verification for this update must include `npm.cmd run test:finance`, `npm.cmd run build`, `git diff --check`, commit, and push.
