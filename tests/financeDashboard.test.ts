@@ -7,8 +7,9 @@ import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
 import { normalizeSettings } from '../lib/settings';
 import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
+import { selectSupportSheetRows } from '../lib/supportSheetRefresh';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseTransactionCsv } from '../lib/transactionModel';
-import type { ProductionSummaryRow, RawTransactionRow, SponsorPipelineDeal } from '../lib/types';
+import type { ProductionSummaryRow, RawTransactionRow, SponsorPipelineDeal, ValidationIssue } from '../lib/types';
 
 function makeRow(overrides: Partial<RawTransactionRow> = {}): RawTransactionRow {
   const workMonth = overrides.workMonth ?? overrides.month ?? '2026-01';
@@ -44,6 +45,47 @@ function issueCodes(issues: Array<{ code: string }>): string[] {
 }
 
 const tests: Array<[string, () => void]> = [
+  [
+    'support sheet refresh keeps the last usable local rows when optional support data is unusable',
+    () => {
+  const fetchedIssues: ValidationIssue[] = [{
+    code: 'support-sheet-empty',
+    scope: 'management',
+    severity: 'warning',
+    message: 'Monthly Production Summary looks empty or incomplete: no usable rows were returned.',
+    field: 'Monthly Production Summary',
+    value: 'no usable rows were returned',
+  }];
+  const localRows: ProductionSummaryRow[] = [
+    { workMonth: '2026-04', totalContent: 4, organicContent: 3, sponsoredContent: 1, totalCogs: 100, costPerContent: 25 },
+  ];
+
+  const fallback = selectSupportSheetRows({
+    sheetName: 'Monthly Production Summary',
+    fetchedRows: [],
+    fetchedIssues,
+    localRows,
+    allowLocalFallback: true,
+  });
+
+  assert.equal(fallback.usedLocalFallback, true);
+  assert.deepEqual(fallback.rows, localRows);
+  assert.ok(fallback.issues.some(issue => issue.code === 'support-sheet-empty'));
+  assert.ok(fallback.issues.some(issue => issue.code === 'support-sheet-local-fallback'));
+
+  const stateless = selectSupportSheetRows({
+    sheetName: 'Monthly Production Summary',
+    fetchedRows: [],
+    fetchedIssues,
+    localRows,
+    allowLocalFallback: false,
+  });
+
+  assert.equal(stateless.usedLocalFallback, false);
+  assert.deepEqual(stateless.rows, []);
+  assert.deepEqual(stateless.issues, fetchedIssues);
+    },
+  ],
   [
     'support sheet validation flags bad headers and missing options',
     () => {

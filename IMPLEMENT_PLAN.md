@@ -81,6 +81,8 @@ M2 has started. The first work queue is intentionally narrow and should not chan
 4. Confirm serverless refresh behavior remains stateless and does not depend on durable `data/backups` writes.
 5. Review validation severity gaps for core fields only: `Work Month`, `Status`, `Main Category`, `Amount`, `Cost Behavior`, `Sponsor`, `Person`, and `Original Forecast`.
 6. Keep all findings in docs or narrow validation changes before any schema proposal.
+7. Active sheet contract documentation has been created in `GOOGLE_SHEET_CONTRACT.md`.
+8. Optional support-sheet refresh fallback has been added for local filesystem mode so unusable support refreshes keep the last usable local support snapshot and emit a management warning.
 
 ## Milestone 1 - Scope Lock and Baseline Freeze
 

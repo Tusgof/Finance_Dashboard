@@ -5,6 +5,7 @@ import { SHEET_GIDS } from '@/lib/settingsDefaults';
 import { loadSettings } from '@/lib/settings';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseProductionSummaryCSV, parseSponsorPipelineCSV, parseTransactionCsv } from '@/lib/transactionModel';
 import { createSnapshotMeta } from '@/lib/snapshotMeta';
+import { selectSupportSheetRows } from '@/lib/supportSheetRefresh';
 import type { DataFile, ProductionSummaryRow, SponsorPipelineDeal, ValidationIssue } from '@/lib/types';
 
 function resolveDataPath(configuredPath: string): string {
@@ -38,6 +39,17 @@ function buildSupportSheetFetchFailedIssue(sheetName: string, detail: string): V
 
 function shouldPersistRefreshSnapshot(): boolean {
   return !process.env.VERCEL;
+}
+
+function readJsonArray<T>(filePath: string): T[] | undefined {
+  if (!fs.existsSync(filePath)) return undefined;
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    return Array.isArray(parsed) ? (parsed as T[]) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function persistRefreshSnapshot(
@@ -147,12 +159,29 @@ export async function POST() {
 
     const productionSummaryPath = resolveDataPath(settings.refresh.productionSummaryPath);
     const sponsorPipelinePath = resolveDataPath(settings.refresh.sponsorPipelinePath);
+    const allowLocalFallback = shouldPersistRefreshSnapshot();
+    const localProductionSummaryRows = allowLocalFallback ? (readJsonArray<ProductionSummaryRow>(productionSummaryPath) ?? []) : [];
+    const localSponsorPipelineRows = allowLocalFallback ? (readJsonArray<SponsorPipelineDeal>(sponsorPipelinePath) ?? []) : [];
+    const productionSummary = selectSupportSheetRows({
+      sheetName: 'Monthly Production Summary',
+      fetchedRows: productionSummaryResult.rows,
+      fetchedIssues: productionSummaryResult.issues,
+      localRows: localProductionSummaryRows,
+      allowLocalFallback,
+    });
+    const sponsorPipeline = selectSupportSheetRows({
+      sheetName: 'Sponsor Pipeline',
+      fetchedRows: sponsorPipelineResult.rows,
+      fetchedIssues: sponsorPipelineResult.issues,
+      localRows: localSponsorPipelineRows,
+      allowLocalFallback,
+    });
 
     const fileContent = normalizeDataFile(
       {
         ...parsed.dataFile,
-        productionSummary: productionSummaryResult.rows,
-        sponsorPipeline: sponsorPipelineResult.rows,
+        productionSummary: productionSummary.rows,
+        sponsorPipeline: sponsorPipeline.rows,
         snapshotMeta: buildSnapshotMeta(csvResponse.url || settings.refresh.csvExportUrl),
       },
       settings
@@ -160,8 +189,8 @@ export async function POST() {
     const validationReport = buildValidationReport(
       parsed.rowIssues,
       fileContent.rawData,
-      productionSummaryResult.rows,
-      [...productionSummaryResult.issues, ...sponsorPipelineResult.issues, ...listsResult.issues]
+      productionSummary.rows,
+      [...productionSummary.issues, ...sponsorPipeline.issues, ...listsResult.issues]
     );
     const snapshotContent = {
       ...fileContent,
@@ -170,8 +199,8 @@ export async function POST() {
 
     const persistence = persistRefreshSnapshot(
       snapshotContent,
-      productionSummaryResult.rows,
-      sponsorPipelineResult.rows,
+      productionSummary.rows,
+      sponsorPipeline.rows,
       productionSummaryPath,
       sponsorPipelinePath
     );
@@ -180,8 +209,8 @@ export async function POST() {
       success: true,
       ...snapshotContent,
       count: snapshotContent.rawData.length,
-      productionSummaryCount: productionSummaryResult.rows.length,
-      sponsorPipelineCount: sponsorPipelineResult.rows.length,
+      productionSummaryCount: productionSummary.rows.length,
+      sponsorPipelineCount: sponsorPipeline.rows.length,
       persistence,
     });
   } catch (err) {

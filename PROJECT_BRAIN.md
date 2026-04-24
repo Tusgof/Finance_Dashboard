@@ -180,22 +180,24 @@ Confirmed secondary metrics:
   - Refreshed `data/current.json` from Google Sheet after TikTok date correction and later sheet date changes.
   - Added focused regression tests for Cash Flow monthly balance and Scenario current-month non-Actual rows.
   - Added `OPERATOR_MANUAL.md` for day-to-day sheet/dashboard operation.
+  - Added `GOOGLE_SHEET_CONTRACT.md` for active sheet tabs, field aliases, validation behavior, and refresh persistence rules.
+  - Added optional support-sheet fallback guardrail so unusable support sheet refreshes do not overwrite usable local support snapshots.
   - Added Monthly Production Summary cross-check warnings for actual COGS total and cost-per-content mismatches.
   - Moved Bull scenario assumptions into normalized scenario settings.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
   - Milestone 2 - Google Sheet Contract and Refresh Reliability.
 - Pending:
-  - Audit current parser/header aliases against the active Google Sheet tabs.
-  - Document the active field contract for `Transactions`, `Monthly Production Summary`, `Sponsor Pipeline`, and `Lists`.
+  - Continue auditing current parser/header aliases against the active Google Sheet tabs.
+  - Use `GOOGLE_SHEET_CONTRACT.md` as the active field contract for `Transactions`, `Monthly Production Summary`, `Sponsor Pipeline`, and `Lists`.
   - Verify local refresh behavior and failed-refresh snapshot safety.
   - Confirm serverless refresh remains stateless and does not depend on durable `data/backups` writes.
   - Review validation severity gaps for core fields only.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 10 tests after IP12/IP16/IP18/IP20 changes.
-  - `npm.cmd run build` passed after IP12/IP16/IP18/IP20 changes.
+  - `npm.cmd run test:finance` passed 11 tests after M2 support-sheet fallback changes.
+  - `npm.cmd run build` passed after M2 support-sheet fallback changes.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Refresh via local dev server returned 148 transactions, 4 production summary rows, 12 sponsor pipeline rows, and 0 validation issues.
 
@@ -480,6 +482,7 @@ git status --short --branch
 - `PROJECT_BRAIN.md`: central operating memory, project definition, guardrails, playbooks, next action.
 - `IMPLEMENT_PLAN.md`: milestone path from current state to lean production-ready dashboard.
 - `OPERATOR_MANUAL.md`: day-to-day operator guide for sheet entry, refresh, charts, scenario, warnings, and release checks.
+- `GOOGLE_SHEET_CONTRACT.md`: active Google Sheet contract, field aliases, validation behavior, and refresh persistence notes.
 - `README.md`: general project entry point if present.
 - `package.json`: runnable scripts and dependency versions.
 - `tests/financeDashboard.test.ts`: finance parser/metric regression tests.
