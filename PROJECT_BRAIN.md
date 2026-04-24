@@ -162,11 +162,11 @@ Confirmed secondary metrics:
 
 ## Current Verified State
 
-- Last verified: 2026-04-25, by local test/build run after Milestone 7 batch-1 ops changes.
+- Last verified: 2026-04-25, by local and live verification after Milestone 7 closeout.
 - Current branch: `main`.
-- Latest known pushed commit before this update: `1eab99f Close milestone two refresh reliability work`.
+- Latest known pushed commit before this update: `6a28646 Advance deployment and recovery readiness`.
 - Git state before this update: `main...origin/main`.
-- Current milestone: Milestone 7 - Deployment, Operations, and Release Readiness.
+- Current milestone: Milestone 8 - Documentation and Handoff Completion.
 - Completed:
   - Milestone 1 - Scope Lock and Baseline Freeze completed.
   - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
@@ -193,6 +193,7 @@ Confirmed secondary metrics:
   - Validation summary UI now reflects the new grouping and keeps legacy snapshots readable.
   - Milestone 5 - Decision-First UI and UX Cleanup completed.
   - Milestone 6 - Testing and Regression Coverage completed.
+  - Milestone 7 - Deployment, Operations, and Release Readiness completed.
   - First screen now puts cash truth ahead of validation noise and includes a compact scenario preview on the cash page.
   - Cash page summary now compresses current cash, runway, pressure, and active warning signals into a faster management read.
   - Scenario page copy was tightened, mojibake was removed from user-facing text, and the Scenario Logic section was restored in simple Thai.
@@ -207,34 +208,32 @@ Confirmed secondary metrics:
   - Monthly cash rows now ignore months that only contain cancelled transactions.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - Milestone 7 - Deployment, Operations, and Release Readiness.
-  - M7 batch 1 aligned `GET /api/backups` and `POST /api/restore` with the stateless Vercel model: backups stay local-only and restore is unavailable in serverless mode.
-  - M7 batch 2 verified the local flow: `GET /api/backups`, `POST /api/refresh`, and `POST /api/restore` all work in local filesystem mode, but restored backups still need validation review before being trusted for management use.
+  - Milestone 8 - Documentation and Handoff Completion.
 - Pending:
   - Keep monthly transaction drilldown aligned with the top-level cash truth.
-  - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits as part of deployment/release work, not sheet-contract work.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 21 tests after Milestone 7 batch-1 ops changes.
-  - `npm.cmd run build` passed after Milestone 7 batch-1 ops changes.
+  - `npm.cmd run test:finance` passed 21 tests after Milestone 7 closeout.
+  - `npm.cmd run build` passed after Milestone 7 closeout.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Regression coverage now protects support-sheet fallback, refresh persistence, validation grouping, monthly cash derivation, scenario anchoring, Bear delay logic, delayed-month horizon behavior, Bull default normalization, and stateless backup/restore gating.
   - Current regression coverage protects refresh persistence, support-sheet fallback, validation grouping, monthly cash derivation, scenario anchoring, and Bull default normalization.
   - Local verification confirmed `GET /api/backups`, `POST /api/refresh`, and `POST /api/restore` succeed in local filesystem mode. Restoring the older backup `2026-04-24T18-06-59.json` returned a valid snapshot file but surfaced 8 management issues, so restored backups still require validation review before management use.
+  - Live verification on `https://finance-dashboard-delta-brown.vercel.app` confirmed the production dashboard loads, `GET /api/backups` returns `[]`, `POST /api/restore` returns `503` with the local-only restore message, and `POST /api/refresh` succeeds with `persistence.mode = stateless`.
 
 ## Next Safe Action
 
-- Action: execute Milestone 7 by tightening deployment/release verification and live operating checks without changing business logic.
+- Action: execute Milestone 8 by tightening documentation and handoff notes around the now-verified operating model.
 - Preconditions:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
-  - Keep the Google Sheet contract, monthly cash logic, validation grouping, M5 decision-first surface, and M6 regression scope unchanged unless a real bug requires a change.
+  - Keep the Google Sheet contract, monthly cash logic, validation grouping, release model, and M6/M7 verified runtime behavior unchanged unless a real bug requires a change.
 - Stop if:
   - A proposed change changes Google Sheet schema without explicit user approval.
-  - A proposed deployment or ops change assumes durable serverless filesystem writes or changes cash/scenario meaning.
+  - A proposed documentation or handoff change describes behavior that is not verified locally or live.
 - Verify with:
   - `npm.cmd run test:finance`.
   - `npm.cmd run build`.
-  - Local and live verification that refresh/release behavior matches the intended operating model.
+  - Manual review that docs and handoff notes match the verified local/live operating model.
 
 ## Improvement Triage
 
@@ -505,6 +504,7 @@ git status --short --branch
 - 2026-04-25: Milestone 7 batch 1 aligned `GET /api/backups` and `POST /api/restore` with the stateless Vercel model, kept live verification manual, and updated operator docs to use Critical/Management/Info validation wording.
 - 2026-04-25: Milestone 7 batch 2 verified the local release/recovery flow end to end. Local refresh and restore work, but successful restore is not enough by itself; restored backups must still pass validation before being trusted for management decisions.
 - 2026-04-25: Milestone 7 release docs should keep the live verification step manual, keep `data/backups` local-only, and use Critical/Management/Info wording for validation instead of the older rendering-versus-management phrasing.
+- 2026-04-25: Milestone 7 was closed after live verification on `finance-dashboard-delta-brown.vercel.app` confirmed the production dashboard loads, `GET /api/backups` stays empty, `POST /api/restore` is blocked in serverless mode, and `POST /api/refresh` returns stateless persistence as intended.
 
 ## Document Map
 

@@ -14,14 +14,15 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 
 ## Milestone Status
 
-- Current milestone: Milestone 7 - Deployment, Operations, and Release Readiness.
+- Current milestone: Milestone 8 - Documentation and Handoff Completion.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
 - Milestone 3 status: Complete as of 2026-04-24.
 - Milestone 4 status: Complete as of 2026-04-24.
 - Milestone 5 status: Complete as of 2026-04-24.
 - Milestone 6 status: Complete as of 2026-04-25.
-- Milestone 7 status: In progress as of 2026-04-25.
+- Milestone 7 status: Complete as of 2026-04-25.
+- Milestone 8 status: Ready to execute as of 2026-04-25.
 - Last status update: 2026-04-25.
 
 ## Milestone 1 Completion Record
@@ -585,7 +586,7 @@ The project is operated by a single owner, so release and recovery steps must be
 - Backups remain local-only and restore now returns a clear unavailable message in serverless mode.
 - Operator docs now use `Critical`, `Management`, and `Info` wording and keep live verification as a manual post-deploy step.
 - M7 batch 2 verified the local flow end to end: backup listing, local refresh, and local restore all work, but restored backups still need validation review before management use.
-- Live deploy verification is still pending, so Milestone 7 is not complete yet.
+- Live verification is complete: the production dashboard loads, `GET /api/backups` returns `[]`, `POST /api/restore` returns the expected local-only `503`, and `POST /api/refresh` returns stateless persistence on Vercel.
 
 ## Milestone 8 - Documentation and Handoff Completion
 
