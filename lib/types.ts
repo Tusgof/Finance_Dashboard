@@ -2,7 +2,7 @@ export type TransactionType = 'Inflow' | 'Outflow';
 export type TransactionStatus = 'Actual' | 'Committed' | 'Forecast' | 'Cancelled';
 export type MainCategory = 'Revenue' | 'COGS' | 'OpEx' | 'CapEx';
 export type CostBehavior = 'Fixed' | 'Variable';
-export type ValidationScope = 'rendering' | 'management';
+export type ValidationLevel = 'critical' | 'management' | 'info';
 export type ValidationSeverity = 'warning' | 'error';
 
 export interface DataSnapshotMeta {
@@ -14,8 +14,8 @@ export interface DataSnapshotMeta {
 
 export interface ValidationIssue {
   code: string;
-  scope: ValidationScope;
-  severity: ValidationSeverity;
+  level: ValidationLevel;
+  severity?: ValidationSeverity;
   message: string;
   rowIndex?: number;
   workMonth?: string;
@@ -25,10 +25,11 @@ export interface ValidationIssue {
 
 export interface ValidationReport {
   generatedAt: string;
-  renderingReady: boolean;
+  criticalReady: boolean;
   managementReady: boolean;
-  renderingWarnings: ValidationIssue[];
-  managementWarnings: ValidationIssue[];
+  criticalIssues: ValidationIssue[];
+  managementIssues: ValidationIssue[];
+  infoIssues: ValidationIssue[];
   issues: ValidationIssue[];
 }
 

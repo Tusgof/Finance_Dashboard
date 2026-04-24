@@ -35,7 +35,7 @@ The project is considered usable when:
 - `POST /api/refresh` can fetch Google Sheets and return a full refreshed snapshot.
 - Cash, revenue, P&L, scenario, and ledger pages render without blocking errors.
 - Every management metric can be traced back to transaction rows or support sheet rows.
-- Validation issues distinguish rendering blockers from management warnings.
+- Validation issues are grouped as Critical, Management, and Info with clear operator action.
 - Cash Flow & Running Balance uses a coherent monthly basis and does not depend on raw row order.
 - Scenario Planner explains Base, Bull, and Bear assumptions clearly enough for non-technical operation.
 - The first screen supports weekly/monthly business decisions without requiring the user to inspect raw transactions first.
@@ -162,15 +162,16 @@ Confirmed secondary metrics:
 
 ## Current Verified State
 
-- Last verified: 2026-04-24, by local test/build run after Milestone 3 closeout changes.
+- Last verified: 2026-04-24, by local test/build run after Milestone 4 closeout changes.
 - Current branch: `main`.
 - Latest known pushed commit before this update: `1eab99f Close milestone two refresh reliability work`.
 - Git state before this update: `main...origin/main`.
-- Current milestone: Milestone 4 - Validation Rules and Data Quality Gating.
+- Current milestone: Milestone 5 - Decision-First UI and UX Cleanup.
 - Completed:
   - Milestone 1 - Scope Lock and Baseline Freeze completed.
   - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
   - Milestone 3 - Cash Flow and Scenario Correctness completed.
+  - Milestone 4 - Validation Rules and Data Quality Gating completed.
   - Added `IMPLEMENT_PLAN.md` with the milestone path to lean production readiness.
   - Recorded M1 completion artifacts: scope checklist, metric meaning map, excluded features, and owner-only decisions.
   - Replaced old scenario planner with current-situation Base/Bull/Bear cash cases.
@@ -187,7 +188,9 @@ Confirmed secondary metrics:
   - Added a management warning for nonblank invalid `Original Forecast` values so bad forecast-history inputs do not stay silent.
   - Isolated refresh persistence in `lib/refreshPersistence.ts` so local filesystem mode and Vercel/stateless mode are testable outside the route.
   - Local refresh writes current/support snapshots through temporary files before swapping them into place, which reduces the risk of leaving unreadable partial JSON after a failed write.
-  - Added focused regression tests for local snapshot backup creation, stateless no-write behavior on Vercel, and the core-field validation severity split.
+  - Added focused regression tests for local snapshot backup creation, stateless no-write behavior on Vercel, and the core-field validation group split.
+  - Converted validation reporting to Critical/Management/Info buckets with operator-action grouping and legacy snapshot normalization.
+  - Validation summary UI now reflects the new grouping and keeps legacy snapshots readable.
   - Added Monthly Production Summary cross-check warnings for actual COGS total and cost-per-content mismatches.
   - Moved Bull scenario assumptions into normalized scenario settings.
   - Current cash and Scenario actual history now derive from monthly cash balances instead of the last raw actual-row balance.
@@ -195,31 +198,30 @@ Confirmed secondary metrics:
   - Monthly cash rows now ignore months that only contain cancelled transactions.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - Milestone 4 - Validation Rules and Data Quality Gating.
+  - Milestone 5 - Decision-First UI and UX Cleanup.
 - Pending:
-  - Refine validation severity groups from the current rendering/management split into the intended Critical/Management/Info model.
   - Keep monthly transaction drilldown aligned with the top-level cash truth.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits as part of deployment/release work, not sheet-contract work.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 17 tests after Milestone 3 cash/scenario alignment changes.
-  - `npm.cmd run build` passed after Milestone 3 cash/scenario alignment changes.
+  - `npm.cmd run test:finance` passed 18 tests after Milestone 4 validation grouping changes.
+  - `npm.cmd run build` passed after Milestone 4 validation grouping changes.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Worker verification for Milestone 3 confirmed the updated scenario/cash alignment and management-chart scope behavior.
 
 ## Next Safe Action
 
-- Action: execute Milestone 4 by turning validation into a clearer decision aid before broader UI cleanup.
+- Action: execute Milestone 5 by simplifying the first screen around cash truth, scenario, and validation summary.
 - Preconditions:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
-  - Keep the Google Sheet contract and monthly cash logic from Milestones 2 and 3 unchanged unless a bug proves they are insufficient.
+  - Keep the Google Sheet contract, monthly cash logic, and validation grouping from Milestones 2 through 4 unchanged unless a bug proves they are insufficient.
 - Stop if:
   - A proposed change changes Google Sheet schema without explicit user approval.
-  - A proposed warning cannot point to a concrete operator action.
+  - A proposed UI change makes cash truth, scenario, or validation harder to scan.
 - Verify with:
   - `npm.cmd run test:finance`.
   - `npm.cmd run build`.
-  - Manual review that warning severity matches actual operator risk.
+  - Manual review that the first screen still answers weekly/monthly management questions first.
 
 ## Improvement Triage
 
@@ -484,6 +486,7 @@ git status --short --branch
 - 2026-04-23: Milestone 1 was closed with `IMPLEMENT_PLAN.md` and explicit completion artifacts. Milestone 2 started with Google Sheet contract and refresh reliability as the active workstream.
 - 2026-04-24: Milestone 2 was closed after the active sheet contract, core-field validation rules, optional support-sheet fallback, atomic local refresh persistence, and Vercel/stateless no-write behavior were all documented and covered by focused verification. Live deploy verification remains deployment work.
 - 2026-04-24: Milestone 3 was closed after current cash and scenario actual history were aligned to month-based balances, cancelled-only months stopped appearing in monthly cash rows, and management charts were detached from ledger filter state.
+- 2026-04-24: Milestone 4 was closed after validation was regrouped into Critical/Management/Info buckets, legacy snapshots gained normalization into the new model, and the operator-facing summary panel was updated to match the new grouping.
 
 ## Document Map
 
@@ -524,7 +527,7 @@ git status --short --branch
 - Verified by: Codex primary agent.
 - Verification source:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` before work.
-  - `npm.cmd run test:finance` passed 17 tests.
+  - `npm.cmd run test:finance` passed 18 tests.
   - `npm.cmd run build` passed.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Worker audit confirmed no remaining M3 gap in the implemented scope.

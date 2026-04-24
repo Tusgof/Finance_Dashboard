@@ -68,7 +68,7 @@ Business rules for this tab:
 - `Type` determines cash sign and calculation direction.
 - `Main Category` drives KPI grouping and support-sheet checks.
 - `Original Forecast` is optional and should not block current dashboard use.
-- Nonblank invalid `Original Forecast` values trigger a management warning and still normalize through the existing numeric parser, so they should be corrected before relying on Forecast Accuracy.
+- Nonblank invalid `Original Forecast` values trigger an info issue and still normalize through the existing numeric parser, so they should be corrected before relying on Forecast Accuracy.
 - `Running Balance` is not the authoritative month-end truth.
 
 ### Monthly Production Summary
@@ -156,19 +156,22 @@ Conditional validation also applies:
 
 ## Validation Behavior
 
-The refresh pipeline builds a validation report with two groups:
+The refresh pipeline builds a validation report with three groups:
 
-- `renderingWarnings`: issues that can affect display or row-level normalization.
-- `managementWarnings`: issues that can make a number unsafe for decision-making even if the page still loads.
+- `criticalIssues`: issues that should be fixed before trusting cash truth.
+- `managementIssues`: issues that should be fixed before relying on secondary metrics.
+- `infoIssues`: informational notes and fallback context.
 
 Report flags:
 
-- `renderingReady`
+- `criticalReady`
 - `managementReady`
 
-Current issue codes visible in `lib/transactionModel.ts`:
+Backward compatibility:
 
-Rendering-related:
+- Older snapshots that still contain `renderingWarnings` and `managementWarnings` are normalized into the new groups when they are read.
+
+Current issue codes visible in `lib/transactionModel.ts`:
 
 - `unsupported-date`
 - `missing-work-month`
@@ -178,7 +181,6 @@ Management-related:
 
 - `invalid-status`
 - `invalid-main-category`
-- `invalid-original-forecast`
 - `missing-cost-behavior`
 - `missing-sponsor`
 - `missing-person`
@@ -188,12 +190,17 @@ Management-related:
 - `support-sheet-fetch-failed`
 - `support-sheet-invalid-header`
 - `support-sheet-empty`
+
+Info-related:
+
+- `invalid-original-forecast`
 - `support-sheet-local-fallback`
 
 Validation intent:
 
-- Rendering warnings should be fixed before trusting the snapshot for display.
-- Management warnings can still allow the page to render, but the related metric should not be treated as decision-grade.
+- Critical issues should be fixed before trusting the cash snapshot.
+- Management issues can still allow the page to render, but the related metric should not be treated as decision-grade.
+- Info issues are useful context and should not dominate the screen.
 - Support-sheet warnings are confined to the support sheets and do not imply a schema redesign.
 
 ## Refresh Behavior

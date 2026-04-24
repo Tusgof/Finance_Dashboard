@@ -142,12 +142,24 @@ function buildManagementSupportIssue(
 ): ValidationIssue {
   return {
     code,
-    scope: 'management',
-    severity: 'warning',
+    level: 'management',
     message,
     field: field || sheetName,
     value,
   };
+}
+
+function normalizeValidationLevel(value: unknown): ValidationIssue['level'] {
+  const text = normalizeKey(normalizeText(value));
+  if (text === 'critical' || text === 'management' || text === 'info') return text;
+  if (text === 'rendering') return 'critical';
+  return 'management';
+}
+
+function normalizeLegacyValidationLevel(code: string, fallback: ValidationIssue['level']): ValidationIssue['level'] {
+  if (code === 'unsupported-date') return 'info';
+  if (code === 'missing-work-month' || code === 'invalid-amount') return 'critical';
+  return fallback;
 }
 
 function canonicalMainCategory(value: string): Transaction['mainCategory'] | undefined {
@@ -251,15 +263,21 @@ function normalizeValidationReport(value: unknown): ValidationReport | undefined
   if (!isRecord(value)) return undefined;
 
   const generatedAt = normalizeText(field(value, ['generatedAt', 'generated at'])) || new Date().toISOString();
-  const renderingWarnings = Array.isArray(field(value, ['renderingWarnings', 'rendering warnings']))
-    ? (field(value, ['renderingWarnings', 'rendering warnings']) as unknown[])
+  const normalizeIssues = (rows: unknown[], fallbackLevel: ValidationIssue['level']): ValidationIssue[] =>
+    rows
         .filter(isRecord)
         .map((item) => {
           const row = item as RawRecord;
+          const code = normalizeText(row.code);
+          const legacyScope = normalizeText(row.scope);
+          const levelSource =
+            row.level ??
+            (legacyScope && normalizeKey(legacyScope) !== 'rendering'
+              ? legacyScope
+              : normalizeLegacyValidationLevel(code, fallbackLevel));
           return {
-            code: normalizeText(row.code),
-            scope: 'rendering' as const,
-            severity: normalizeText(row.severity) === 'error' ? 'error' : 'warning',
+            code,
+            level: normalizeValidationLevel(levelSource),
             message: normalizeText(row.message),
             rowIndex: typeof row.rowIndex === 'number' ? row.rowIndex : undefined,
             workMonth: normalizeText(row.workMonth) || undefined,
@@ -267,36 +285,47 @@ function normalizeValidationReport(value: unknown): ValidationReport | undefined
             value: normalizeText(row.value) || undefined,
           } satisfies ValidationIssue;
         })
-        .filter(issue => issue.code && issue.message)
+        .filter(issue => issue.code && issue.message);
+
+  const criticalIssues = Array.isArray(field(value, ['criticalIssues', 'critical issues']))
+    ? normalizeIssues(field(value, ['criticalIssues', 'critical issues']) as unknown[], 'critical')
+    : [];
+  const managementIssues = Array.isArray(field(value, ['managementIssues', 'management issues']))
+    ? normalizeIssues(field(value, ['managementIssues', 'management issues']) as unknown[], 'management')
+    : [];
+  const infoIssues = Array.isArray(field(value, ['infoIssues', 'info issues']))
+    ? normalizeIssues(field(value, ['infoIssues', 'info issues']) as unknown[], 'info')
+    : [];
+  const legacyRenderingWarnings = Array.isArray(field(value, ['renderingWarnings', 'rendering warnings']))
+    ? normalizeIssues(field(value, ['renderingWarnings', 'rendering warnings']) as unknown[], 'critical')
+    : [];
+  const legacyManagementWarnings = Array.isArray(field(value, ['managementWarnings', 'management warnings']))
+    ? normalizeIssues(field(value, ['managementWarnings', 'management warnings']) as unknown[], 'management')
     : [];
 
-  const managementWarnings = Array.isArray(field(value, ['managementWarnings', 'management warnings']))
-    ? (field(value, ['managementWarnings', 'management warnings']) as unknown[])
-        .filter(isRecord)
-        .map((item) => {
-          const row = item as RawRecord;
-          return {
-            code: normalizeText(row.code),
-            scope: 'management' as const,
-            severity: normalizeText(row.severity) === 'error' ? 'error' : 'warning',
-            message: normalizeText(row.message),
-            rowIndex: typeof row.rowIndex === 'number' ? row.rowIndex : undefined,
-            workMonth: normalizeText(row.workMonth) || undefined,
-            field: normalizeText(row.field) || undefined,
-            value: normalizeText(row.value) || undefined,
-          } satisfies ValidationIssue;
-        })
-        .filter(issue => issue.code && issue.message)
-    : [];
+  const issues = [
+    ...criticalIssues,
+    ...managementIssues,
+    ...infoIssues,
+    ...legacyRenderingWarnings,
+    ...legacyManagementWarnings,
+  ];
+  const dedupedIssues = issues.filter((issue, index, list) => index === list.findIndex(
+    candidate =>
+      candidate.code === issue.code &&
+      candidate.message === issue.message &&
+      candidate.rowIndex === issue.rowIndex &&
+      candidate.workMonth === issue.workMonth
+  ));
 
-  const issues = [...renderingWarnings, ...managementWarnings];
   return {
     generatedAt,
-    renderingReady: renderingWarnings.length === 0,
-    managementReady: managementWarnings.length === 0,
-    renderingWarnings,
-    managementWarnings,
-    issues,
+    criticalReady: !dedupedIssues.some(issue => issue.level === 'critical'),
+    managementReady: !dedupedIssues.some(issue => issue.level === 'critical' || issue.level === 'management'),
+    criticalIssues: dedupedIssues.filter(issue => issue.level === 'critical'),
+    managementIssues: dedupedIssues.filter(issue => issue.level === 'management'),
+    infoIssues: dedupedIssues.filter(issue => issue.level === 'info'),
+    issues: dedupedIssues,
   };
 }
 
@@ -339,8 +368,7 @@ function buildTransactionValidationIssues(
   if (dateRaw && !isCanonicalDate(normalizeDate(dateRaw))) {
     pushValidationIssue(issues, {
       code: 'unsupported-date',
-      scope: 'rendering',
-      severity: 'warning',
+      level: 'info',
       message: `Row ${rowIndex}: Date "${dateRaw}" is not in a supported format.`,
       rowIndex,
       field: 'Date',
@@ -351,8 +379,7 @@ function buildTransactionValidationIssues(
   if (dueDateRaw && !isCanonicalDate(normalizeDate(dueDateRaw))) {
     pushValidationIssue(issues, {
       code: 'unsupported-date',
-      scope: 'rendering',
-      severity: 'warning',
+      level: 'info',
       message: `Row ${rowIndex}: Due Date "${dueDateRaw}" is not in a supported format.`,
       rowIndex,
       field: 'Due Date',
@@ -363,8 +390,7 @@ function buildTransactionValidationIssues(
   if (!workMonthRaw || !isCanonicalMonth(normalizeMonth(workMonthRaw))) {
     pushValidationIssue(issues, {
       code: 'missing-work-month',
-      scope: 'rendering',
-      severity: 'warning',
+      level: 'critical',
       message: `Row ${rowIndex}: Work Month is missing or not normalized to YYYY-MM.`,
       rowIndex,
       field: 'Work Month',
@@ -376,8 +402,7 @@ function buildTransactionValidationIssues(
   if (!normalizedStatus || !VALID_STATUS_VALUES.some(status => normalizeKey(status) === normalizedStatus)) {
     pushValidationIssue(issues, {
       code: 'invalid-status',
-      scope: 'management',
-      severity: 'warning',
+      level: 'management',
       message: `Row ${rowIndex}: Status "${statusRaw || '(blank)'}" is not one of Actual, Committed, Forecast, or Cancelled.`,
       rowIndex,
       field: 'Status',
@@ -389,8 +414,7 @@ function buildTransactionValidationIssues(
   if (!canonicalMainCategoryValue || !VALID_MAIN_CATEGORIES.includes(canonicalMainCategoryValue)) {
     pushValidationIssue(issues, {
       code: 'invalid-main-category',
-      scope: 'management',
-      severity: 'warning',
+      level: 'management',
       message: `Row ${rowIndex}: Main Category "${mainCategoryRaw || '(blank)'}" should be Revenue, COGS, OpEx, or CapEx.`,
       rowIndex,
       field: 'Main Category',
@@ -401,8 +425,7 @@ function buildTransactionValidationIssues(
   if (normalized.type === 'Outflow' && !costBehaviorRaw) {
     pushValidationIssue(issues, {
       code: 'missing-cost-behavior',
-      scope: 'management',
-      severity: 'warning',
+      level: 'management',
       message: `Row ${rowIndex}: Outflow rows should include a Cost Behavior before inference is used.`,
       rowIndex,
       field: 'Cost Behavior',
@@ -413,8 +436,7 @@ function buildTransactionValidationIssues(
   if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
     pushValidationIssue(issues, {
       code: 'invalid-amount',
-      scope: 'rendering',
-      severity: 'warning',
+      level: 'critical',
       message: `Row ${rowIndex}: Amount is blank or zero.`,
       rowIndex,
       field: 'Amount',
@@ -425,8 +447,7 @@ function buildTransactionValidationIssues(
   if (normalized.mainCategory === 'Revenue' && !sponsorRaw) {
     pushValidationIssue(issues, {
       code: 'missing-sponsor',
-      scope: 'management',
-      severity: 'warning',
+      level: 'management',
       message: `Row ${rowIndex}: Revenue rows should include a Sponsor.`,
       rowIndex,
       field: 'Sponsor',
@@ -437,8 +458,7 @@ function buildTransactionValidationIssues(
   if (originalForecastText && !Number.isFinite(parseNumber(originalForecastRaw, NaN))) {
     pushValidationIssue(issues, {
       code: 'invalid-original-forecast',
-      scope: 'management',
-      severity: 'warning',
+      level: 'management',
       message: `Row ${rowIndex}: Original Forecast "${originalForecastText}" is not a valid numeric value.`,
       rowIndex,
       field: 'Original Forecast',
@@ -450,8 +470,7 @@ function buildTransactionValidationIssues(
   if (normalized.type === 'Outflow' && peopleCostKeywords.some(keyword => keyword && joinedText.includes(keyword)) && !personRaw) {
     pushValidationIssue(issues, {
       code: 'missing-person',
-      scope: 'management',
-      severity: 'warning',
+      level: 'management',
       message: `Row ${rowIndex}: People-cost outflows should include a Person.`,
       rowIndex,
       field: 'Person',
@@ -480,8 +499,7 @@ function buildProductionSummaryValidationIssues(
     if (!summary || summary.totalContent <= 0) {
       pushValidationIssue(issues, {
         code: 'missing-production-summary',
-        scope: 'management',
-        severity: 'warning',
+        level: 'management',
         message: `Month ${month} has COGS rows but no usable Monthly Production Summary row.`,
         workMonth: month,
         field: 'Monthly Production Summary',
@@ -496,8 +514,7 @@ function buildProductionSummaryValidationIssues(
     if (typeof summary.totalCogs === 'number' && Math.abs(summary.totalCogs - actualCogsTotal) > tolerance) {
       pushValidationIssue(issues, {
         code: 'production-summary-total-cogs-mismatch',
-        scope: 'management',
-        severity: 'warning',
+        level: 'management',
         message: `Month ${month}: Monthly Production Summary totalCogs (${summary.totalCogs}) does not match actual COGS outflows (${actualCogsTotal}).`,
         workMonth: month,
         field: 'Total COGS',
@@ -510,8 +527,7 @@ function buildProductionSummaryValidationIssues(
       if (typeof expectedCostPerContent === 'number' && Math.abs(summary.costPerContent - expectedCostPerContent) > tolerance) {
         pushValidationIssue(issues, {
           code: 'production-summary-cost-per-content-mismatch',
-          scope: 'management',
-          severity: 'warning',
+          level: 'management',
           message: `Month ${month}: Monthly Production Summary costPerContent (${summary.costPerContent}) does not match totalCogs / totalContent (${expectedCostPerContent}).`,
           workMonth: month,
           field: 'Cost per Content',
@@ -632,15 +648,17 @@ export function buildValidationReport(
     ...buildProductionSummaryValidationIssues(transactions, productionSummary),
     ...extraIssues,
   ];
-  const renderingWarnings = issues.filter(issue => issue.scope === 'rendering');
-  const managementWarnings = issues.filter(issue => issue.scope === 'management');
+  const criticalIssues = issues.filter(issue => issue.level === 'critical');
+  const managementIssues = issues.filter(issue => issue.level === 'management');
+  const infoIssues = issues.filter(issue => issue.level === 'info');
 
   return {
     generatedAt: new Date().toISOString(),
-    renderingReady: renderingWarnings.length === 0,
-    managementReady: managementWarnings.length === 0,
-    renderingWarnings,
-    managementWarnings,
+    criticalReady: criticalIssues.length === 0,
+    managementReady: criticalIssues.length === 0 && managementIssues.length === 0,
+    criticalIssues,
+    managementIssues,
+    infoIssues,
     issues,
   };
 }

@@ -14,11 +14,12 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 
 ## Milestone Status
 
-- Current milestone: Milestone 4 - Validation Rules and Data Quality Gating.
+- Current milestone: Milestone 5 - Decision-First UI and UX Cleanup.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
 - Milestone 3 status: Complete as of 2026-04-24.
-- Milestone 4 status: Ready to execute as of 2026-04-24.
+- Milestone 4 status: Complete as of 2026-04-24.
+- Milestone 5 status: Ready to execute as of 2026-04-24.
 - Last status update: 2026-04-24.
 
 ## Milestone 1 Completion Record
@@ -145,6 +146,34 @@ M3 is complete because monthly cash truth and scenario history now share the sam
 - It does not change Base/Bull/Bear business meaning.
 - It does not introduce a new forecasting model.
 - It does not change Google Sheet schema or ledger filtering behavior for the ledger page itself.
+
+## Milestone 4 Completion Record
+
+M4 is complete because validation now matches the intended operator-action model instead of the older rendering-versus-management split.
+
+### Closed M4 Outputs
+
+- Validation now groups issues as `Critical`, `Management`, and `Info`.
+- The validation summary panel now reflects the new grouping and uses direct operator-facing wording.
+- Legacy snapshots that still contain `renderingWarnings` and `managementWarnings` are normalized into the new model when read.
+- `invalid-original-forecast` and support-sheet local fallback are now treated as non-blocking informational issues.
+- Focused regression tests cover both the new grouping behavior and legacy snapshot compatibility.
+
+### M4 Verification Record
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- `git diff --check`
+- Focused regression coverage now includes:
+  - Critical/Management/Info grouping for core-field issues
+  - legacy validation report normalization
+  - non-blocking info handling for `invalid-original-forecast`
+
+### What M4 Does Not Claim
+
+- It does not redesign the Google Sheet schema.
+- It does not broaden support-sheet checks beyond business-relevant use.
+- It does not replace later UI cleanup work in Milestone 5.
 
 ## Milestone 1 - Scope Lock and Baseline Freeze
 

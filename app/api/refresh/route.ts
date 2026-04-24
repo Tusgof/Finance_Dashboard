@@ -29,8 +29,7 @@ function buildSheetCsvUrlByGid(sheetId: string, gid: string): string {
 function buildSupportSheetFetchFailedIssue(sheetName: string, detail: string): ValidationIssue {
   return {
     code: 'support-sheet-fetch-failed',
-    scope: 'management',
-    severity: 'warning',
+    level: 'management',
     message: `${sheetName} could not be refreshed: ${detail}.`,
     field: sheetName,
     value: detail,

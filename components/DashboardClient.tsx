@@ -77,6 +77,40 @@ export default function DashboardClient() {
   };
 
   const activeMeta = PAGES.find(page => page.id === activePage) ?? PAGES[0];
+  const validationSubtitle = validationReport
+    ? !validationReport.criticalReady
+      ? 'Fix critical data issues before relying on this snapshot.'
+      : !validationReport.managementReady
+        ? 'Snapshot renders, but some metrics still need cleanup before decision use.'
+        : validationReport.infoIssues.length > 0
+          ? 'Snapshot is ready. Informational notes are listed for follow-up.'
+          : 'Snapshot is ready for management use.'
+    : '';
+  const validationGroups = validationReport
+    ? [
+        {
+          level: 'critical' as const,
+          title: 'Critical',
+          action: 'Fix before using cash truth.',
+          ready: validationReport.criticalReady,
+          issues: validationReport.criticalIssues,
+        },
+        {
+          level: 'management' as const,
+          title: 'Management',
+          action: 'Clean up before relying on these numbers.',
+          ready: validationReport.managementReady,
+          issues: validationReport.managementIssues,
+        },
+        {
+          level: 'info' as const,
+          title: 'Info',
+          action: 'Context for follow-up only.',
+          ready: validationReport.infoIssues.length === 0,
+          issues: validationReport.infoIssues,
+        },
+      ]
+    : [];
 
   if (loading) {
     return (
@@ -124,33 +158,51 @@ export default function DashboardClient() {
                 <div className="validation-panel-header">
                   <div>
                     <div className="validation-title">Snapshot Validation</div>
-                    <div className="validation-subtitle">
-                      {validationReport.managementReady ? 'Ready for management use with warnings.' : 'Review before relying on management metrics.'}
-                    </div>
+                    <div className="validation-subtitle">{validationSubtitle}</div>
                   </div>
                   <div className="validation-badges">
-                    <span className={`validation-badge ${validationReport.renderingReady ? 'ok' : 'warn'}`}>
-                      Render {validationReport.renderingReady ? 'ready' : 'warnings'}
+                    <span className={`validation-badge ${validationReport.criticalReady ? 'ok' : 'critical'}`}>
+                      Critical {validationReport.criticalIssues.length > 0 ? validationReport.criticalIssues.length : 'clear'}
                     </span>
                     <span className={`validation-badge ${validationReport.managementReady ? 'ok' : 'warn'}`}>
-                      Management {validationReport.managementReady ? 'ready' : 'warnings'}
+                      Management {validationReport.managementIssues.length > 0 ? validationReport.managementIssues.length : 'clear'}
+                    </span>
+                    <span className={`validation-badge ${validationReport.infoIssues.length > 0 ? 'info' : 'ok'}`}>
+                      Info {validationReport.infoIssues.length > 0 ? validationReport.infoIssues.length : 'clear'}
                     </span>
                   </div>
                 </div>
-                <div className="validation-list">
-                  {validationReport.issues.slice(0, 4).map(issue => (
-                    <div key={`${issue.code}-${issue.rowIndex ?? issue.workMonth ?? issue.message}`} className="validation-item">
-                      <span className={`validation-pill ${issue.scope === 'management' ? 'management' : 'rendering'}`}>
-                        {issue.scope}
-                      </span>
-                      <span>{issue.message}</span>
-                    </div>
-                  ))}
-                  {validationReport.issues.length > 4 ? (
-                    <div className="validation-item validation-more">
-                      +{validationReport.issues.length - 4} more warnings
-                    </div>
-                  ) : null}
+                <div className="validation-groups">
+                  {validationGroups
+                    .filter(group => group.issues.length > 0)
+                    .map(group => (
+                      <section key={group.level} className="validation-group">
+                        <div className="validation-group-header">
+                          <div>
+                            <div className={`validation-group-title ${group.level}`}>{group.title}</div>
+                            <div className="validation-group-action">{group.action}</div>
+                          </div>
+                          <span className={`validation-badge ${group.ready ? 'ok' : group.level === 'critical' ? 'critical' : group.level === 'info' ? 'info' : 'warn'}`}>
+                            {group.issues.length} issue{group.issues.length === 1 ? '' : 's'}
+                          </span>
+                        </div>
+                        <div className="validation-list">
+                          {group.issues.slice(0, 2).map(issue => (
+                            <div key={`${group.level}-${issue.code}-${issue.rowIndex ?? issue.workMonth ?? issue.message}`} className="validation-item">
+                              <span className={`validation-pill ${issue.level}`}>
+                                {issue.level}
+                              </span>
+                              <span>{issue.message}</span>
+                            </div>
+                          ))}
+                          {group.issues.length > 2 ? (
+                            <div className="validation-item validation-more">
+                              +{group.issues.length - 2} more {group.level} item{group.issues.length - 2 === 1 ? '' : 's'}
+                            </div>
+                          ) : null}
+                        </div>
+                      </section>
+                    ))}
                 </div>
               </div>
             ) : null}

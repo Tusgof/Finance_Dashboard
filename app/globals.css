@@ -279,10 +279,69 @@ select {
   border-color: rgba(217, 119, 6, 0.22);
   background: var(--accent-amber-bg);
 }
+.validation-badge.critical {
+  color: var(--accent-red);
+  border-color: rgba(220, 38, 38, 0.22);
+  background: var(--accent-red-bg);
+}
+.validation-badge.info {
+  color: var(--accent-blue);
+  border-color: rgba(37, 99, 235, 0.22);
+  background: var(--accent-blue-bg);
+}
 
 .validation-list {
   display: grid;
   gap: 8px;
+}
+
+.validation-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.validation-group {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.validation-group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.validation-group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.validation-group-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.validation-group-title.critical {
+  color: var(--accent-red);
+}
+
+.validation-group-title.management {
+  color: var(--accent-amber);
+}
+
+.validation-group-title.info {
+  color: var(--accent-blue);
+}
+
+.validation-group-action {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .validation-item {
@@ -311,14 +370,19 @@ select {
   flex: 0 0 auto;
 }
 
-.validation-pill.rendering {
-  color: var(--accent-blue);
-  background: var(--accent-blue-bg);
+.validation-pill.critical {
+  color: var(--accent-red);
+  background: var(--accent-red-bg);
 }
 
 .validation-pill.management {
   color: var(--accent-amber);
   background: var(--accent-amber-bg);
+}
+
+.validation-pill.info {
+  color: var(--accent-blue);
+  background: var(--accent-blue-bg);
 }
 
 .sidebar-block {

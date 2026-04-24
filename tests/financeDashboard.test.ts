@@ -51,8 +51,7 @@ const tests: Array<[string, () => void]> = [
     () => {
   const fetchedIssues: ValidationIssue[] = [{
     code: 'support-sheet-empty',
-    scope: 'management',
-    severity: 'warning',
+    level: 'management',
     message: 'Monthly Production Summary looks empty or incomplete: no usable rows were returned.',
     field: 'Monthly Production Summary',
     value: 'no usable rows were returned',
@@ -214,7 +213,7 @@ const tests: Array<[string, () => void]> = [
     },
   ],
   [
-    'core field validation separates rendering blockers from management warnings',
+    'core field validation separates critical, management, and info warnings',
     () => {
   const csv = [
     'Date,Work Month,Type,Main Category,Description,Amount,Status,Original Forecast',
@@ -224,14 +223,55 @@ const tests: Array<[string, () => void]> = [
   const parsed = parseTransactionCsv(csv, DEFAULT_DASHBOARD_SETTINGS);
   const report = buildValidationReport(parsed.rowIssues, parsed.dataFile.rawData, []);
 
-  assert.equal(report.renderingReady, false);
+  assert.equal(report.criticalReady, false);
   assert.equal(report.managementReady, false);
-  assert.ok(report.renderingWarnings.some(issue => issue.code === 'missing-work-month'));
-  assert.ok(report.renderingWarnings.some(issue => issue.code === 'invalid-amount'));
-  assert.ok(report.managementWarnings.some(issue => issue.code === 'invalid-status'));
-  assert.ok(report.managementWarnings.some(issue => issue.code === 'invalid-main-category'));
-  assert.ok(report.managementWarnings.some(issue => issue.code === 'missing-cost-behavior'));
-  assert.ok(report.managementWarnings.some(issue => issue.code === 'invalid-original-forecast'));
+  assert.ok(report.criticalIssues.some(issue => issue.code === 'missing-work-month'));
+  assert.ok(report.criticalIssues.some(issue => issue.code === 'invalid-amount'));
+  assert.ok(report.managementIssues.some(issue => issue.code === 'invalid-status'));
+  assert.ok(report.managementIssues.some(issue => issue.code === 'invalid-main-category'));
+  assert.ok(report.managementIssues.some(issue => issue.code === 'missing-cost-behavior'));
+  assert.ok(report.managementIssues.some(issue => issue.code === 'invalid-original-forecast'));
+  assert.equal(report.infoIssues.length, 0);
+    },
+  ],
+  [
+    'validation report normalizer reads legacy rendering and management buckets',
+    () => {
+      const normalized = normalizeDataFile(
+        {
+          rawData: [],
+          openingBalance: 0,
+          productionSummary: [],
+          sponsorPipeline: [],
+          validationReport: {
+            generatedAt: '2026-04-24T00:00:00.000Z',
+            renderingReady: false,
+            managementReady: false,
+            renderingWarnings: [
+              {
+                code: 'missing-work-month',
+                scope: 'rendering',
+                severity: 'warning',
+                message: 'Row 1: Work Month is missing or not normalized to YYYY-MM.',
+              },
+            ],
+            managementWarnings: [
+              {
+                code: 'invalid-status',
+                scope: 'management',
+                severity: 'warning',
+                message: 'Row 1: Status "(blank)" is not one of Actual, Committed, Forecast, or Cancelled.',
+              },
+            ],
+          },
+        },
+        DEFAULT_DASHBOARD_SETTINGS
+      );
+
+      assert.ok(normalized.validationReport);
+      assert.ok(normalized.validationReport?.criticalIssues.some(issue => issue.code === 'missing-work-month'));
+      assert.ok(normalized.validationReport?.managementIssues.some(issue => issue.code === 'invalid-status'));
+      assert.equal(normalized.validationReport?.infoIssues.length, 0);
     },
   ],
   [
@@ -282,7 +322,7 @@ const tests: Array<[string, () => void]> = [
     []
   );
 
-  const missingSummaryWarnings = report.managementWarnings.filter(issue => issue.code === 'missing-production-summary');
+  const missingSummaryWarnings = report.managementIssues.filter(issue => issue.code === 'missing-production-summary');
   assert.deepEqual(missingSummaryWarnings.map(issue => issue.workMonth), ['2026-06']);
     },
   ],
@@ -317,10 +357,10 @@ const tests: Array<[string, () => void]> = [
     ]
   );
 
-  const codes = issueCodes(report.managementWarnings);
+  const codes = issueCodes(report.managementIssues);
   assert.ok(codes.includes('production-summary-total-cogs-mismatch'));
   assert.ok(codes.includes('production-summary-cost-per-content-mismatch'));
-  assert.equal(report.managementWarnings.filter(issue => issue.workMonth === '2026-08').length, 0);
+  assert.equal(report.managementIssues.filter(issue => issue.workMonth === '2026-08').length, 0);
     },
   ],
   [
@@ -340,8 +380,32 @@ const tests: Array<[string, () => void]> = [
   assert.equal(parsed.dataFile.rawData[1].balance, 1200);
 
   const fallbackMeta = createSnapshotMeta('https://example.com/sheet.csv', '2026-04-19T08:15:00.000Z');
-  const normalized = normalizeDataFile(parsed.dataFile, DEFAULT_DASHBOARD_SETTINGS, fallbackMeta);
+  const normalized = normalizeDataFile({
+    ...parsed.dataFile,
+    validationReport: {
+      generatedAt: '2026-04-19T08:15:00.000Z',
+      renderingReady: false,
+      managementReady: false,
+      renderingWarnings: [{
+        code: 'missing-work-month',
+        scope: 'rendering',
+        severity: 'warning',
+        message: 'legacy rendering issue',
+      }],
+      managementWarnings: [{
+        code: 'missing-sponsor',
+        scope: 'management',
+        severity: 'warning',
+        message: 'legacy management issue',
+      }],
+      issues: [],
+    },
+  }, DEFAULT_DASHBOARD_SETTINGS, fallbackMeta);
   assert.deepEqual(normalized.snapshotMeta, fallbackMeta);
+  assert.equal(normalized.validationReport?.criticalReady, false);
+  assert.equal(normalized.validationReport?.managementReady, false);
+  assert.equal(normalized.validationReport?.criticalIssues[0]?.code, 'missing-work-month');
+  assert.equal(normalized.validationReport?.managementIssues[0]?.code, 'missing-sponsor');
     },
   ],
   [

@@ -17,8 +17,7 @@ export interface SupportSheetRefreshResult<T> {
 function buildLocalFallbackIssue(sheetName: string, rowCount: number): ValidationIssue {
   return {
     code: 'support-sheet-local-fallback',
-    scope: 'management',
-    severity: 'warning',
+    level: 'info',
     message: `${sheetName} refresh was unusable, so the previous local snapshot with ${rowCount} rows was kept.`,
     field: sheetName,
     value: String(rowCount),
