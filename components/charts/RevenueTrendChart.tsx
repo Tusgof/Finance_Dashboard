@@ -22,13 +22,13 @@ function monthLabel(month: string): string {
 }
 
 export default function RevenueTrendChart() {
-  const { filteredData } = useDashboard();
+  const { rawData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
   const inflows = useMemo(
-    () => filteredData.filter(row => row.type === 'Inflow' && row.status !== 'Cancelled'),
-    [filteredData]
+    () => rawData.filter(row => row.type === 'Inflow' && row.status !== 'Cancelled'),
+    [rawData]
   );
 
   const months = useMemo(

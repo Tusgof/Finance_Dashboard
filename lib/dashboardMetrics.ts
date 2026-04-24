@@ -123,7 +123,8 @@ export function groupByMonth(data: NormalizedTransaction[]): Record<string, Norm
 export function getCurrentCash(data: NormalizedTransaction[], openingBalance: number): number {
   const actual = data.filter(item => item.status === 'Actual');
   if (actual.length === 0) return openingBalance;
-  return actual[actual.length - 1]?.balance ?? openingBalance;
+  const monthlyActualRows = buildMonthlyCashFlowRows(actual, openingBalance);
+  return monthlyActualRows.at(-1)?.balance ?? openingBalance;
 }
 
 export function getMonthlyRevenue(data: NormalizedTransaction[]): Record<string, number> {
@@ -252,16 +253,12 @@ function accumulateBalances(startingBalance: number, monthlyNet: number[]): numb
   });
 }
 
-function latestMonthBalance(rows: NormalizedTransaction[], month: string): number | null {
-  const monthRows = rows.filter(row => row.workMonth === month);
-  return monthRows.length > 0 ? monthRows[monthRows.length - 1].balance : null;
-}
-
 function getScenarioStartingCash(data: NormalizedTransaction[], openingBalance: number): number {
   const actualRows = data.filter(row => row.status === 'Actual');
   const latestActualMonth = sortMonths(actualRows.map(row => row.workMonth)).at(-1);
   if (!latestActualMonth) return getCurrentCash(data, openingBalance);
-  return latestMonthBalance(actualRows, latestActualMonth) ?? getCurrentCash(data, openingBalance);
+  const monthlyActualRows = buildMonthlyCashFlowRows(actualRows, openingBalance);
+  return monthlyActualRows.at(-1)?.balance ?? getCurrentCash(data, openingBalance);
 }
 
 function isAdRevenue(row: NormalizedTransaction): boolean {
@@ -337,7 +334,7 @@ export function buildMonthlyCashFlowRows(
   openingBalance: number
 ): MonthlyCashFlowRow[] {
   const activeRows = data.filter(row => row.status !== 'Cancelled');
-  const months = getMonths(data);
+  const months = sortMonths(activeRows.map(row => row.workMonth));
   const inflows = months.map(month =>
     activeRows
       .filter(row => row.workMonth === month && row.type === 'Inflow')
@@ -366,7 +363,9 @@ export function buildScenarioProjection(
   const resolved = resolveSettings(settings);
   const activeRows = data.filter(row => row.status !== 'Cancelled');
   const actualRows = activeRows.filter(row => row.status === 'Actual');
-  const actualMonths = sortMonths(actualRows.map(row => row.workMonth));
+  const actualMonthlyRows = buildMonthlyCashFlowRows(actualRows, openingBalance);
+  const actualBalanceByMonth = new Map(actualMonthlyRows.map(row => [row.month, row.balance]));
+  const actualMonths = actualMonthlyRows.map(row => row.month);
   const latestActualMonth = actualMonths.at(-1) ?? sortMonths(activeRows.map(row => row.workMonth)).at(0) ?? monthKey(new Date());
   const currentCash = getScenarioStartingCash(data, openingBalance);
   const futureRows = activeRows.filter(row => row.status !== 'Actual' && row.workMonth >= latestActualMonth);
@@ -403,7 +402,7 @@ export function buildScenarioProjection(
 
   return months.map((month, index) => ({
     month,
-    actualBalance: month <= latestActualMonth ? latestMonthBalance(actualRows, month) : null,
+    actualBalance: month <= latestActualMonth ? actualBalanceByMonth.get(month) ?? null : null,
     baseNet: baseNetByMonth[index],
     bullNet: bullNetByMonth[index],
     bearNet: bearNetByMonth[index],

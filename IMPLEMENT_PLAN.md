@@ -14,10 +14,11 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 
 ## Milestone Status
 
-- Current milestone: Milestone 3 - Cash Flow and Scenario Correctness.
+- Current milestone: Milestone 4 - Validation Rules and Data Quality Gating.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
-- Milestone 3 status: Ready to execute as of 2026-04-24.
+- Milestone 3 status: Complete as of 2026-04-24.
+- Milestone 4 status: Ready to execute as of 2026-04-24.
 - Last status update: 2026-04-24.
 
 ## Milestone 1 Completion Record
@@ -115,6 +116,35 @@ M2 is complete because the sheet-to-snapshot contract is now explicit, guarded, 
 - It does not claim durable production persistence on Vercel.
 - It does not claim live deploy verification. That belongs to Milestone 7.
 - It does not change Google Sheet schema or business meaning.
+
+## Milestone 3 Completion Record
+
+M3 is complete because monthly cash truth and scenario history now share the same month-based balance source, and management charts no longer inherit ledger-only filter state.
+
+### Closed M3 Outputs
+
+- `getCurrentCash` now derives current cash from month-based actual balances instead of trusting the last raw actual row balance.
+- Scenario actual history and scenario starting cash now reuse monthly cash rows instead of row-level balance lookups.
+- `ScenarioPlannerSection` normalizes rows with the active dashboard settings before building projections.
+- Revenue and direct/indirect management charts now read the full snapshot so the ledger sidebar filter does not change top-level management truth.
+- Monthly cash rows now ignore months that only contain cancelled transactions.
+
+### M3 Verification Record
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- `git diff --check`
+- Focused regression coverage now includes:
+  - month-end balance derivation from monthly net
+  - excluded cancelled-only months
+  - current cash and scenario actual history derived from monthly balances
+  - current-month inclusion of non-Actual rows in Scenario
+
+### What M3 Does Not Claim
+
+- It does not change Base/Bull/Bear business meaning.
+- It does not introduce a new forecasting model.
+- It does not change Google Sheet schema or ledger filtering behavior for the ledger page itself.
 
 ## Milestone 1 - Scope Lock and Baseline Freeze
 

@@ -162,14 +162,15 @@ Confirmed secondary metrics:
 
 ## Current Verified State
 
-- Last verified: 2026-04-24, by local test/build run after Milestone 2 closeout changes.
+- Last verified: 2026-04-24, by local test/build run after Milestone 3 closeout changes.
 - Current branch: `main`.
-- Latest known pushed commit before this update: `d579362 Warn on invalid original forecasts`.
+- Latest known pushed commit before this update: `1eab99f Close milestone two refresh reliability work`.
 - Git state before this update: `main...origin/main`.
-- Current milestone: Milestone 3 - Cash Flow and Scenario Correctness.
+- Current milestone: Milestone 4 - Validation Rules and Data Quality Gating.
 - Completed:
   - Milestone 1 - Scope Lock and Baseline Freeze completed.
   - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
+  - Milestone 3 - Cash Flow and Scenario Correctness completed.
   - Added `IMPLEMENT_PLAN.md` with the milestone path to lean production readiness.
   - Recorded M1 completion artifacts: scope checklist, metric meaning map, excluded features, and owner-only decisions.
   - Replaced old scenario planner with current-situation Base/Bull/Bear cash cases.
@@ -189,33 +190,36 @@ Confirmed secondary metrics:
   - Added focused regression tests for local snapshot backup creation, stateless no-write behavior on Vercel, and the core-field validation severity split.
   - Added Monthly Production Summary cross-check warnings for actual COGS total and cost-per-content mismatches.
   - Moved Bull scenario assumptions into normalized scenario settings.
+  - Current cash and Scenario actual history now derive from monthly cash balances instead of the last raw actual-row balance.
+  - Revenue and direct/indirect management charts now use the full snapshot rather than ledger filter state.
+  - Monthly cash rows now ignore months that only contain cancelled transactions.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - Milestone 3 - Cash Flow and Scenario Correctness.
+  - Milestone 4 - Validation Rules and Data Quality Gating.
 - Pending:
-  - Continue centralizing monthly cash/scenario helpers so Cash Flow and Scenario cannot drift.
+  - Refine validation severity groups from the current rendering/management split into the intended Critical/Management/Info model.
   - Keep monthly transaction drilldown aligned with the top-level cash truth.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits as part of deployment/release work, not sheet-contract work.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 15 tests after M2 refresh persistence extraction and route-safety coverage.
-  - `npm.cmd run build` passed after M2 refresh persistence extraction and route-safety coverage.
+  - `npm.cmd run test:finance` passed 17 tests after Milestone 3 cash/scenario alignment changes.
+  - `npm.cmd run build` passed after Milestone 3 cash/scenario alignment changes.
   - `git diff --check` passed with only LF/CRLF warnings.
-  - Worker verification of the compiled refresh handler in a temp workspace returned `200`, `success: true`, `count: 1`, `productionSummaryCount: 1`, `sponsorPipelineCount: 1`, and `persistenceMode: filesystem`.
+  - Worker verification for Milestone 3 confirmed the updated scenario/cash alignment and management-chart scope behavior.
 
 ## Next Safe Action
 
-- Action: execute Milestone 3 by tightening the shared monthly cash/scenario logic before making new chart or scenario changes.
+- Action: execute Milestone 4 by turning validation into a clearer decision aid before broader UI cleanup.
 - Preconditions:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
-  - Keep the Google Sheet contract and refresh behavior from Milestone 2 unchanged unless a bug proves they are insufficient.
+  - Keep the Google Sheet contract and monthly cash logic from Milestones 2 and 3 unchanged unless a bug proves they are insufficient.
 - Stop if:
   - A proposed change changes Google Sheet schema without explicit user approval.
-  - A proposed cash/scenario change alters the meaning of `Work Month`, `Base`, `Bull`, or `Bear` without explicit review.
+  - A proposed warning cannot point to a concrete operator action.
 - Verify with:
   - `npm.cmd run test:finance`.
   - `npm.cmd run build`.
-  - Manual comparison of monthly cash/scenario output against known problematic months.
+  - Manual review that warning severity matches actual operator risk.
 
 ## Improvement Triage
 
@@ -479,6 +483,7 @@ git status --short --branch
 - 2026-04-23: User confirmed Production Metrics option B: keep as medium-priority secondary metrics, with `Cost per Content` shown only when actual content count exists.
 - 2026-04-23: Milestone 1 was closed with `IMPLEMENT_PLAN.md` and explicit completion artifacts. Milestone 2 started with Google Sheet contract and refresh reliability as the active workstream.
 - 2026-04-24: Milestone 2 was closed after the active sheet contract, core-field validation rules, optional support-sheet fallback, atomic local refresh persistence, and Vercel/stateless no-write behavior were all documented and covered by focused verification. Live deploy verification remains deployment work.
+- 2026-04-24: Milestone 3 was closed after current cash and scenario actual history were aligned to month-based balances, cancelled-only months stopped appearing in monthly cash rows, and management charts were detached from ledger filter state.
 
 ## Document Map
 
@@ -519,7 +524,7 @@ git status --short --branch
 - Verified by: Codex primary agent.
 - Verification source:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` before work.
-  - `npm.cmd run test:finance` passed 15 tests.
+  - `npm.cmd run test:finance` passed 17 tests.
   - `npm.cmd run build` passed.
   - `git diff --check` passed with only LF/CRLF warnings.
-  - Worker verification of the compiled refresh handler succeeded in a temp workspace.
+  - Worker audit confirmed no remaining M3 gap in the implemented scope.

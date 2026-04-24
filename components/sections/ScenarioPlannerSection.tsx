@@ -49,7 +49,6 @@ export default function ScenarioPlannerSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
-  const normalized = useMemo(() => normalizeTransactions(rawData), [rawData]);
   useEffect(() => {
     let active = true;
     void loadDashboardSettings().then(next => {
@@ -59,6 +58,7 @@ export default function ScenarioPlannerSection() {
       active = false;
     };
   }, []);
+  const normalized = useMemo(() => normalizeTransactions(rawData, settings), [rawData, settings]);
   const projection = useMemo(() => buildScenarioProjection(normalized, openingBalance, settings), [normalized, openingBalance, settings]);
   const scenarioProjection = projection.filter(row => row.baseBalance !== null);
   const latest = scenarioProjection.at(-1);

@@ -7,16 +7,16 @@ import { chartDefaults } from '@/lib/chartDefaults';
 import { DEFAULT_DASHBOARD_SETTINGS, getAvailableMonths, getCostType, loadDashboardSettings } from '@/lib/dataUtils';
 
 export default function DirectIndirectStackedChart() {
-  const { filteredData, currentFilter } = useDashboard();
+  const { rawData } = useDashboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
 
   const filteredVideoProduction = useMemo(
-    () => filteredData
-      .filter((d) => d.category === 'ต้นทุนสินค้า' && d.entity === 'Video Production')
+    () => rawData
+      .filter((d) => d.mainCategory === 'COGS' && d.entity === 'Video Production')
       .map((d) => ({ ...d, costType: getCostType(d, settings) })),
-    [filteredData, settings]
+    [rawData, settings]
   );
 
   const months = useMemo(() => getAvailableMonths(filteredVideoProduction), [filteredVideoProduction]);
@@ -39,18 +39,11 @@ export default function DirectIndirectStackedChart() {
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
 
-    const activeMonths = new Set(filteredVideoProduction.map((d) => d.month));
-    const showAll = currentFilter === 'all' || currentFilter === 'actual' || currentFilter === 'forecast';
-
     const direct = months.map((month) =>
-      showAll || activeMonths.has(month)
-        ? filteredVideoProduction.filter((d) => d.month === month && d.costType === 'Direct').reduce((s, d) => s + d.amount, 0)
-        : 0
+      filteredVideoProduction.filter((d) => d.month === month && d.costType === 'Direct').reduce((s, d) => s + d.amount, 0)
     );
     const indirect = months.map((month) =>
-      showAll || activeMonths.has(month)
-        ? filteredVideoProduction.filter((d) => d.month === month && d.costType === 'Indirect').reduce((s, d) => s + d.amount, 0)
-        : 0
+      filteredVideoProduction.filter((d) => d.month === month && d.costType === 'Indirect').reduce((s, d) => s + d.amount, 0)
     );
 
     chartRef.current = new Chart(canvasRef.current, {
@@ -73,7 +66,7 @@ export default function DirectIndirectStackedChart() {
     });
 
     return () => { chartRef.current?.destroy(); };
-  }, [filteredVideoProduction, currentFilter, months, labels]);
+  }, [filteredVideoProduction, months, labels]);
 
   return (
     <div className="chart-card" style={{ borderColor: 'var(--border)' }}>

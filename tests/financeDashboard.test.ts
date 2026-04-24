@@ -600,6 +600,101 @@ const tests: Array<[string, () => void]> = [
     },
   ],
   [
+    'cash flow excludes months that only contain cancelled rows',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-04-01',
+      workMonth: '2026-04',
+      month: '2026-04',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-05-01',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Outflow',
+      status: 'Cancelled',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 50,
+      balance: 1050,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const series = buildMonthlyCashFlowRows(normalized, 1000);
+
+  assert.deepEqual(series.map(row => row.month), ['2026-04']);
+  assert.equal(series[0]?.balance, 1100);
+    },
+  ],
+  [
+    'current cash and scenario actual history use monthly balances, not the last raw actual balance',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-04-01',
+      workMonth: '2026-04',
+      month: '2026-04',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-04-20',
+      workMonth: '2026-04',
+      month: '2026-04',
+      type: 'Outflow',
+      status: 'Actual',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 25,
+      balance: 9999,
+    }),
+    makeRow({
+      date: '2026-05-01',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 10,
+      balance: 1010,
+    }),
+    makeRow({
+      date: '2026-05-10',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Outflow',
+      status: 'Actual',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 5,
+      balance: 8888,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  assert.equal(getCurrentCash(normalized, 1000), 1080);
+
+  const projection = buildScenarioProjection(normalized, 1000);
+  const may = projection.find(row => row.month === '2026-05');
+
+  assert.equal(may?.actualBalance, 1080);
+  assert.equal(may?.baseBalance, 1080);
+    },
+  ],
+  [
     'scenario includes non-Actual rows from the latest actual work month onward',
     () => {
   const rawRows: RawTransactionRow[] = [
