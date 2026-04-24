@@ -31,7 +31,8 @@ npm.cmd run build
 ## Key docs
 
 - [PROJECT_BRAIN.md](./PROJECT_BRAIN.md) - project scope, guardrails, verified state, and milestone history.
-- [IMPLEMENT_PLAN.md](./IMPLEMENT_PLAN.md) - milestone plan and production readiness path.
+- [IMPLEMENT_PLAN.md](./IMPLEMENT_PLAN.md) - active milestone plan and production readiness path.
+- [25042026_implement_plan.md](./Back%20up%20implement%20plan/25042026_implement_plan.md) - archived milestone plan.
 - [OPERATOR_MANUAL.md](./OPERATOR_MANUAL.md) - day-to-day refresh, reading, warnings, and recovery steps.
 - [GOOGLE_SHEET_CONTRACT.md](./GOOGLE_SHEET_CONTRACT.md) - active sheet tabs, field contract, and refresh notes.
 - [package.json](./package.json) - runnable scripts and dependencies.

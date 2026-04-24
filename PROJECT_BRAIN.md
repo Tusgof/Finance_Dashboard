@@ -1,634 +1,211 @@
 # PROJECT_BRAIN.md
 
-Central operating memory for `Finance_Dashboard`.
+## 1. Project Definition
+- **Purpose**: Internal finance dashboard that turns Google Sheet cash data into a decision-oriented web dashboard for Easymoneyconcept / Fin Friend Media.
+- **Primary Users**: Founder/operator, with maintainers and AI agents as internal support users.
+- **Problem Solved**: Weekly and monthly cash, revenue, cost, and scenario signals are difficult to read directly from raw Google Sheets.
+- **Desired Outcome**: A reliable, lean dashboard where the operator can refresh data, review validation, and make cash-survival decisions from one place within seconds.
+- **In Scope**: Google Sheet refresh, local JSON snapshots, cash truth, scenario analysis, monthly transaction drilldown/reconciliation, essential settings only, local backup/restore, validation rules, and support-sheet reads for production summary and sponsor pipeline.
+- **Out of Scope**: Accounting system, CRM, payroll/bonus system, multi-user admin, database-backed redesign, auth-protected user management, and expansion of settings/configurability that does not directly improve decision-making.
 
-Use this file before changing code, data schema, Google Sheet structure, scenario logic, refresh behavior, deployment behavior, or management KPI formulas.
+## 2. Success Criteria
+### Usable When:
+- `GET /api/data` returns a normalized snapshot from local JSON without crashing.
+- `POST /api/refresh` can fetch the Google Sheet and return refreshed data.
+- Cash, revenue, P&L, scenario, ledger, settings, and backups pages render.
+- Validation issues are grouped into `Critical`, `Management`, and `Info`.
+- The first screen answers current cash position and near-term cash risk quickly enough for weekly and monthly decisions.
 
-## Project Definition
-
-- Purpose: provide a lean internal finance management dashboard for Easymoneyconcept / Fin Friend Media.
-- Primary users: founder/operator first. Future maintainers and AI agents are secondary users, not the product target.
-- Problem: finance data lives in Google Sheets and can be hard to interpret quickly for weekly/monthly cash, revenue, cost, scenario, and decision risk.
-- Desired outcome: a dashboard that helps the operator make weekly and monthly management decisions from a clear business overview, with Cash Flow & Running Balance as the main truth.
-- In scope:
-  - Google Sheet-backed transaction dashboard.
-  - Cash overview, Cash Flow & Running Balance chart, Revenue & Sponsor view, Cash P&L view, Scenario Planner, Ledger.
-  - Refresh from Google Sheets into local JSON snapshots.
-  - Validation warnings classified by severity for data that is renderable but risky for management decisions.
-  - Scenario planning for Base, Bull, and Bear cash paths with short plain-language logic.
-  - Support sheets for production summary and sponsor pipeline only where they support cash/business decisions.
-- Out of scope:
-  - Double-entry accounting system.
-  - Full accounting system behavior.
-  - Tax filing automation.
-  - Formal audited financial statements.
-  - Payroll or bonus calculation system.
-  - CRM or sponsor management system.
-  - Multi-user permission/admin system.
-  - Permanent database replacement while Google Sheets remains the source of truth.
-
-## Success Criteria
-
-The project is considered usable when:
-
-- The dashboard loads from `data/current.json` through `GET /api/data`.
-- `POST /api/refresh` can fetch Google Sheets and return a full refreshed snapshot.
-- Cash, revenue, P&L, scenario, and ledger pages render without blocking errors.
-- Every management metric can be traced back to transaction rows or support sheet rows.
-- Validation issues are grouped as Critical, Management, and Info with clear operator action.
-- Cash Flow & Running Balance uses a coherent monthly basis and does not depend on raw row order.
-- Scenario Planner explains Base, Bull, and Bear assumptions clearly enough for non-technical operation.
-- The first screen supports weekly/monthly business decisions without requiring the user to inspect raw transactions first.
-- Secondary metrics do not distract from cash and scenario decision-making when their input data is incomplete.
-
-The project is considered production-ready when:
-
+### Production-Ready When:
 - `npm.cmd run test:finance` passes.
 - `npm.cmd run build` passes.
-- Vercel deployment succeeds from `main`.
-- Refresh behavior works in Vercel without attempting non-durable filesystem writes.
-- Google Sheet source tabs have stable headers and no management warnings for currently used metrics.
-- Latest pushed snapshot reflects the intended Google Sheet state.
-- Known recovery playbooks below are enough to handle common refresh, data, and chart failures.
+- Local backup/restore works in filesystem mode and is blocked in stateless Vercel mode.
+- Operators can explain top-level cash numbers from transaction rows and support-sheet rows.
+- Cash truth and scenario outputs are decision-grade; secondary surfaces are acceptable at operator-grade so long as they do not distort cash decisions.
 
-Quality success means:
+## 3. Tech Stack
+| Layer | Technology | Version | Notes |
+|:------|:-----------|:--------|:------|
+| Language | TypeScript | 5.9.3 | From `package-lock.json` |
+| Runtime | Node.js | `>=18.17.0` | Required by `next@14.2.5` engine |
+| Framework | Next.js App Router | 14.2.5 | `app/` routes and pages |
+| UI Library | React | 18.3.1 | With `react-dom` 18.3.1 |
+| Styling | Global CSS + `next/font/google` Inter | [REQUIRES_INPUT] | Styling is in `app/globals.css`; no separate CSS framework |
+| State Management | React Context + hook state | [REQUIRES_INPUT] | `DashboardContext`, `useState`, `useMemo`, `useEffect` |
+| Database | None | [REQUIRES_INPUT] | No database config or schema found |
+| ORM / Data Layer | Google Sheets CSV + local JSON snapshots | [REQUIRES_INPUT] | `lib/transactionModel.ts`, `data/*.json` |
+| Authentication | None | [REQUIRES_INPUT] | No auth package or auth route found |
+| API Layer | Next.js Route Handlers | 14.2.5 | `app/api/*/route.ts` |
+| Testing | TypeScript compile + Node `assert/strict` | 5.9.3 / built-in | `npm.cmd run test:finance` |
+| Build Tool | Next.js build / SWC | 14.2.5 | `next build` |
+| Package Manager | npm | lockfile v3 | `package-lock.json` present |
+| CI/CD | [REQUIRES_INPUT] | [REQUIRES_INPUT] | No `.github/workflows` or deploy config file found |
+| Hosting/Deploy | Vercel | [REQUIRES_INPUT] | Referenced in repo docs and route behavior |
+| Key Dependencies | `chart.js`, `chartjs-plugin-annotation`, `@types/node`, `@types/react`, `@types/react-dom` | 4.4.7 / 3.1.0 / 20.19.37 / 18.3.28 / 18.3.7 | Verified from lock file |
 
-- Business formulas are simple, auditable, and documented.
-- The UI favors operational clarity over decorative complexity.
-- Chart labels and scenario logic use wording the operator can act on.
-- Code changes stay local to the relevant module unless a shared invariant requires broader edits.
-- Lean product scope is preserved: avoid adding accounting, CRM, payroll, or permission-system behavior into this dashboard.
+## 4. Architecture Overview
+- **System Type**: Hybrid Next.js dashboard with serverless-style route handlers plus local filesystem persistence in non-Vercel mode.
+- **Core Flow**: Operator updates Google Sheet -> refresh route fetches CSV -> parser normalizes rows and builds validation -> local mode persists `data/current.json` and support snapshots -> UI fetches `/api/data` and computes dashboard views from normalized transactions.
+- **Core Components**:
+  - `app/page.tsx`: main dashboard entry.
+  - `components/DashboardClient.tsx`: data fetch, refresh action, page navigation, context provider.
+  - `components/sections/CashOverviewSection.tsx`: cash summary and cash truth surface.
+  - `components/sections/ScenarioPlannerSection.tsx`: Base/Bull/Bear scenario view.
+  - `components/sections/RevenueSponsorSection.tsx`: revenue and sponsor-facing summaries.
+  - `components/sections/PnLCostSection.tsx`: cash P&L and cost views.
+  - `components/TransactionTable.tsx`: row-level ledger view.
+  - `app/settings/page.tsx` + `app/settings/SettingsClient.tsx`: settings editor.
+  - `app/backups/page.tsx` + `app/backups/BackupList.tsx`: local backup history and restore UI.
+  - `lib/transactionModel.ts`: parsing, normalization, validation, support-sheet checks.
+  - `lib/dashboardMetrics.ts`: KPI, monthly cash flow, scenario projection, runway helpers.
+  - `lib/refreshPersistence.ts`: local-vs-stateless persistence behavior.
+- **External Dependencies**: Google Sheets CSV/gviz endpoints, Vercel deployment target, Google Fonts via `next/font/google`.
+- **Persistence/State**: Source of truth is Google Sheets; cached state is stored in `data/current.json`, `data/production-summary.json`, `data/sponsor-pipeline.json`, and `data/backups/*.json`; client runtime state lives in React state/context.
+- **Integration Points**: `/api/data`, `/api/refresh`, `/api/settings`, `/api/backups`, `/api/restore`, Google Sheets workbook `1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8`.
 
-Reliability success means:
+## 5. Design Principles
+- Prefer correctness and traceability over UI novelty.
+- Keep Google Sheets as the source of truth unless a new store is intentionally introduced.
+- Treat `Work Month` as the monthly reporting key and `Date` as audit timing.
+- Keep cash truth and scenario views ahead of secondary metrics.
+- Prioritize transaction drilldown and reconciliation before adding new decision surfaces.
+- Use conservative normalization and explicit validation instead of silent inference.
+- Keep settings/configuration lean; expand settings only when the setting directly changes decision-grade behavior.
+- Raise input discipline gradually on important Google Sheet fields instead of pushing more normalization burden into dashboard code forever.
+- Use mixed quality targets: cash and scenario changes must be decision-grade, while supporting surfaces may ship at operator-grade if they do not weaken cash truth.
+- Keep serverless behavior stateless; only local mode may persist snapshots and backups.
 
-- Cancelled rows never affect calculations.
-- Amount sign comes from `Type`, not negative amount values.
-- Refresh failures do not corrupt the last known usable snapshot.
-- Local backup/snapshot writes are not assumed to work on Vercel.
+## 6. Current Verified State
+- **Last Verified**: 2026-04-25
+- **Current Milestone**: Milestone 2 - Monthly Cash Reconciliation.
+- **Completed**: Dashboard pages, refresh route, local backup/restore flow, settings API/UI, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, and root `IMPLEMENT_PLAN.md` creation.
+- **In Progress**: Monthly cash reconciliation work and any follow-up doc alignment needed for that milestone.
+- **Pending**: Execute the active plan milestone by milestone through the current root `IMPLEMENT_PLAN.md`.
+- **Latest Validation**: `npm.cmd run test:finance` passed 25 tests on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned only LF/CRLF warnings and no diff errors.
 
-## Tech Stack
+## 7. Next Safe Action
+- **Action**: Start Milestone 2 - Monthly Cash Reconciliation using the active root `IMPLEMENT_PLAN.md`.
+- **Preconditions**: `IMPLEMENT_PLAN.md` exists in repo root and the doc sync from Milestone 1 is complete.
+- **Stop If**: The reconciliation path would create a competing cash truth or require a sheet schema change.
+- **Verify With**: Confirm monthly drilldown/reconciliation matches the same month-end cash truth as the top-level cash surface.
 
-- Framework: Next.js 14 App Router
-- Language: TypeScript
-- UI runtime: React client components
-- Charts: Chart.js with `chartjs-plugin-annotation`
-- Data source: Google Sheets public CSV/gviz CSV endpoints
-- Persistence: local JSON snapshots and local backup files for filesystem mode
-- Deployment: Vercel from GitHub `main`
-- Testing: TypeScript test build via `tsconfig.test.json` plus Node-based finance regression tests
+## 8. Invariants & Guardrails
+### Never:
+- Never treat Vercel filesystem writes as durable storage.
+- Never let `Cancelled` rows affect management calculations.
+- Never use negative amount signs as the primary direction rule; `Type` is authoritative.
+- Never manually edit `data/current.json`, `data/production-summary.json`, or `data/sponsor-pipeline.json` as normal workflow.
+- Never broaden this dashboard into accounting, CRM, payroll, or multi-user admin without owner approval.
 
-## Architecture Overview
+### Always:
+- Always use `Work Month` for monthly cash and scenario grouping.
+- Always keep backup/restore local-only and stateless behavior intact on Vercel.
+- Always run finance tests and a production build before claiming feature work is complete.
+- Always update operating docs when sheet contract or behavior changes.
 
-- System shape: Next.js App Router dashboard with API routes, local JSON snapshots, Google Sheet refresh, and Chart.js visualizations.
-- System flow:
-  1. Human updates Google Sheet.
-  2. `POST /api/refresh` fetches public CSV/gviz CSV from Google Sheets.
-  3. Refresh parser validates and normalizes transaction/support data.
-  4. Local environment writes `data/current.json`, support JSON files, and backups.
-  5. Vercel/serverless environment returns the refreshed snapshot directly without relying on durable filesystem writes.
-  6. `GET /api/data` loads dashboard snapshot and support data.
-  7. `DashboardClient` stores data in React state and provides `DashboardContext`.
-  8. Page sections and charts compute management views from context data.
-- Core components:
-  - `app/page.tsx`: dashboard entry.
-  - `components/DashboardClient.tsx`: data loading, refresh, page navigation, context provider.
-  - `components/sections/CashOverviewSection.tsx`: cash page.
-  - `components/charts/CashFlowChart.tsx`: monthly inflow, outflow, and running balance.
-  - `components/sections/RevenueSponsorSection.tsx`: revenue and sponsor view.
-  - `components/sections/PnLCostSection.tsx`: cash P&L and cost metrics.
-  - `components/sections/ScenarioPlannerSection.tsx`: Base/Bull/Bear cash scenarios.
-  - `components/TransactionTable.tsx`: ledger audit view.
-- Core libraries:
-  - `lib/transactionModel.ts`: CSV parsing, source validation, refresh model, running balance recomputation.
-  - `lib/dashboardMetrics.ts`: normalized transaction model and KPI formulas.
-  - `lib/dataUtils.ts`: formatting, filters, helper utilities.
-  - `lib/settingsDefaults.ts`: default Google Sheet config and dashboard settings.
-  - `lib/settings.ts`: server-side settings load/save/normalization.
-  - `lib/chartDefaults.ts`: Chart.js registration and shared styling.
-- External dependencies:
-  - Google Sheets public CSV/gviz CSV endpoints.
-  - Vercel deployment from GitHub `main`.
-  - Chart.js and `chartjs-plugin-annotation`.
-- Persistence/state:
-  - Source of truth: Google Sheet.
-  - Local snapshot: `data/current.json`.
-  - Support snapshots: `data/production-summary.json`, `data/sponsor-pipeline.json`.
-  - Backups: `data/backups/*.json` on local filesystem only.
-  - Runtime state: React state in `DashboardClient`.
-- Integration points:
-  - `GET /api/data`
-  - `POST /api/refresh`
-  - `GET/POST /api/settings`
-  - `GET /api/backups`
-  - `POST /api/restore`
+### Requires Approval:
+- Google Sheet schema changes.
+- Destructive git operations or deleting backups/snapshots.
+- Introducing a database, auth layer, or new durable persistence model.
+- Changing business assumptions behind scenario logic or KPI meaning.
 
-## Design Principles
-
-- Correctness over speed for management metrics.
-- Traceability over cleverness: every number should be explainable from ledger/support rows.
-- Google Sheet remains source of truth until a durable production store is explicitly introduced.
-- Explicit sheet fields beat Thai keyword inference. Inference is only fallback and should trigger management warnings when important fields are missing.
-- UI copy should be operational and plain. Avoid long scenario explanations in the UI.
-- Cash decision first: Cash Flow & Running Balance is the main page truth; Scenario Planner is the main decision companion.
-- Keep Health Cards as supporting warnings/checks, not the primary management surface.
-- Hide or reduce metrics whose source data is not mature enough for reliable decisions.
-- Keep charts aligned with their business question:
-  - Cash Flow chart is operating cash overview and ignores ledger sidebar filters.
-  - Ledger filter is for ledger inspection, not for changing top-level management cash truth.
-- Do not hide data-quality risk. Warnings are better than silent inference for management use.
-- Use severity groups for validation: Critical, Management, and Info.
-- Preserve backward compatibility for existing sheet headers where practical.
-- Avoid destructive operations on snapshots/backups unless the user explicitly requests them.
-- Do not commit build artifacts, local logs, `.next`, `node_modules`, or transient dev-server files.
-- For non-trivial project work, the primary agent acts as project brain and delegates implementation to worker agents when the user explicitly permits subagents.
-
-## Lean Product Direction
-
-Latest user calibration: 2026-04-23.
-
-Confirmed direction:
-
-- Product shape: business overview dashboard, not a narrow cash-only tool and not a full accounting system.
-- Main user: founder/operator.
-- Source of truth: Google Sheet.
-- First-priority surface: Cash Flow & Running Balance.
-- Scenario depth: Base/Bull/Bear running balance plus a short logic table in plain language.
-- Forecast Accuracy: remove or hide for now because `Original Forecast` data is not mature enough.
-- Production Metrics: medium importance. Use `Cost per Content` only for months with actual content count and usable Monthly Production Summary data.
-- Health Cards: keep as secondary warnings/checks.
-- Validation: classify warnings as Critical, Management, and Info.
-- Google Sheet schema: keep flexible but require clear fields for important cash logic.
-- Language/data model: normalize internally to stable English keys while supporting Thai display and mixed Thai/English sheet values.
-- Release target: usable for weekly and monthly management decision meetings.
-- First metric to reduce: Forecast Accuracy.
-- Operating model: dashboard has manual refresh and keeps the latest snapshot.
-- Cashflow debugging: add or preserve monthly transaction drilldown as the preferred first diagnostic level.
-- Out of scope now: accounting system, CRM/sponsor management system, payroll/bonus system, multi-user permission/admin system.
-- Documentation structure: user prefers a split-document model, but the user will handle that organization separately.
-- Next improvement themes: lean cleanup, data reliability, UX clarity, and Google Sheet workflow.
-
-Confirmed secondary metrics:
-
-- Production Metrics are useful as a secondary signal, but they must not block core cash/scenario decisions. `Cost per Content` should only show for months with actual content count; forecast-only production months should not be treated as complete production performance.
-
-## Current Verified State
-
-- Last verified: 2026-04-25, by local verification after Maintenance Milestone M10 completion.
-- Current branch: `main`.
-- Latest known pushed commit before this update: `b70eee0 Add tech stack to project brain`.
-- Git state before this update: `main...origin/main`.
-- Current milestone: Production-ready maintenance mode. Maintenance milestone M10 is complete.
-- Maintenance milestone M11 is planned next. It is not started or implemented yet.
-- Maintenance milestone M9: complete as of 2026-04-25. Cash summary now includes an approximate Base-path days-to-forecast-zero note while monthly Cash Runway stays unchanged.
-- Maintenance milestone M10: complete as of 2026-04-25. The approximate Base-path days-to-forecast-zero note now updates from the current local day instead of staying fixed after initial render.
-- Completed:
-  - Milestone 1 - Scope Lock and Baseline Freeze completed.
-  - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
-  - Milestone 3 - Cash Flow and Scenario Correctness completed.
-  - Milestone 4 - Validation Rules and Data Quality Gating completed.
-  - Added `IMPLEMENT_PLAN.md` with the milestone path to lean production readiness.
-  - Recorded M1 completion artifacts: scope checklist, metric meaning map, excluded features, and owner-only decisions.
-  - Replaced old scenario planner with current-situation Base/Bull/Bear cash cases.
-  - Added scenario running balance chart with Actual History plus Base/Bull/Bear.
-  - Bear case shifts all future non-ad customer revenue inflows by one month; ad revenue stays on schedule.
-  - Scenario includes non-Actual rows from the latest actual Work Month onward.
-  - Fixed Vercel refresh behavior so serverless refresh does not require writing `data/backups`.
-  - Fixed Cash Flow & Running Balance so balance is recomputed by sorted Work Month from opening balance, not by last raw row per month.
-  - Refreshed `data/current.json` from Google Sheet after TikTok date correction and later sheet date changes.
-  - Added focused regression tests for Cash Flow monthly balance and Scenario current-month non-Actual rows.
-  - Added `OPERATOR_MANUAL.md` for day-to-day sheet/dashboard operation.
-  - Added `GOOGLE_SHEET_CONTRACT.md` for active sheet tabs, field aliases, validation behavior, and refresh persistence rules.
-  - Added `README.md` as the repo entry point for operators and maintainers.
-  - Added optional support-sheet fallback guardrail so unusable support sheet refreshes do not overwrite usable local support snapshots.
-  - Added a management warning for nonblank invalid `Original Forecast` values so bad forecast-history inputs do not stay silent.
-  - Isolated refresh persistence in `lib/refreshPersistence.ts` so local filesystem mode and Vercel/stateless mode are testable outside the route.
-  - Local refresh writes current/support snapshots through temporary files before swapping them into place, which reduces the risk of leaving unreadable partial JSON after a failed write.
-  - Added focused regression tests for local snapshot backup creation, stateless no-write behavior on Vercel, and the core-field validation group split.
-  - Converted validation reporting to Critical/Management/Info buckets with operator-action grouping and legacy snapshot normalization.
-  - Validation summary UI now reflects the new grouping and keeps legacy snapshots readable.
-  - Milestone 5 - Decision-First UI and UX Cleanup completed.
-  - Milestone 6 - Testing and Regression Coverage completed.
-  - Milestone 7 - Deployment, Operations, and Release Readiness completed.
-  - First screen now puts cash truth ahead of validation noise and includes a compact scenario preview on the cash page.
-  - Cash page summary now compresses current cash, runway, pressure, and active warning signals into a faster management read.
-  - Scenario page copy was tightened, mojibake was removed from user-facing text, and the Scenario Logic section was restored in simple Thai.
-  - Revenue and Cash P&L pages now use clearer operational wording and de-emphasize immature metrics such as Forecast Accuracy.
-  - Header and page chrome now use neutral operator-facing wording instead of hard-coded period copy.
-  - Added focused regression tests for Bear-case revenue delay behavior so non-ad customer inflows shift by one month while ad revenue stays on schedule.
-  - Added focused regression tests for scenario projection horizon so the delayed month remains visible even when it has no same-month Base activity.
-  - Added Monthly Production Summary cross-check warnings for actual COGS total and cost-per-content mismatches.
-  - Moved Bull scenario assumptions into normalized scenario settings.
-  - Current cash and Scenario actual history now derive from monthly cash balances instead of the last raw actual-row balance.
-  - Revenue and direct/indirect management charts now use the full snapshot rather than ledger filter state.
-  - Monthly cash rows now ignore months that only contain cancelled transactions.
-  - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
-  - Maintenance milestone M9 added an approximate Base-path days-to-forecast-zero note in the cash summary while keeping the monthly Cash Runway value unchanged.
-  - Maintenance milestone M10 made the approximate Base-path days-to-forecast-zero note dynamic on the client so it updates as the local date changes without changing monthly runway meaning.
-- In progress:
-  - No open implementation milestone. Keep docs and verification aligned as operational maintenance continues.
-- Pending:
-  - Maintenance milestone M11: align monthly transaction drilldown and reconciliation views with the top-level cash truth.
-  - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
-- Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 25 tests after M10 implementation.
-  - `npm.cmd run build` passed after M10 implementation.
-  - `git diff --check` passed with only LF/CRLF warnings.
-  - Regression coverage now protects support-sheet fallback, refresh persistence, validation grouping, monthly cash derivation, scenario anchoring, Bear delay logic, delayed-month horizon behavior, Bull default normalization, and stateless backup/restore gating.
-  - Current regression coverage protects refresh persistence, support-sheet fallback, validation grouping, monthly cash derivation, scenario anchoring, and Bull default normalization.
-  - Local verification confirmed `GET /api/backups`, `POST /api/refresh`, and `POST /api/restore` succeed in local filesystem mode. Restoring the older backup `2026-04-24T18-06-59.json` returned a valid snapshot file but surfaced 8 management issues, so restored backups still require validation review before management use.
-  - Live verification on `https://finance-dashboard-delta-brown.vercel.app` confirmed the production dashboard loads, `GET /api/backups` returns `[]`, `POST /api/restore` returns `503` with the local-only restore message, and `POST /api/refresh` succeeds with `persistence.mode = stateless`.
-
-## Maintenance Milestone M9
-
-- Status: complete as of 2026-04-25.
-- Goal: add a separate forecast-timing note for days from today until the first forecast negative date.
-- Relationship to current cash truth: `Cash Runway` stays as the monthly burn-based runway metric. The new note is separate and does not replace runway.
-- Scope:
-  - Show the note as an approximate forecast timing signal only.
-  - Derive it from the first forecast month that turns negative in the current monthly projection.
-  - Keep the existing month-based scenario and runway logic unchanged.
-  - Do not introduce day-level forecast logic, new sheet fields, or schema changes.
-- Verification:
-  - `npm.cmd run test:finance`
-  - `npm.cmd run build`
-  - Manual review of the cash summary copy and operator wording
-- Completion note:
-  - The cash summary now shows an approximate Base-path days-to-forecast-zero note, and the monthly Cash Runway value remains unchanged.
-- What M9 does not claim:
-  - It does not replace `Cash Runway`.
-  - It does not add day-level forecast logic.
-  - It does not expand the product scope.
-
-## Maintenance Milestone M10
-
-- Status: complete as of 2026-04-25.
-- Goal: make the approximate Base-path days-to-forecast-zero note dynamic so the displayed timing stays current as the date changes.
-- Relationship to current cash truth: `Cash Runway` stays as the monthly burn-based runway metric. The timing note remains separate and approximate.
-- Scope:
-  - Keep the existing Base-path timing note as a secondary signal.
-  - Make the note derive from the current date at render time so it does not drift stale between refreshes.
-  - Keep the monthly runway and scenario logic unchanged.
-  - Do not introduce new sheet fields or broaden product scope.
-- Verification:
-  - `npm.cmd run test:finance`
-  - `npm.cmd run build`
-  - Manual review of the cash summary copy and operator wording with a current date check
-- Completion note:
-  - The cash page now reschedules the timing note from the next local midnight onward, so the displayed days-to-zero stay current without changing the underlying monthly forecast logic.
-- What M10 does not claim:
-  - It does not replace `Cash Runway`.
-  - It does not change the monthly scenario model.
-  - It does not expand the product scope.
-
-## Maintenance Milestone M11
-
-- Status: planned next as of 2026-04-25.
-- Goal: align monthly transaction drilldown and reconciliation behavior with the top-level cash truth so operators can trace monthly cash without getting a conflicting answer from row-level views.
-- Relationship to current cash truth: Cash Flow & Running Balance stays the monthly management truth. M11 is about keeping drilldown and reconciliation consistent with that truth, not redefining it.
-- Scope:
-  - Keep monthly transaction drilldown usable as a diagnostic view for cash questions.
-  - Align reconciliation logic and supporting copy with the same monthly cash basis used by the top-level cash view.
-  - Reduce gaps between row-level inspection and the month-end cash truth surfaced on the dashboard.
-  - Avoid changing Google Sheet schema, scenario assumptions, or the monthly cash model.
-- Verification:
-  - `npm.cmd run test:finance`
-  - `npm.cmd run build`
-  - Manual review of a month with drilldown/reconciliation questions against the cash summary and chart
-- What M11 does not claim:
-  - It does not change the top-level monthly cash truth.
-  - It does not introduce accounting-system behavior.
-  - It does not broaden dashboard scope beyond cash decision support.
-
-## Next Safe Action
-
-- Action: keep the project in maintenance mode by updating docs and regression coverage only when verified behavior or operator workflow actually changes.
-- Preconditions:
-  - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
-  - Keep the Google Sheet contract, monthly cash logic, validation grouping, release model, and M6/M7 verified runtime behavior unchanged unless a real bug requires a change.
-  - Keep `README.md`, `PROJECT_BRAIN.md`, `GOOGLE_SHEET_CONTRACT.md`, and `OPERATOR_MANUAL.md` synchronized when operator-facing behavior changes.
-- Stop if:
-  - A proposed change changes Google Sheet schema without explicit user approval.
-  - A proposed documentation or handoff change describes behavior that is not verified locally or live.
-- Verify with:
-  - `npm.cmd run test:finance`.
-  - `npm.cmd run build`.
-  - Manual review that docs and handoff notes match the verified local/live operating model.
-
-## Improvement Triage
-
-Scoring model:
-
-- Difficulty: hard = `0`, medium = `1`, easy = `2`.
-- Importance: low = `0`, medium = `1`, high = `2`.
-- Fix now if total score is `>= 3`.
-- If total score is `< 3`, do not fix now; keep it documented for later.
-
-| ID | Issue | Difficulty | Importance | Total | Decision |
-|---|---|---:|---:|---:|---|
-| IP01 | Source of truth is split between Google Sheet and git snapshot | 0 | 2 | 2 | Later |
-| IP02 | Vercel refresh is stateless and not durable | 0 | 2 | 2 | Later |
-| IP03 | Cash Flow and Scenario duplicate monthly cash/running-balance logic | 1 | 2 | 3 | Fix now |
-| IP04 | Regression tests missing for Cash Flow/Scenario bugs | 2 | 2 | 4 | Fix now |
-| IP05 | Work Month vs Date can confuse operators | 2 | 2 | 4 | Fix now |
-| IP06 | Data model naming still blurs cash timing vs work period | 1 | 2 | 3 | Fix now |
-| IP07 | Row-level `balance` can be misused outside ledger/current-cash context | 2 | 2 | 4 | Fix now |
-| IP08 | Scenario running balance can hide monthly delay pain | 1 | 2 | 3 | Fix now |
-| IP09 | Bull case assumptions are hard-coded in component code | 2 | 1 | 3 | Fix now |
-| IP10 | Validation lacks some business-rule warnings | 1 | 2 | 3 | Fix now, narrow scope only |
-| IP11 | Google Sheet schema relies on manual discipline | 1 | 2 | 3 | Fix now, documentation/validation only |
-| IP12 | Production Summary cross-checking could be stronger | 1 | 1 | 2 | Fixed by user override |
-| IP13 | Vercel/live verification is manual | 2 | 1 | 3 | Fix now via checklist |
-| IP14 | No operator manual | 2 | 2 | 4 | Fix now |
-| IP15 | Release process is implicit | 2 | 1 | 3 | Fix now via checklist |
-| IP16 | Thai encoding/mojibake debt remains | 1 | 1 | 2 | Fixed by user override, source/docs scope |
-| IP17 | Default filter behavior may confuse chart truth | 1 | 2 | 3 | Fix now |
-| IP18 | Settings are not yet the main assumption control surface | 1 | 1 | 2 | Fixed by user override, Bull assumptions |
-| IP19 | No durable production refresh audit log | 0 | 2 | 2 | Later |
-| IP20 | UI behavior test coverage is thin | 1 | 1 | 2 | Partially fixed by user override |
-
-Fix-now scope for this triage:
-
-- Extract or centralize only the monthly cash/running balance helpers needed to prevent Cash Flow/Scenario drift.
-- Add focused regression tests for the known chart/scenario bugs.
-- Audit and fix only clear `filteredData` misuse in management truth charts.
-- Add operator-facing documentation for Work Month vs Date, refresh, validation warnings, Scenario reading, and release checklist.
-- Keep validation/business-rule work narrow; do not redesign the parser or sheet schema in this phase.
-
-Deferred backlog:
-
-- IP01: decide future durable source-of-truth architecture.
-- IP02: decide whether Vercel refresh should persist to durable storage.
-- IP19: add durable production refresh/audit logging if the dashboard becomes a shared production tool.
-- IP20: add broader UI/Playwright coverage after pure calculation tests are stable.
-
-User-overridden fixed scope from 2026-04-23:
-
-- IP12: actual COGS months now warn when Monthly Production Summary `totalCogs` differs from actual COGS outflows, or when `costPerContent` differs from `totalCogs / totalContent`.
-- IP16: source/docs mojibake scan for `เธ`, `โ–`, `โ`, and replacement characters returns no matches in `app`, `components`, `lib`, and `tests`.
-- IP18: Bull scenario assumptions are now normalized settings fields: `scenario.bullMonthlyCash` and `scenario.bullCreditTermMonths`.
-- IP20: pure tests now cover Cash Flow balance derivation, Scenario current-month non-Actual rows, Production Summary cross-checks, and Bull scenario settings normalization.
-
-## Invariants And Guardrails
-
-- Never:
-  - Treat local Vercel filesystem writes as durable storage.
-  - Let `Cancelled` rows affect calculations.
-  - Use negative amount signs to infer inflow/outflow direction.
-  - Derive monthly Cash Flow balance from the last raw row for a Work Month.
-  - Let ledger sidebar filter alter Cash Flow management overview.
-  - Bulk-edit Thai keyword arrays through lossy terminal encoding.
-  - Revert user changes or unrelated agent changes without explicit request.
-  - Commit `node_modules`, `.next`, local dev logs, or backup noise.
-  - Expand this dashboard into accounting, CRM, payroll, or multi-user admin unless the user explicitly changes scope.
-- Always:
-  - Use `Work Month` as the month basis for Cash Flow and Scenario charts unless the user explicitly changes the operating model.
-  - Use `Date` as transaction timing/audit metadata, not as the primary monthly chart grouping for these views.
-  - Prefer explicit sheet columns: `Main Category`, `Cost Behavior`, `Sponsor`, `Person`, `Status`.
-  - Keep `Original Forecast` when a forecast becomes actual if forecast accuracy is needed.
-  - Treat Forecast Accuracy as optional/hidden until there is enough `Original Forecast` history.
-  - Keep production/content metrics secondary and calculate them only for months with actual content count.
-  - Run focused verification after changing KPI/chart logic.
-  - Update this brain when a decision changes project direction.
-- Requires approval or explicit user instruction:
-  - Destructive git operations.
-  - Deleting backups/snapshots.
-  - Changing Google Sheet schema.
-  - Changing scenario business assumptions.
-  - Introducing a database or replacing Google Sheet source of truth.
-- Security/privacy assumptions:
-  - Data is internal operating finance data.
-  - Public CSV endpoints are currently used; do not broaden access beyond the existing Google Sheet sharing model without owner approval.
-
-## Operating Commands
-
-Use PowerShell from:
-
-```powershell
-cd D:\Fogust\Workspace\Easymoneyconcept\02-Finance\Finance_Dashboard
-```
-
-Install dependencies:
-
-```powershell
+## 9. Operating Commands
+```bash
+# Setup
+cd D:/Fogust/Workspace/Easymoneyconcept/02-Finance/Finance_Dashboard
 npm.cmd install
-```
 
-Run dev server:
-
-```powershell
+# Development
 npm.cmd run dev -- -p 3011
-```
 
-Test finance logic:
-
-```powershell
+# Test
 npm.cmd run test:finance
-```
 
-Build:
-
-```powershell
+# Build
 npm.cmd run build
-```
 
-Check git state:
+# Deploy
+git push origin main
 
-```powershell
+# Status Check
 git status --short --branch
 git log -5 --oneline
+
+# Rollback
+Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentType 'application/json' -Body '{"filename":"2026-04-24T18-07-41.json"}' -UseBasicParsing
 ```
 
-Refresh local snapshot through dev server:
+## 10. Tech Stack Details & Conventions
+- **Naming Convention**: React component files use PascalCase; utility and model files in `lib/` use camelCase file names; route folders under `app/api` are lowercase.
+- **Directory Structure Convention**: UI pages live in `app/`; reusable UI in `components/`; charts under `components/charts/`; page sections under `components/sections/`; business logic in `lib/`; persisted local data in `data/`; finance regression tests in `tests/`.
+- **Import Convention**: Project uses the `@/*` path alias from `tsconfig.json`; local imports commonly use alias imports instead of long relative chains.
+- **Error Handling Pattern**: Route handlers use `try/catch` and return JSON error payloads with HTTP status codes; client refresh uses `alert()` for user-visible refresh errors.
+- **Logging Pattern**: No dedicated app logger is present; tests use `console.log` / `console.error`; runtime code is mostly silent outside returned error payloads.
 
-```powershell
-Invoke-WebRequest -Uri http://localhost:3011/api/refresh -Method POST -UseBasicParsing
-```
+## 11. Known Risks & Failure Modes
+| Symptom | Cause | Impact | First Response |
+|:--------|:------|:-------|:---------------|
+| Refresh fails on Vercel with filesystem-related errors | Serverless runtime is stateless | Snapshot refresh appears broken in production | Check that refresh path skips persistence when `VERCEL` is set |
+| Cash month-end balance looks wrong | Month-end balance derived from row order instead of monthly net | Management cash chart becomes misleading | Recompute with `buildMonthlyCashFlowRows` logic |
+| Scenario understates delay pain | Delayed inflows catch up later in cumulative balance | Bear/Base may look too similar at later months | Inspect monthly net by case, not only cumulative balance |
+| Forecast accuracy stays unusable | `Original Forecast` is blank or invalid on actual rows | Forecast accuracy card remains misleading or `N/A` | Fix `Original Forecast` data or keep the metric de-emphasized |
+| Support metrics look unreliable | Production summary or sponsor pipeline sheet is missing or invalid | Secondary metrics lose decision-grade quality | Check validation report and support-sheet fallback status |
+| Restore succeeds but numbers still look unsafe | Older backup content may carry management issues | Operator may trust stale or low-quality snapshot | Re-open dashboard and review validation after restore |
+| Repo documentation drifts | Core docs still point to the backup plan or stale plan references | Humans and AI agents lose a clean execution path | Keep the active plan synced and update references |
 
-Push:
+## 12. Recovery Playbooks
+### If `/api/refresh` fails locally:
+1. Check: `git status --short --branch`
+2. Run: `npm.cmd run dev -- -p 3011`
+3. Do NOT: edit snapshot JSON by hand to fake a refresh result
+4. Escalate if: Google Sheet access or sharing changed and the fetch still fails
 
-```powershell
-git push origin main
-```
+### If `/api/refresh` fails on Vercel:
+1. Check: production response body for filesystem-related messages
+2. Run: local verification with `npm.cmd run build`
+3. Do NOT: add serverless file writes as a quick fix
+4. Escalate if: production now requires durable persistence beyond stateless refresh
 
-Common verification sequence:
+### If a restore is needed:
+1. Check: `Invoke-WebRequest -Uri http://localhost:3011/api/backups -UseBasicParsing`
+2. Run: `Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentType 'application/json' -Body '{"filename":"<backup>.json"}' -UseBasicParsing`
+3. Do NOT: delete the current snapshot before confirming the backup file exists
+4. Escalate if: the restored snapshot still shows `Critical` issues or the backup is malformed
 
-```powershell
-npm.cmd run test:finance
-npm.cmd run build
-git diff --check
-git status --short --branch
-```
+## 13. Decision Log
+| Date | Decision | Reason | Consequence |
+|:-----|:---------|:-------|:------------|
+| 2026-04-19 | Keep Google Sheets as source of truth | Existing workflow is sheet-driven | App reads CSV and persists local snapshots only as cache/recovery |
+| 2026-04-19 | Use `Work Month` as monthly reporting key | Cash and scenario views need stable monthly grouping | `Date` remains audit context, not chart grouping |
+| 2026-04-19 | Keep Vercel refresh stateless | Serverless filesystem is not durable | Backup/restore are local-only operations |
+| 2026-04-19 | Replace old what-if flow with Base/Bull/Bear scenario view | Operator needs simpler decision cases | Scenario logic is explicit in dashboard metrics |
+| 2026-04-24 | Regroup validation into `Critical` / `Management` / `Info` | Operator needs action-oriented severity buckets | Legacy snapshots need normalization support |
+| 2026-04-25 | Add approximate days-to-forecast-zero note without changing runway meaning | Operator wanted day-level timing signal | Cash runway stays monthly, timing note stays approximate |
 
-## Known Risks
+## 14. Document Map
+| Document | Purpose | Location |
+|:---------|:--------|:---------|
+| PROJECT_BRAIN.md | Single source of truth | `PROJECT_BRAIN.md` |
+| IMPLEMENT_PLAN.md | Milestone execution plan | `IMPLEMENT_PLAN.md` |
+| AGENTS.md | AI agent behavioral guidelines | `D:/Fogust/Workspace/Document/Prompt/AGENTS.md` |
+| README.md | Repo entry point and operating model summary | `README.md` |
+| OPERATOR_MANUAL.md | Day-to-day operation and recovery guidance | `OPERATOR_MANUAL.md` |
+| GOOGLE_SHEET_CONTRACT.md | Active sheet contract and validation behavior | `GOOGLE_SHEET_CONTRACT.md` |
+| tests/financeDashboard.test.ts | Finance regression coverage | `tests/financeDashboard.test.ts` |
 
-- Symptom: Cash Flow month-end balance looks wrong, such as May showing about `-7,887`.
-  - Cause: deriving monthly balance from the last raw row for a Work Month, especially when sheet rows are interleaved.
-  - Impact: management cash chart can show the wrong month crossing below zero.
-  - First response: recompute balance by sorted Work Month from `openingBalance + monthly net`.
-- Symptom: Scenario Base does not go negative when expected.
-  - Cause: excluding non-Actual rows from the latest actual Work Month.
-  - Impact: scenario starts too high and understates near-term cash risk.
-  - First response: include non-Actual rows from latest actual Work Month onward.
-- Symptom: Bear case looks equal to Base in a later month.
-  - Cause: Bear delays non-ad customer cash by one month; once delayed cash arrives, cumulative running balance may catch up if there are no other differences.
-  - Impact: running balance alone can hide monthly timing pain.
-  - First response: inspect monthly net by case or add monthly net/delay impact display.
-- Symptom: Refresh fails on Vercel with `ENOENT ... data/backups`.
-  - Cause: serverless filesystem is not durable/writable like local dev.
-  - Impact: refresh fails even if Google Sheet fetch works.
-  - First response: keep Vercel refresh stateless and return refreshed snapshot directly.
-- Symptom: Validation warns COGS rows but no production summary.
-  - Cause: actual COGS month has no usable Monthly Production Summary row.
-  - Impact: cost per content and production metrics are not management-ready.
-  - First response: add/fix production summary for actual month.
-- Symptom: Forecast accuracy is `N/A`.
-  - Cause: actual rows lack `Original Forecast`.
-  - Impact: forecast accuracy cannot be computed historically and may distract from cash decisions.
-  - First response: hide or de-emphasize Forecast Accuracy until enough original forecast history exists.
-- Symptom: Dashboard feels too busy for weekly/monthly decisions.
-  - Cause: secondary metrics and diagnostics competing with Cash Flow and Scenario.
-  - Impact: operator spends attention interpreting dashboard mechanics instead of making decisions.
-  - First response: keep Cash Flow first, Scenario second, and move incomplete/immature metrics into secondary diagnostics.
-- Symptom: Thai text appears mojibake in console.
-  - Cause: terminal encoding mismatch.
-  - Impact: accidental corruption risk if editing Thai text through lossy commands.
-  - First response: use UTF-8-safe editor or known-good source values.
-- Symptom: Git reports dubious ownership.
-  - Cause: sandbox/current user differs from repo owner.
-  - Impact: git commands may fail.
-  - First response: use approved/safe git invocation or configure safe.directory only when appropriate.
+## 15. Roles
+- **Owner**: User/operator `[REQUIRES_INPUT]`
+- **Architect**: Primary AI orchestrator plus owner approval on product direction
+- **Implementer**: AI worker agents for substantial work; primary agent only for small or coordinating changes
+- **Reviewer**: Primary AI orchestrator, with owner sign-off for risky decisions
 
-## Recovery Playbooks
+## 16. Operating Policy
+- **Main Policy**: Use an orchestrator-worker pattern: primary AI reads the core docs, plans the work, delegates substantial implementation to `gpt-5.4-mini` worker agents, then reviews and verifies the result.
+- **Sub Policy**: Follow `D:/Fogust/Workspace/Document/Prompt/AGENTS.md` before major work; keep changes simple, surgical, and goal-driven.
+- **Escalation Policy**: Stop and ask the owner when schema meaning changes, assumptions are ambiguous, destructive actions are needed, or verified repo state is insufficient to proceed safely.
 
-### If `/api/refresh` fails locally
-
-1. Check dev server is running on the intended port.
-2. Read the HTTP response body.
-3. Check `app/api/refresh/route.ts` and Google Sheet access.
-4. Retry with a fresh dev server on another port if an old server is stuck.
-5. Do not delete the current snapshot while diagnosing.
-6. Escalate to user if Google Sheet access or sharing has changed.
-
-### If `/api/refresh` fails on Vercel
-
-1. Check whether the error mentions filesystem paths such as `data/backups`.
-2. Confirm the refresh route is still using stateless response behavior for serverless.
-3. Confirm Google Sheet public CSV endpoints are reachable.
-4. Do not add serverless writes as a permanent fix.
-5. Escalate if durable production persistence is required.
-
-### If Cash Flow chart looks wrong
-
-1. Compute monthly totals from `data/current.json` grouped by `workMonth || month`.
-2. Exclude `Cancelled`.
-3. Start from `openingBalance`.
-4. Add monthly `inflow - outflow` in sorted month order.
-5. Compare the chart line against computed balances.
-6. Do not use row-level `balance` as month-end truth if rows are interleaved.
-
-### If Scenario chart looks wrong
-
-1. Identify latest actual Work Month.
-2. Starting cash should be latest actual balance on that Work Month.
-3. Future rows should include non-Actual rows from latest actual Work Month onward.
-4. Base uses current non-cancelled Committed/Forecast path.
-5. Bull adds THB 30,000 monthly starting two months after latest actual month.
-6. Bear shifts all future non-ad customer revenue inflows by one month.
-7. Ad revenue stays on its original month.
-
-### If Google Sheet schema changes
-
-1. Stop before editing parser assumptions.
-2. Compare headers with expected parser fields.
-3. Update parser/header aliases only after understanding business meaning.
-4. Add or adjust validation warnings.
-5. Run `npm.cmd run test:finance` and `npm.cmd run build`.
-6. Update this brain and any operator notes.
-
-### If the dashboard becomes too broad
-
-1. Check whether the requested feature supports weekly/monthly management decisions.
-2. Check whether it belongs to accounting, CRM, payroll, or permission administration.
-3. If it belongs to an out-of-scope system, document the need but do not implement it here.
-4. If it supports cash/scenario decisions, keep the smallest useful version.
-5. Verify the first screen still makes Cash Flow & Running Balance easy to read.
-
-### If data snapshot is bad after refresh
-
-1. Do not commit immediately.
-2. Inspect `git diff -- data/current.json`.
-3. Check row count and validation report.
-4. If needed, restore from a known-good local backup with `POST /api/restore`.
-5. Ask user before deleting backups, snapshots, or making other destructive recovery changes.
-
-## Decision Log
-
-- 2026-04-19: Google Sheet remains source of truth. Local JSON snapshots are dashboard cache/backup, not primary truth.
-- 2026-04-19: Vercel refresh must be stateless for filesystem persistence. Local writes are allowed locally; serverless writes are not durable.
-- 2026-04-19: Scenario Plan and old What-If analysis were replaced with current-situation Base/Bull/Bear cash cases.
-- 2026-04-19: Scenario chart uses `Work Month` to match Cash Flow chart, not transaction `Date`.
-- 2026-04-19: Bear case shifts all future non-ad customer revenue inflows by one month. Ad revenue stays on schedule.
-- 2026-04-19: Scenario must include non-Actual rows from the latest actual Work Month onward so current-month forecast/outflows affect near-term risk.
-- 2026-04-19: Cash Flow & Running Balance must recompute monthly running balance from opening balance and sorted monthly net. It must not take the last raw row per month.
-- 2026-04-23: This `PROJECT_BRAIN.md` was rewritten into a concise operational brain with explicit success criteria, guardrails, playbooks, and next safe action.
-- 2026-04-23: User overrode the score threshold to fix IP12, IP16, IP18, and IP20 despite total score `2`; fixes stayed scoped to production-summary validation, source/docs mojibake cleanup, Bull scenario settings, and focused tests.
-- 2026-04-23: User calibrated product direction toward a lean business overview dashboard for weekly/monthly decisions. Cash Flow & Running Balance is the main truth, Scenario is the decision companion, Forecast Accuracy should be reduced/removed for now, Google Sheet remains source of truth, and accounting/CRM/payroll/multi-user admin are out of scope.
-- 2026-04-23: User confirmed Production Metrics option B: keep as medium-priority secondary metrics, with `Cost per Content` shown only when actual content count exists.
-- 2026-04-23: Milestone 1 was closed with `IMPLEMENT_PLAN.md` and explicit completion artifacts. Milestone 2 started with Google Sheet contract and refresh reliability as the active workstream.
-- 2026-04-24: Milestone 2 was closed after the active sheet contract, core-field validation rules, optional support-sheet fallback, atomic local refresh persistence, and Vercel/stateless no-write behavior were all documented and covered by focused verification. Live deploy verification remains deployment work.
-- 2026-04-24: Milestone 3 was closed after current cash and scenario actual history were aligned to month-based balances, cancelled-only months stopped appearing in monthly cash rows, and management charts were detached from ledger filter state.
-- 2026-04-24: Milestone 4 was closed after validation was regrouped into Critical/Management/Info buckets, legacy snapshots gained normalization into the new model, and the operator-facing summary panel was updated to match the new grouping.
-- 2026-04-24: Milestone 5 was closed after the first screen was tightened around cash truth, a compact scenario preview was added to the cash page, validation was visually de-emphasized relative to decision surfaces, and user-facing copy was cleaned up for scenario, revenue, and cash P&L sections.
-- 2026-04-25: Milestone 6 was closed after focused regression coverage was expanded to protect Bear-case delay logic, ad-revenue-on-schedule behavior, and the delayed-month projection horizon alongside the existing cash, refresh, and validation rules.
-- 2026-04-25: Milestone 7 batch 1 aligned `GET /api/backups` and `POST /api/restore` with the stateless Vercel model, kept live verification manual, and updated operator docs to use Critical/Management/Info validation wording.
-- 2026-04-25: Milestone 7 batch 2 verified the local release/recovery flow end to end. Local refresh and restore work, but successful restore is not enough by itself; restored backups must still pass validation before being trusted for management decisions.
-- 2026-04-25: Milestone 7 release docs should keep the live verification step manual, keep `data/backups` local-only, and use Critical/Management/Info wording for validation instead of the older rendering-versus-management phrasing.
-- 2026-04-25: Milestone 7 was closed after live verification on `finance-dashboard-delta-brown.vercel.app` confirmed the production dashboard loads, `GET /api/backups` stays empty, `POST /api/restore` is blocked in serverless mode, and `POST /api/refresh` returns stateless persistence as intended.
-- 2026-04-25: Milestone 8 was closed after adding `README.md` as the repo entry point and tightening handoff guidance across the brain, operator manual, contract doc, and milestone plan so the verified operating model can be maintained without guesswork.
-- 2026-04-25: Maintenance milestone M9 completed the approximate Base-path days-to-forecast-zero note in the cash summary. Monthly Cash Runway stays unchanged and the product scope did not expand.
-- 2026-04-25: Maintenance milestone M10 made the approximate Base-path days-to-forecast-zero note update from the current local day on the client. Monthly Cash Runway and the monthly scenario model stayed unchanged.
-
-## Document Map
-
-- Handoff reading order: `README.md` -> `PROJECT_BRAIN.md` -> `GOOGLE_SHEET_CONTRACT.md` -> `OPERATOR_MANUAL.md` -> `IMPLEMENT_PLAN.md`.
-- `PROJECT_BRAIN.md`: central operating memory, project definition, guardrails, playbooks, next action.
-- `IMPLEMENT_PLAN.md`: milestone path from current state to lean production-ready dashboard.
-- `OPERATOR_MANUAL.md`: day-to-day operator guide for sheet entry, refresh, charts, scenario, warnings, and release checks.
-- `GOOGLE_SHEET_CONTRACT.md`: active Google Sheet contract, field aliases, validation behavior, and refresh persistence notes.
-- `README.md`: repo entry point for operators and maintainers.
-- `package.json`: runnable scripts and dependency versions.
-- `tests/financeDashboard.test.ts`: finance parser/metric regression tests.
-- `data/current.json`: latest dashboard transaction snapshot.
-- `data/production-summary.json`: latest production summary support snapshot.
-- `data/sponsor-pipeline.json`: latest sponsor pipeline support snapshot.
-- `lib/types.ts`: shared contracts and data shapes.
-- `lib/transactionModel.ts`: refresh parser, validation, running balance recomputation.
-- `lib/dashboardMetrics.ts`: KPI and normalized transaction formulas.
-- `lib/settingsDefaults.ts`: default sheet IDs/GIDs/settings.
-- `lib/refreshPersistence.ts`: local snapshot/support persistence and stateless refresh guard.
-- `app/api/refresh/route.ts`: Google Sheet refresh endpoint.
-- `components/charts/CashFlowChart.tsx`: Cash Flow & Running Balance chart.
-- `components/sections/ScenarioPlannerSection.tsx`: Base/Bull/Bear scenario view.
-
-## Roles
-
-- Owner: user/operator.
-- Product direction: user/operator decides business assumptions, Google Sheet structure, management meaning, and what is useful in weekly/monthly meetings.
-- Project brain / architect: primary AI agent maintains system understanding, plans work, reviews tradeoffs, and updates this file when direction changes.
-- Implementer: primary AI agent for small changes; worker subagents for larger implementation when explicitly authorized by the user.
-- Reviewer: primary AI agent must review diffs, run verification, and check against guardrails before reporting completion.
-- Approval authority:
-  - User approves risky schema changes, destructive file/git operations, data deletion, and major architecture changes.
-  - AI may run non-destructive read/build/test/status commands needed for normal maintenance.
-
-## Last Updated / Last Verified
-
-- Last updated: 2026-04-25.
-- Last verified: 2026-04-25.
-- Verified by: Codex primary agent.
-- Verification source:
-  - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` before work.
-  - `npm.cmd run test:finance` passed 25 tests.
-  - `npm.cmd run build` passed.
-  - `git diff --check` passed with only LF/CRLF warnings.
-  - Local verification confirmed the M10 dynamic days-to-zero note update path and the existing backup listing, refresh, and restore behavior in filesystem mode.
+## 17. Last Updated / Last Verified
+- **Last Updated**: 2026-04-25
+- **Last Verified**: 2026-04-25
+- **Verified By**: Codex primary agent
+- **Verification Method**: Read `PROJECT_BRAIN.md`, read active `IMPLEMENT_PLAN.md`, read `AGENTS.md`, scanned repo structure/config/docs/code paths, confirmed all 17 sections exist, verified document references against existing files, ran `npm.cmd run test:finance`, ran `npm.cmd run build`, and checked `git diff --check`.

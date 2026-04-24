@@ -16,7 +16,7 @@ Use the sheet as the source of truth. Do not edit snapshot JSON files by hand.
 - `README.md`: repo entry point and short operating model summary.
 - `PROJECT_BRAIN.md`: scope, guardrails, verified state, and next safe action.
 - `GOOGLE_SHEET_CONTRACT.md`: active sheet fields, validation rules, and refresh behavior.
-- `IMPLEMENT_PLAN.md`: milestone status, release criteria, and closeout notes.
+- `IMPLEMENT_PLAN.md`: active milestone status, release criteria, and closeout notes.
 - Keep these docs aligned whenever sheet meaning, warnings, or recovery steps change.
 
 ## Key Google Sheet Fields

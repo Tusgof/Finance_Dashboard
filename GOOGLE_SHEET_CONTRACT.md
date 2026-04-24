@@ -21,7 +21,7 @@ This document is ASCII-only by design.
 
 - `PROJECT_BRAIN.md`: scope, guardrails, verified state, and decision log.
 - `OPERATOR_MANUAL.md`: day-to-day operating steps and recovery checklist.
-- `IMPLEMENT_PLAN.md`: milestone status, release criteria, and handoff notes.
+- `IMPLEMENT_PLAN.md`: active milestone status, release criteria, and handoff notes.
 
 ## Non-Goals
 
