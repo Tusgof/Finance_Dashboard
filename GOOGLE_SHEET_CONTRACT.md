@@ -204,8 +204,10 @@ Current refresh behavior from `app/api/refresh/route.ts`:
 - Local non-Vercel refresh also writes `data/production-summary.json` and `data/sponsor-pipeline.json`.
 - Local non-Vercel refresh keeps backups under `data/backups/`.
 - If a current snapshot exists locally, refresh copies it into the backup folder before writing the new snapshot.
+- Local refresh persistence is isolated in `lib/refreshPersistence.ts` so filesystem behavior stays testable outside the route.
 - If an optional support sheet refresh fails, returns an invalid header, or comes back empty, local refresh keeps the last usable local support snapshot instead of overwriting it with empty rows.
 - The validation report includes a management warning when that local fallback is used.
+- Local refresh writes refreshed JSON through temporary files and only swaps them into place after the fetch and parse step succeeds, so a failed write should leave the previous `data/current.json` readable.
 - On Vercel, refresh is stateless.
 - On Vercel, the route skips filesystem persistence and returns the refreshed snapshot directly.
 - Do not assume durable serverless backups exist.
@@ -231,14 +233,14 @@ Do not:
 - Treat the archived backup tab as active contract data.
 - Add a new data store without owner approval.
 
-## M2 Known Gaps and Next Checks
+## Milestone 2 Closure Notes
 
-These are the current Milestone 2 checks, kept within the plan:
+Milestone 2 is complete because:
 
-- Audit parser/header aliases against the active sheet tabs.
-- Confirm the active field contract is documented for all four tabs.
-- Verify a failed refresh does not corrupt the last usable local snapshot.
-- Verify optional support-sheet fetch failures do not replace usable support snapshots with empty or misleading support data.
-- Confirm Vercel refresh remains stateless and does not depend on `data/backups`.
-- Review validation severity gaps only for core fields.
-- Keep findings documented before any schema proposal.
+- The active field contract is documented for all four live tabs.
+- Core-field validation for `Work Month`, `Status`, `Main Category`, `Amount`, `Cost Behavior`, `Sponsor`, `Person`, and `Original Forecast` is explicit in code and covered by focused tests.
+- Optional support-sheet refresh fallback is documented and covered by regression tests.
+- Refresh persistence behavior is isolated in `lib/refreshPersistence.ts` and covered by tests for both local filesystem mode and Vercel/stateless mode.
+- The refresh route still refuses to persist anything when `VERCEL` is set, so serverless refresh does not depend on `data/backups`.
+
+Remaining live deploy verification belongs to deployment/release work rather than the sheet-contract milestone itself.

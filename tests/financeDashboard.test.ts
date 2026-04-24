@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
 import { normalizeSettings } from '../lib/settings';
+import { persistRefreshSnapshot } from '../lib/refreshPersistence';
 import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
 import { selectSupportSheetRows } from '../lib/supportSheetRefresh';
@@ -87,6 +88,79 @@ const tests: Array<[string, () => void]> = [
     },
   ],
   [
+    'refresh persistence writes current, support snapshots, and a backup in local filesystem mode',
+    () => {
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'finance-dashboard-refresh-'));
+      const dataDir = path.join(tmpDir, 'data');
+      const productionSummaryPath = path.join(dataDir, 'production-summary.json');
+      const sponsorPipelinePath = path.join(dataDir, 'sponsor-pipeline.json');
+      const currentPath = path.join(dataDir, 'current.json');
+
+      fs.mkdirSync(dataDir, { recursive: true });
+      fs.writeFileSync(currentPath, JSON.stringify({ rawData: [], openingBalance: 50 }, null, 2), 'utf-8');
+
+      const result = persistRefreshSnapshot({
+        snapshotContent: {
+          rawData: [makeRow({ workMonth: '2026-04', month: '2026-04', type: 'Inflow', mainCategory: 'Revenue', category: 'Revenue', amount: 200, balance: 250 })],
+          openingBalance: 50,
+          productionSummary: [],
+          sponsorPipeline: [],
+        },
+        productionSummaryRows: [
+          { workMonth: '2026-04', totalContent: 4, organicContent: 3, sponsoredContent: 1, totalCogs: 100, costPerContent: 25 },
+        ],
+        sponsorPipelineRows: [
+          { sponsor: 'Sponsor A', dealValue: 1000, status: 'Committed', probability: 80, weightedValue: 800 },
+        ],
+        productionSummaryPath,
+        sponsorPipelinePath,
+        dataDir,
+        vercel: '',
+      });
+
+      assert.equal(result.mode, 'filesystem');
+      assert.equal(JSON.parse(fs.readFileSync(currentPath, 'utf-8')).openingBalance, 50);
+      assert.equal(JSON.parse(fs.readFileSync(productionSummaryPath, 'utf-8'))[0].workMonth, '2026-04');
+      assert.equal(JSON.parse(fs.readFileSync(sponsorPipelinePath, 'utf-8'))[0].sponsor, 'Sponsor A');
+
+      const backupDir = path.join(dataDir, 'backups');
+      const backups = fs.readdirSync(backupDir);
+      assert.equal(backups.length, 1);
+      assert.equal(JSON.parse(fs.readFileSync(path.join(backupDir, backups[0]), 'utf-8')).openingBalance, 50);
+    },
+  ],
+  [
+    'refresh persistence stays stateless on Vercel and does not create snapshot files',
+    () => {
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'finance-dashboard-stateless-'));
+      const dataDir = path.join(tmpDir, 'data');
+      const productionSummaryPath = path.join(dataDir, 'production-summary.json');
+      const sponsorPipelinePath = path.join(dataDir, 'sponsor-pipeline.json');
+
+      const result = persistRefreshSnapshot({
+        snapshotContent: {
+          rawData: [makeRow({ workMonth: '2026-04', month: '2026-04', type: 'Inflow', mainCategory: 'Revenue', category: 'Revenue', amount: 200, balance: 250 })],
+          openingBalance: 50,
+          productionSummary: [],
+          sponsorPipeline: [],
+        },
+        productionSummaryRows: [],
+        sponsorPipelineRows: [],
+        productionSummaryPath,
+        sponsorPipelinePath,
+        dataDir,
+        vercel: '1',
+      });
+
+      assert.equal(result.mode, 'stateless');
+      assert.ok(result.skippedReason?.includes('Vercel serverless filesystem'));
+      assert.equal(fs.existsSync(path.join(dataDir, 'current.json')), false);
+      assert.equal(fs.existsSync(path.join(dataDir, 'backups')), false);
+      assert.equal(fs.existsSync(productionSummaryPath), false);
+      assert.equal(fs.existsSync(sponsorPipelinePath), false);
+    },
+  ],
+  [
     'support sheet validation flags bad headers and missing options',
     () => {
   const goodSummary = [
@@ -137,6 +211,27 @@ const tests: Array<[string, () => void]> = [
   assert.ok(codes.includes('missing-cost-behavior'));
   assert.ok(codes.includes('missing-person'));
   assert.ok(codes.includes('missing-sponsor'));
+    },
+  ],
+  [
+    'core field validation separates rendering blockers from management warnings',
+    () => {
+  const csv = [
+    'Date,Work Month,Type,Main Category,Description,Amount,Status,Original Forecast',
+    '2026-01-02,,Outflow,,Salary payment,,Bogus,not-a-number',
+  ].join('\n');
+
+  const parsed = parseTransactionCsv(csv, DEFAULT_DASHBOARD_SETTINGS);
+  const report = buildValidationReport(parsed.rowIssues, parsed.dataFile.rawData, []);
+
+  assert.equal(report.renderingReady, false);
+  assert.equal(report.managementReady, false);
+  assert.ok(report.renderingWarnings.some(issue => issue.code === 'missing-work-month'));
+  assert.ok(report.renderingWarnings.some(issue => issue.code === 'invalid-amount'));
+  assert.ok(report.managementWarnings.some(issue => issue.code === 'invalid-status'));
+  assert.ok(report.managementWarnings.some(issue => issue.code === 'invalid-main-category'));
+  assert.ok(report.managementWarnings.some(issue => issue.code === 'missing-cost-behavior'));
+  assert.ok(report.managementWarnings.some(issue => issue.code === 'invalid-original-forecast'));
     },
   ],
   [

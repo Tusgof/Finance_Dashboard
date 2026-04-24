@@ -162,13 +162,14 @@ Confirmed secondary metrics:
 
 ## Current Verified State
 
-- Last verified: 2026-04-23, by local git/status inspection before M1 closeout commit.
+- Last verified: 2026-04-24, by local test/build run after Milestone 2 closeout changes.
 - Current branch: `main`.
-- Latest known pushed commit before this update: `8bb043b Update project brain lean direction`.
-- Git state before M1 closeout: `main...origin/main` with documentation changes for `PROJECT_BRAIN.md` and new `IMPLEMENT_PLAN.md`.
-- Current milestone: Milestone 2 - Google Sheet Contract and Refresh Reliability.
+- Latest known pushed commit before this update: `d579362 Warn on invalid original forecasts`.
+- Git state before this update: `main...origin/main`.
+- Current milestone: Milestone 3 - Cash Flow and Scenario Correctness.
 - Completed:
   - Milestone 1 - Scope Lock and Baseline Freeze completed.
+  - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
   - Added `IMPLEMENT_PLAN.md` with the milestone path to lean production readiness.
   - Recorded M1 completion artifacts: scope checklist, metric meaning map, excluded features, and owner-only decisions.
   - Replaced old scenario planner with current-situation Base/Bull/Bear cash cases.
@@ -183,38 +184,38 @@ Confirmed secondary metrics:
   - Added `GOOGLE_SHEET_CONTRACT.md` for active sheet tabs, field aliases, validation behavior, and refresh persistence rules.
   - Added optional support-sheet fallback guardrail so unusable support sheet refreshes do not overwrite usable local support snapshots.
   - Added a management warning for nonblank invalid `Original Forecast` values so bad forecast-history inputs do not stay silent.
+  - Isolated refresh persistence in `lib/refreshPersistence.ts` so local filesystem mode and Vercel/stateless mode are testable outside the route.
+  - Local refresh writes current/support snapshots through temporary files before swapping them into place, which reduces the risk of leaving unreadable partial JSON after a failed write.
+  - Added focused regression tests for local snapshot backup creation, stateless no-write behavior on Vercel, and the core-field validation severity split.
   - Added Monthly Production Summary cross-check warnings for actual COGS total and cost-per-content mismatches.
   - Moved Bull scenario assumptions into normalized scenario settings.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - Milestone 2 - Google Sheet Contract and Refresh Reliability.
+  - Milestone 3 - Cash Flow and Scenario Correctness.
 - Pending:
-  - Continue auditing current parser/header aliases against the active Google Sheet tabs.
-  - Use `GOOGLE_SHEET_CONTRACT.md` as the active field contract for `Transactions`, `Monthly Production Summary`, `Sponsor Pipeline`, and `Lists`.
-  - Verify local refresh behavior and failed-refresh snapshot safety.
-  - Confirm serverless refresh remains stateless and does not depend on durable `data/backups` writes.
-  - Continue reviewing validation severity gaps for remaining core fields after `Original Forecast`.
-  - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits.
+  - Continue centralizing monthly cash/scenario helpers so Cash Flow and Scenario cannot drift.
+  - Keep monthly transaction drilldown aligned with the top-level cash truth.
+  - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits as part of deployment/release work, not sheet-contract work.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 12 tests after M2 support-sheet fallback and `Original Forecast` validation changes.
-  - `npm.cmd run build` passed after M2 support-sheet fallback and `Original Forecast` validation changes.
+  - `npm.cmd run test:finance` passed 15 tests after M2 refresh persistence extraction and route-safety coverage.
+  - `npm.cmd run build` passed after M2 refresh persistence extraction and route-safety coverage.
   - `git diff --check` passed with only LF/CRLF warnings.
-  - Refresh via local dev server returned 148 transactions, 4 production summary rows, 12 sponsor pipeline rows, and 0 validation issues.
+  - Worker verification of the compiled refresh handler in a temp workspace returned `200`, `success: true`, `count: 1`, `productionSummaryCount: 1`, `sponsorPipelineCount: 1`, and `persistenceMode: filesystem`.
 
 ## Next Safe Action
 
-- Action: execute Milestone 2 by auditing the active Google Sheet contract and refresh behavior before changing parser or schema assumptions.
+- Action: execute Milestone 3 by tightening the shared monthly cash/scenario logic before making new chart or scenario changes.
 - Preconditions:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
-  - Use the active Google Sheet tabs as observed truth, but do not change their schema without approval.
+  - Keep the Google Sheet contract and refresh behavior from Milestone 2 unchanged unless a bug proves they are insufficient.
 - Stop if:
   - A proposed change changes Google Sheet schema without explicit user approval.
-  - A proposed validation rule cannot point to a clear operator action.
+  - A proposed cash/scenario change alters the meaning of `Work Month`, `Base`, `Bull`, or `Bear` without explicit review.
 - Verify with:
   - `npm.cmd run test:finance`.
   - `npm.cmd run build`.
-  - Manual review that refresh behavior preserves the last usable snapshot on failure.
+  - Manual comparison of monthly cash/scenario output against known problematic months.
 
 ## Improvement Triage
 
@@ -477,6 +478,7 @@ git status --short --branch
 - 2026-04-23: User calibrated product direction toward a lean business overview dashboard for weekly/monthly decisions. Cash Flow & Running Balance is the main truth, Scenario is the decision companion, Forecast Accuracy should be reduced/removed for now, Google Sheet remains source of truth, and accounting/CRM/payroll/multi-user admin are out of scope.
 - 2026-04-23: User confirmed Production Metrics option B: keep as medium-priority secondary metrics, with `Cost per Content` shown only when actual content count exists.
 - 2026-04-23: Milestone 1 was closed with `IMPLEMENT_PLAN.md` and explicit completion artifacts. Milestone 2 started with Google Sheet contract and refresh reliability as the active workstream.
+- 2026-04-24: Milestone 2 was closed after the active sheet contract, core-field validation rules, optional support-sheet fallback, atomic local refresh persistence, and Vercel/stateless no-write behavior were all documented and covered by focused verification. Live deploy verification remains deployment work.
 
 ## Document Map
 
@@ -494,6 +496,7 @@ git status --short --branch
 - `lib/transactionModel.ts`: refresh parser, validation, running balance recomputation.
 - `lib/dashboardMetrics.ts`: KPI and normalized transaction formulas.
 - `lib/settingsDefaults.ts`: default sheet IDs/GIDs/settings.
+- `lib/refreshPersistence.ts`: local snapshot/support persistence and stateless refresh guard.
 - `app/api/refresh/route.ts`: Google Sheet refresh endpoint.
 - `components/charts/CashFlowChart.tsx`: Cash Flow & Running Balance chart.
 - `components/sections/ScenarioPlannerSection.tsx`: Base/Bull/Bear scenario view.
@@ -511,11 +514,12 @@ git status --short --branch
 
 ## Last Updated / Last Verified
 
-- Last updated: 2026-04-23.
-- Last verified: 2026-04-23.
+- Last updated: 2026-04-24.
+- Last verified: 2026-04-24.
 - Verified by: Codex primary agent.
 - Verification source:
-  - Located `PROJECT_BRAIN.md` in `D:\Fogust\Workspace\Easymoneyconcept\02-Finance\Finance_Dashboard`.
-  - `IMPLEMENT_PLAN.md` now records Milestone 1 completion and Milestone 2 start.
-  - `git status --short --branch` reported `## main...origin/main` with documentation changes before M1 closeout commit.
-  - Verification for this update must include `npm.cmd run test:finance`, `npm.cmd run build`, `git diff --check`, commit, and push.
+  - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` before work.
+  - `npm.cmd run test:finance` passed 15 tests.
+  - `npm.cmd run build` passed.
+  - `git diff --check` passed with only LF/CRLF warnings.
+  - Worker verification of the compiled refresh handler succeeded in a temp workspace.

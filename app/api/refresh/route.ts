@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
 import path from 'path';
+import { persistRefreshSnapshot, readJsonArray, shouldPersistRefreshSnapshot } from '@/lib/refreshPersistence';
 import { SHEET_GIDS } from '@/lib/settingsDefaults';
 import { loadSettings } from '@/lib/settings';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseProductionSummaryCSV, parseSponsorPipelineCSV, parseTransactionCsv } from '@/lib/transactionModel';
 import { createSnapshotMeta } from '@/lib/snapshotMeta';
 import { selectSupportSheetRows } from '@/lib/supportSheetRefresh';
-import type { DataFile, ProductionSummaryRow, SponsorPipelineDeal, ValidationIssue } from '@/lib/types';
+import type { ProductionSummaryRow, SponsorPipelineDeal, ValidationIssue } from '@/lib/types';
 
 function resolveDataPath(configuredPath: string): string {
   return path.isAbsolute(configuredPath)
@@ -35,53 +35,6 @@ function buildSupportSheetFetchFailedIssue(sheetName: string, detail: string): V
     field: sheetName,
     value: detail,
   };
-}
-
-function shouldPersistRefreshSnapshot(): boolean {
-  return !process.env.VERCEL;
-}
-
-function readJsonArray<T>(filePath: string): T[] | undefined {
-  if (!fs.existsSync(filePath)) return undefined;
-
-  try {
-    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    return Array.isArray(parsed) ? (parsed as T[]) : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function persistRefreshSnapshot(
-  snapshotContent: DataFile,
-  productionSummaryRows: ProductionSummaryRow[],
-  sponsorPipelineRows: SponsorPipelineDeal[],
-  productionSummaryPath: string,
-  sponsorPipelinePath: string
-): { mode: 'filesystem' | 'stateless'; skippedReason?: string } {
-  if (!shouldPersistRefreshSnapshot()) {
-    return {
-      mode: 'stateless',
-      skippedReason: 'Vercel serverless filesystem is read-only; refreshed data is returned directly.',
-    };
-  }
-
-  const dataDir = path.join(process.cwd(), 'data');
-  const currentPath = path.join(dataDir, 'current.json');
-  const backupDir = path.join(dataDir, 'backups');
-
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-  if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
-  if (fs.existsSync(currentPath)) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    fs.copyFileSync(currentPath, path.join(backupDir, `${timestamp}.json`));
-  }
-
-  fs.writeFileSync(currentPath, JSON.stringify(snapshotContent, null, 2), 'utf-8');
-  fs.writeFileSync(productionSummaryPath, JSON.stringify(productionSummaryRows, null, 2), 'utf-8');
-  fs.writeFileSync(sponsorPipelinePath, JSON.stringify(sponsorPipelineRows, null, 2), 'utf-8');
-
-  return { mode: 'filesystem' };
 }
 
 async function fetchOptionalSheet<T>(
@@ -197,13 +150,13 @@ export async function POST() {
       validationReport,
     };
 
-    const persistence = persistRefreshSnapshot(
+    const persistence = persistRefreshSnapshot({
       snapshotContent,
-      productionSummary.rows,
-      sponsorPipeline.rows,
+      productionSummaryRows: productionSummary.rows,
+      sponsorPipelineRows: sponsorPipeline.rows,
       productionSummaryPath,
-      sponsorPipelinePath
-    );
+      sponsorPipelinePath,
+    });
 
     return NextResponse.json({
       success: true,

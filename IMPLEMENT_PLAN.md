@@ -14,10 +14,11 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 
 ## Milestone Status
 
-- Current milestone: Milestone 2 - Google Sheet Contract and Refresh Reliability.
+- Current milestone: Milestone 3 - Cash Flow and Scenario Correctness.
 - Milestone 1 status: Complete as of 2026-04-23.
-- Milestone 2 status: Started as of 2026-04-23.
-- Last status update: 2026-04-23.
+- Milestone 2 status: Complete as of 2026-04-24.
+- Milestone 3 status: Ready to execute as of 2026-04-24.
+- Last status update: 2026-04-24.
 
 ## Milestone 1 Completion Record
 
@@ -84,6 +85,36 @@ M2 has started. The first work queue is intentionally narrow and should not chan
 7. Active sheet contract documentation has been created in `GOOGLE_SHEET_CONTRACT.md`.
 8. Optional support-sheet refresh fallback has been added for local filesystem mode so unusable support refreshes keep the last usable local support snapshot and emit a management warning.
 9. Nonblank invalid `Original Forecast` values now emit a non-blocking management warning instead of staying silent.
+
+## Milestone 2 Completion Record
+
+M2 is complete because the sheet-to-snapshot contract is now explicit, guarded, and verified without requiring a live schema change.
+
+### Closed M2 Outputs
+
+- `GOOGLE_SHEET_CONTRACT.md` now documents the active contract for `Transactions`, `Monthly Production Summary`, `Sponsor Pipeline`, and `Lists`.
+- Core-field validation is explicit for `Work Month`, `Status`, `Main Category`, `Amount`, `Cost Behavior`, `Sponsor`, `Person`, and `Original Forecast`.
+- Optional support-sheet refresh fallback keeps the last usable local support snapshot instead of overwriting it with empty or invalid support data.
+- Refresh persistence behavior is isolated in `lib/refreshPersistence.ts` so local filesystem mode and Vercel/stateless mode can be tested directly.
+- Local refresh writes current/support snapshots through temporary files and keeps the previous snapshot readable if the write step fails before the swap.
+
+### M2 Verification Record
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- `git diff --check`
+- Focused regression coverage now includes:
+  - local support-sheet fallback behavior
+  - local snapshot/support persistence and backup creation
+  - Vercel/stateless no-write behavior
+  - core-field validation severity split
+  - invalid `Original Forecast` warnings
+
+### What M2 Does Not Claim
+
+- It does not claim durable production persistence on Vercel.
+- It does not claim live deploy verification. That belongs to Milestone 7.
+- It does not change Google Sheet schema or business meaning.
 
 ## Milestone 1 - Scope Lock and Baseline Freeze
 
