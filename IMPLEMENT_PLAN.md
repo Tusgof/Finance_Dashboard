@@ -12,9 +12,17 @@ This plan follows the latest project direction:
 
 The order is intentional: stabilize the core truth first, then improve reliability, then harden the product for release.
 
+## Handoff Map
+
+- `README.md`: repo entry point, operating model summary, and doc entry links.
+- `PROJECT_BRAIN.md`: scope, guardrails, verified state, and decision log.
+- `GOOGLE_SHEET_CONTRACT.md`: active sheet contract, field aliases, validation rules, and refresh behavior.
+- `OPERATOR_MANUAL.md`: day-to-day operating steps, warning reading, and recovery checklist.
+- `IMPLEMENT_PLAN.md`: milestone status, release criteria, and handoff completion notes.
+
 ## Milestone Status
 
-- Current milestone: Milestone 8 - Documentation and Handoff Completion.
+- Current milestone: Milestone track complete. Project is in production-ready maintenance mode.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
 - Milestone 3 status: Complete as of 2026-04-24.
@@ -22,7 +30,7 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 - Milestone 5 status: Complete as of 2026-04-24.
 - Milestone 6 status: Complete as of 2026-04-25.
 - Milestone 7 status: Complete as of 2026-04-25.
-- Milestone 8 status: Ready to execute as of 2026-04-25.
+- Milestone 8 status: Complete as of 2026-04-25.
 - Last status update: 2026-04-25.
 
 ## Milestone 1 Completion Record
@@ -605,6 +613,7 @@ This project has financial context, multi-step data flow, and operational risk. 
 - Explain the release checklist and the common failure modes.
 - Keep backup and restore wording local-only unless durable production storage is explicitly introduced later.
 - Keep references to the main files easy to find.
+- Keep maintainer guidance short: update the brain, contract, and operator manual together when the active contract or handoff flow changes.
 
 **Deliverables**
 
@@ -633,6 +642,30 @@ This project has financial context, multi-step data flow, and operational risk. 
 
 - This should happen after the behavior is stable.
 - The docs should be an action guide, not an essay.
+
+## Milestone 8 Completion Record
+
+M8 is complete because the project now has a clear repo entry point, a stable handoff reading order, and synchronized operator/maintainer docs that match the verified local and live operating model.
+
+### Closed M8 Outputs
+
+- Added `README.md` as the repo entry point for operators and maintainers.
+- Added a handoff reading order so a new maintainer can start from the right document instead of guessing.
+- Tightened `PROJECT_BRAIN.md`, `GOOGLE_SHEET_CONTRACT.md`, and `OPERATOR_MANUAL.md` so they point to each other and describe the same verified operating model.
+- Kept backup/restore wording explicitly local-only and Vercel refresh explicitly stateless.
+- Kept maintainer guidance narrow: update the brain, contract, and operator manual together when verified operator behavior changes.
+
+### M8 Verification Record
+
+- Manual review of `README.md`, `PROJECT_BRAIN.md`, `GOOGLE_SHEET_CONTRACT.md`, and `OPERATOR_MANUAL.md`
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+
+### What M8 Does Not Claim
+
+- It does not introduce new runtime behavior.
+- It does not change the Google Sheet schema or the finance model.
+- It does not remove the need for future doc updates when verified behavior changes.
 
 ## Production-Ready Exit Criteria
 

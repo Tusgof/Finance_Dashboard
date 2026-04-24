@@ -166,7 +166,7 @@ Confirmed secondary metrics:
 - Current branch: `main`.
 - Latest known pushed commit before this update: `6a28646 Advance deployment and recovery readiness`.
 - Git state before this update: `main...origin/main`.
-- Current milestone: Milestone 8 - Documentation and Handoff Completion.
+- Current milestone: Milestone track complete. Project is in production-ready maintenance mode.
 - Completed:
   - Milestone 1 - Scope Lock and Baseline Freeze completed.
   - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
@@ -184,6 +184,7 @@ Confirmed secondary metrics:
   - Added focused regression tests for Cash Flow monthly balance and Scenario current-month non-Actual rows.
   - Added `OPERATOR_MANUAL.md` for day-to-day sheet/dashboard operation.
   - Added `GOOGLE_SHEET_CONTRACT.md` for active sheet tabs, field aliases, validation behavior, and refresh persistence rules.
+  - Added `README.md` as the repo entry point for operators and maintainers.
   - Added optional support-sheet fallback guardrail so unusable support sheet refreshes do not overwrite usable local support snapshots.
   - Added a management warning for nonblank invalid `Original Forecast` values so bad forecast-history inputs do not stay silent.
   - Isolated refresh persistence in `lib/refreshPersistence.ts` so local filesystem mode and Vercel/stateless mode are testable outside the route.
@@ -208,7 +209,7 @@ Confirmed secondary metrics:
   - Monthly cash rows now ignore months that only contain cancelled transactions.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - Milestone 8 - Documentation and Handoff Completion.
+  - No open implementation milestone. Keep docs and verification aligned as operational maintenance continues.
 - Pending:
   - Keep monthly transaction drilldown aligned with the top-level cash truth.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
@@ -223,10 +224,11 @@ Confirmed secondary metrics:
 
 ## Next Safe Action
 
-- Action: execute Milestone 8 by tightening documentation and handoff notes around the now-verified operating model.
+- Action: keep the project in maintenance mode by updating docs and regression coverage only when verified behavior or operator workflow actually changes.
 - Preconditions:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
   - Keep the Google Sheet contract, monthly cash logic, validation grouping, release model, and M6/M7 verified runtime behavior unchanged unless a real bug requires a change.
+  - Keep `README.md`, `PROJECT_BRAIN.md`, `GOOGLE_SHEET_CONTRACT.md`, and `OPERATOR_MANUAL.md` synchronized when operator-facing behavior changes.
 - Stop if:
   - A proposed change changes Google Sheet schema without explicit user approval.
   - A proposed documentation or handoff change describes behavior that is not verified locally or live.
@@ -505,14 +507,16 @@ git status --short --branch
 - 2026-04-25: Milestone 7 batch 2 verified the local release/recovery flow end to end. Local refresh and restore work, but successful restore is not enough by itself; restored backups must still pass validation before being trusted for management decisions.
 - 2026-04-25: Milestone 7 release docs should keep the live verification step manual, keep `data/backups` local-only, and use Critical/Management/Info wording for validation instead of the older rendering-versus-management phrasing.
 - 2026-04-25: Milestone 7 was closed after live verification on `finance-dashboard-delta-brown.vercel.app` confirmed the production dashboard loads, `GET /api/backups` stays empty, `POST /api/restore` is blocked in serverless mode, and `POST /api/refresh` returns stateless persistence as intended.
+- 2026-04-25: Milestone 8 was closed after adding `README.md` as the repo entry point and tightening handoff guidance across the brain, operator manual, contract doc, and milestone plan so the verified operating model can be maintained without guesswork.
 
 ## Document Map
 
+- Handoff reading order: `README.md` -> `PROJECT_BRAIN.md` -> `GOOGLE_SHEET_CONTRACT.md` -> `OPERATOR_MANUAL.md` -> `IMPLEMENT_PLAN.md`.
 - `PROJECT_BRAIN.md`: central operating memory, project definition, guardrails, playbooks, next action.
 - `IMPLEMENT_PLAN.md`: milestone path from current state to lean production-ready dashboard.
 - `OPERATOR_MANUAL.md`: day-to-day operator guide for sheet entry, refresh, charts, scenario, warnings, and release checks.
 - `GOOGLE_SHEET_CONTRACT.md`: active Google Sheet contract, field aliases, validation behavior, and refresh persistence notes.
-- `README.md`: general project entry point if present.
+- `README.md`: repo entry point for operators and maintainers.
 - `package.json`: runnable scripts and dependency versions.
 - `tests/financeDashboard.test.ts`: finance parser/metric regression tests.
 - `data/current.json`: latest dashboard transaction snapshot.

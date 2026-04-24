@@ -11,6 +11,14 @@ Daily operator manual for `Finance_Dashboard`.
 
 Use the sheet as the source of truth. Do not edit snapshot JSON files by hand.
 
+## Doc Map
+
+- `README.md`: repo entry point and short operating model summary.
+- `PROJECT_BRAIN.md`: scope, guardrails, verified state, and next safe action.
+- `GOOGLE_SHEET_CONTRACT.md`: active sheet fields, validation rules, and refresh behavior.
+- `IMPLEMENT_PLAN.md`: milestone status, release criteria, and closeout notes.
+- Keep these docs aligned whenever sheet meaning, warnings, or recovery steps change.
+
 ## Key Google Sheet Fields
 
 Fill these fields consistently. They matter most for refresh, charting, and warnings.
@@ -128,3 +136,4 @@ If any check fails, fix that first. Do not ship a snapshot that you cannot expla
 - Use restore only for local recovery. `data/backups` is not durable production storage.
 - After a restore, open the dashboard and re-check validation before trusting the numbers. Older backups may restore successfully but still contain management issues.
 - Do not delete backups or snapshots unless the owner explicitly asks.
+- Maintainer note: keep `Work Month` as the monthly basis, keep `Date` as audit timing, and update the contract and project brain before handing off any change to sheet meaning or validation.

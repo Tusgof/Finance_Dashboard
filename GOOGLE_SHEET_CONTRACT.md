@@ -17,6 +17,12 @@ This document is ASCII-only by design.
 - Make the current parser aliases and validation behavior explicit.
 - Separate the active contract from archived or backup sheets.
 
+## Related Docs
+
+- `PROJECT_BRAIN.md`: scope, guardrails, verified state, and decision log.
+- `OPERATOR_MANUAL.md`: day-to-day operating steps and recovery checklist.
+- `IMPLEMENT_PLAN.md`: milestone status, release criteria, and handoff notes.
+
 ## Non-Goals
 
 - No Google Sheet schema changes.
@@ -232,6 +238,8 @@ Before changing any sheet field, alias, or validation rule:
 7. Run `npm.cmd run build`.
 8. Verify refresh behavior locally after the change.
 9. Update `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and this contract doc together when the contract changes.
+
+Maintainer note: keep aliases conservative and prefer documenting the active contract before widening parser inference.
 
 Do not:
 
