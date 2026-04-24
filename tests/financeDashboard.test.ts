@@ -6,7 +6,7 @@ import path from 'node:path';
 import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
 import { normalizeSettings } from '../lib/settings';
 import { getRestoreUnavailableMessage, isVercelStatelessRuntime, persistRefreshSnapshot, shouldPersistRefreshSnapshot } from '../lib/refreshPersistence';
-import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
+import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getApproximateBaseForecastZeroCrossing, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
 import { selectSupportSheetRows } from '../lib/supportSheetRefresh';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseTransactionCsv } from '../lib/transactionModel';
@@ -997,6 +997,129 @@ const tests: Array<[string, () => void]> = [
       const june = projection.find(row => row.month === '2026-06');
 
       assert.equal(june?.bullNet, 45080);
+    },
+  ],
+  [
+    'approximate base forecast zero crossing returns null when no future or present month goes negative',
+    () => {
+      const rawRows: RawTransactionRow[] = [
+        makeRow({
+          date: '2026-04-01',
+          workMonth: '2026-04',
+          month: '2026-04',
+          type: 'Inflow',
+          status: 'Actual',
+          mainCategory: 'Revenue',
+          category: 'Revenue',
+          amount: 0,
+          balance: 100,
+        }),
+        makeRow({
+          date: '2026-05-01',
+          workMonth: '2026-05',
+          month: '2026-05',
+          type: 'Inflow',
+          status: 'Forecast',
+          mainCategory: 'Revenue',
+          category: 'Revenue',
+          amount: 25,
+          balance: 125,
+        }),
+      ];
+
+      const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+      const crossing = getApproximateBaseForecastZeroCrossing(normalized, 100, new Date('2026-05-01T00:00:00.000Z'));
+
+      assert.equal(crossing, null);
+    },
+  ],
+  [
+    'approximate base forecast zero crossing interpolates the current or future negative month',
+    () => {
+      const rawRows: RawTransactionRow[] = [
+        makeRow({
+          date: '2026-04-01',
+          workMonth: '2026-04',
+          month: '2026-04',
+          type: 'Inflow',
+          status: 'Actual',
+          mainCategory: 'Revenue',
+          category: 'Revenue',
+          amount: 0,
+          balance: 100,
+        }),
+        makeRow({
+          date: '2026-05-01',
+          workMonth: '2026-05',
+          month: '2026-05',
+          type: 'Outflow',
+          status: 'Forecast',
+          mainCategory: 'OpEx',
+          category: 'OpEx',
+          amount: 200,
+          balance: -100,
+        }),
+      ];
+
+      const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+      const crossing = getApproximateBaseForecastZeroCrossing(normalized, 100, new Date('2026-05-01T00:00:00.000Z'));
+
+      assert.deepEqual(crossing, {
+        crossingMonth: '2026-05',
+        approximateNegativeDate: '2026-05-16',
+        daysUntilCrossing: 15,
+        approximate: true,
+      });
+    },
+  ],
+  [
+    'approximate base forecast zero crossing handles exact month-start edges cleanly',
+    () => {
+      const rawRows: RawTransactionRow[] = [
+        makeRow({
+          date: '2026-04-01',
+          workMonth: '2026-04',
+          month: '2026-04',
+          type: 'Inflow',
+          status: 'Actual',
+          mainCategory: 'Revenue',
+          category: 'Revenue',
+          amount: 0,
+          balance: 100,
+        }),
+        makeRow({
+          date: '2026-05-01',
+          workMonth: '2026-05',
+          month: '2026-05',
+          type: 'Outflow',
+          status: 'Forecast',
+          mainCategory: 'OpEx',
+          category: 'OpEx',
+          amount: 100,
+          balance: 0,
+        }),
+        makeRow({
+          date: '2026-06-01',
+          workMonth: '2026-06',
+          month: '2026-06',
+          type: 'Outflow',
+          status: 'Forecast',
+          mainCategory: 'OpEx',
+          category: 'OpEx',
+          amount: 1,
+          balance: -1,
+        }),
+      ];
+
+      const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+      const crossing = getApproximateBaseForecastZeroCrossing(normalized, 100, new Date('2026-06-01T00:00:00.000Z'));
+
+      assert.deepEqual(crossing, {
+        crossingMonth: '2026-06',
+        approximateNegativeDate: '2026-06-01',
+        daysUntilCrossing: 0,
+        approximate: true,
+      });
     },
   ],
 ];

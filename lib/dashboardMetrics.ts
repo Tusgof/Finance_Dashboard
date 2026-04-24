@@ -25,6 +25,10 @@ function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function utcMonthKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 function addMonths(month: string, offset: number): string {
   const [year, rawMonth] = month.split('-').map(Number);
   if (!year || !rawMonth) return month;
@@ -241,6 +245,13 @@ export interface ScenarioProjectionRow {
   bearBalance: number | null;
 }
 
+export interface ApproximateBaseForecastZeroCrossing {
+  crossingMonth: string;
+  approximateNegativeDate: string;
+  daysUntilCrossing: number;
+  approximate: true;
+}
+
 function signedAmount(row: NormalizedTransaction): number {
   return row.type === 'Inflow' ? row.amount : -row.amount;
 }
@@ -274,6 +285,24 @@ function sumMonthNet(rows: NormalizedTransaction[], month: string): number {
   return rows
     .filter(row => row.workMonth === month && row.status !== 'Cancelled')
     .reduce((sum, row) => sum + signedAmount(row), 0);
+}
+
+function monthStartUtc(month: string): Date {
+  const [year, rawMonth] = month.split('-').map(Number);
+  return new Date(Date.UTC(year, rawMonth - 1, 1));
+}
+
+function daysInMonthUtc(month: string): number {
+  const [year, rawMonth] = month.split('-').map(Number);
+  return new Date(Date.UTC(year, rawMonth, 0)).getUTCDate();
+}
+
+function formatUtcDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function addUtcDays(date: Date, days: number): Date {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
 export function buildMonthlyPnLRows(
@@ -410,6 +439,52 @@ export function buildScenarioProjection(
     bullBalance: month < latestActualMonth ? null : bullBalances[index],
     bearBalance: month < latestActualMonth ? null : bearBalances[index],
   }));
+}
+
+export function getApproximateBaseForecastZeroCrossing(
+  data: NormalizedTransaction[],
+  openingBalance: number,
+  today: Date,
+  settings?: DashboardSettings | null
+): ApproximateBaseForecastZeroCrossing | null {
+  const projection = buildScenarioProjection(data, openingBalance, settings);
+  const todayMonth = utcMonthKey(today);
+  const currentCash = getScenarioStartingCash(data, openingBalance);
+  const crossingIndex = projection.findIndex(row => row.month >= todayMonth && row.baseBalance !== null && row.baseBalance < 0);
+
+  if (crossingIndex < 0) return null;
+
+  const crossingRow = projection[crossingIndex];
+  const monthStartBalance =
+    crossingIndex === 0
+      ? currentCash
+      : (projection[crossingIndex - 1]?.baseBalance ?? currentCash);
+  const monthEndBalance = crossingRow.baseBalance;
+  if (monthEndBalance === null) return null;
+
+  const monthStart = monthStartUtc(crossingRow.month);
+  const monthSpanDays = Math.max(daysInMonthUtc(crossingRow.month) - 1, 0);
+  const crossingOffsetDays =
+    monthStartBalance <= 0
+      ? 0
+      : monthEndBalance >= 0
+        ? monthSpanDays
+        : monthSpanDays * (monthStartBalance / (monthStartBalance - monthEndBalance));
+  const approximateNegativeDate = formatUtcDate(addUtcDays(monthStart, Math.round(crossingOffsetDays)));
+  const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const crossingStart = new Date(Date.UTC(
+    Number(approximateNegativeDate.slice(0, 4)),
+    Number(approximateNegativeDate.slice(5, 7)) - 1,
+    Number(approximateNegativeDate.slice(8, 10))
+  ));
+  const daysUntilCrossing = Math.max(0, Math.round((crossingStart.getTime() - todayStart.getTime()) / (24 * 60 * 60 * 1000)));
+
+  return {
+    crossingMonth: crossingRow.month,
+    approximateNegativeDate,
+    daysUntilCrossing,
+    approximate: true,
+  };
 }
 
 export function calculateForecastAccuracy(data: NormalizedTransaction[]): number | null {

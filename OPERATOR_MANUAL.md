@@ -72,6 +72,15 @@ How to interpret it:
 - Negative monthly net means cash decreased that month.
 - If the balance drops below zero, it is a real cash warning for the operating model.
 
+## Cash Runway Note
+
+The cash summary now shows one extra timing note beside `Cash Runway`.
+
+- `Cash Runway` still shows the monthly burn-based runway in months.
+- The added note is approximate and based on the `Base` forecast path.
+- It is a timing signal only, not a day-level forecast model.
+- If the `Base` forecast never goes below zero, the note says so instead of inventing a zero date.
+
 ## How To Read Scenario
 
 `Scenario` uses the latest actual month as the anchor.

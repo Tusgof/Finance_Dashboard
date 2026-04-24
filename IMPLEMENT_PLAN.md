@@ -23,6 +23,7 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 ## Milestone Status
 
 - Current milestone: Milestone track complete. Project is in production-ready maintenance mode.
+- Maintenance milestone M9 status: Complete as of 2026-04-25.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
 - Milestone 3 status: Complete as of 2026-04-24.
@@ -666,6 +667,29 @@ M8 is complete because the project now has a clear repo entry point, a stable ha
 - It does not introduce new runtime behavior.
 - It does not change the Google Sheet schema or the finance model.
 - It does not remove the need for future doc updates when verified behavior changes.
+
+## Maintenance Milestone M9 Completion Record
+
+M9 is complete because the cash summary now includes an approximate Base-path days-to-forecast-zero note while the monthly `Cash Runway` value stays unchanged.
+
+### Closed M9 Outputs
+
+- The cash summary now shows an additional timing note beside `Cash Runway`.
+- The timing note is explicitly approximate and based on the `Base` forecast path.
+- The monthly runway value remains the same burn-based metric it was before this maintenance pass.
+- This is an additive maintenance update only; it does not change product scope, sheet meaning, or scenario behavior.
+
+### M9 Verification Record
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- Manual review of the cash summary copy and documentation wording
+
+### What M9 Does Not Claim
+
+- It does not replace the monthly `Cash Runway` metric.
+- It does not add day-level forecast logic.
+- It does not change the Google Sheet contract or broaden product scope.
 
 ## Production-Ready Exit Criteria
 

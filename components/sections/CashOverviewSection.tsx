@@ -4,7 +4,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDashboard } from '../DashboardContext';
 import CashFlowChart from '../charts/CashFlowChart';
 import { DEFAULT_DASHBOARD_SETTINGS, fmt, loadDashboardSettings } from '@/lib/dataUtils';
-import { buildScenarioProjection, calculateCashRunway, getCashAlerts, getCurrentCash, normalizeTransactions, type ScenarioProjectionRow } from '@/lib/dashboardMetrics';
+import {
+  buildScenarioProjection,
+  calculateCashRunway,
+  getApproximateBaseForecastZeroCrossing,
+  getCashAlerts,
+  getCurrentCash,
+  normalizeTransactions,
+  type ScenarioProjectionRow,
+} from '@/lib/dashboardMetrics';
 
 type ScenarioCaseKey = 'base' | 'bull' | 'bear';
 
@@ -44,6 +52,13 @@ export default function CashOverviewSection() {
     () => buildScenarioProjection(normalized, openingBalance, settings).filter(row => row.baseBalance !== null),
     [normalized, openingBalance, settings]
   );
+  const baseForecastZero = useMemo(
+    () => getApproximateBaseForecastZeroCrossing(normalized, openingBalance, new Date(), settings),
+    [normalized, openingBalance, settings]
+  );
+  const baseForecastZeroNote = baseForecastZero
+    ? `Approx. ${baseForecastZero.daysUntilCrossing} days to forecast zero on Base forecast path (${baseForecastZero.approximateNegativeDate}).`
+    : 'Base forecast path stays above zero in the monthly forecast.';
   const scenarioLatest = scenarioProjection.at(-1);
   const scenarioStartingCash =
     scenarioProjection[0]?.baseBalance !== null && scenarioProjection[0]?.baseBalance !== undefined
@@ -127,6 +142,7 @@ export default function CashOverviewSection() {
               {Number.isFinite(runway) ? `${runway.toFixed(1)} mo` : 'Infinite'}
             </div>
             <div className="cash-summary-note">Based on recent actual deficit months</div>
+            <div className="cash-summary-note">{baseForecastZeroNote}</div>
           </div>
 
           <div className="cash-summary-card">

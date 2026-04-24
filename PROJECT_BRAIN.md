@@ -164,9 +164,10 @@ Confirmed secondary metrics:
 
 - Last verified: 2026-04-25, by local and live verification after Milestone 7 closeout.
 - Current branch: `main`.
-- Latest known pushed commit before this update: `6a28646 Advance deployment and recovery readiness`.
+- Latest known pushed commit before this update: `ae23749 Close milestone eight documentation handoff`.
 - Git state before this update: `main...origin/main`.
 - Current milestone: Milestone track complete. Project is in production-ready maintenance mode.
+- Maintenance milestone M9: complete as of 2026-04-25. Cash summary now includes an approximate Base-path days-to-forecast-zero note while monthly Cash Runway stays unchanged.
 - Completed:
   - Milestone 1 - Scope Lock and Baseline Freeze completed.
   - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
@@ -208,19 +209,41 @@ Confirmed secondary metrics:
   - Revenue and direct/indirect management charts now use the full snapshot rather than ledger filter state.
   - Monthly cash rows now ignore months that only contain cancelled transactions.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
+  - Maintenance milestone M9 added an approximate Base-path days-to-forecast-zero note in the cash summary while keeping the monthly Cash Runway value unchanged.
 - In progress:
   - No open implementation milestone. Keep docs and verification aligned as operational maintenance continues.
 - Pending:
   - Keep monthly transaction drilldown aligned with the top-level cash truth.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 21 tests after Milestone 7 closeout.
-  - `npm.cmd run build` passed after Milestone 7 closeout.
+  - `npm.cmd run test:finance` passed 24 tests after M9 implementation.
+  - `npm.cmd run build` passed after M9 implementation.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Regression coverage now protects support-sheet fallback, refresh persistence, validation grouping, monthly cash derivation, scenario anchoring, Bear delay logic, delayed-month horizon behavior, Bull default normalization, and stateless backup/restore gating.
   - Current regression coverage protects refresh persistence, support-sheet fallback, validation grouping, monthly cash derivation, scenario anchoring, and Bull default normalization.
   - Local verification confirmed `GET /api/backups`, `POST /api/refresh`, and `POST /api/restore` succeed in local filesystem mode. Restoring the older backup `2026-04-24T18-06-59.json` returned a valid snapshot file but surfaced 8 management issues, so restored backups still require validation review before management use.
   - Live verification on `https://finance-dashboard-delta-brown.vercel.app` confirmed the production dashboard loads, `GET /api/backups` returns `[]`, `POST /api/restore` returns `503` with the local-only restore message, and `POST /api/refresh` succeeds with `persistence.mode = stateless`.
+
+## Maintenance Milestone M9
+
+- Status: complete as of 2026-04-25.
+- Goal: add a separate forecast-timing note for days from today until the first forecast negative date.
+- Relationship to current cash truth: `Cash Runway` stays as the monthly burn-based runway metric. The new note is separate and does not replace runway.
+- Scope:
+  - Show the note as an approximate forecast timing signal only.
+  - Derive it from the first forecast month that turns negative in the current monthly projection.
+  - Keep the existing month-based scenario and runway logic unchanged.
+  - Do not introduce day-level forecast logic, new sheet fields, or schema changes.
+- Verification:
+  - `npm.cmd run test:finance`
+  - `npm.cmd run build`
+  - Manual review of the cash summary copy and operator wording
+- Completion note:
+  - The cash summary now shows an approximate Base-path days-to-forecast-zero note, and the monthly Cash Runway value remains unchanged.
+- What M9 does not claim:
+  - It does not replace `Cash Runway`.
+  - It does not add day-level forecast logic.
+  - It does not expand the product scope.
 
 ## Next Safe Action
 
@@ -508,6 +531,7 @@ git status --short --branch
 - 2026-04-25: Milestone 7 release docs should keep the live verification step manual, keep `data/backups` local-only, and use Critical/Management/Info wording for validation instead of the older rendering-versus-management phrasing.
 - 2026-04-25: Milestone 7 was closed after live verification on `finance-dashboard-delta-brown.vercel.app` confirmed the production dashboard loads, `GET /api/backups` stays empty, `POST /api/restore` is blocked in serverless mode, and `POST /api/refresh` returns stateless persistence as intended.
 - 2026-04-25: Milestone 8 was closed after adding `README.md` as the repo entry point and tightening handoff guidance across the brain, operator manual, contract doc, and milestone plan so the verified operating model can be maintained without guesswork.
+- 2026-04-25: Maintenance milestone M9 completed the approximate Base-path days-to-forecast-zero note in the cash summary. Monthly Cash Runway stays unchanged and the product scope did not expand.
 
 ## Document Map
 
@@ -549,7 +573,7 @@ git status --short --branch
 - Verified by: Codex primary agent.
 - Verification source:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` before work.
-  - `npm.cmd run test:finance` passed 21 tests.
+  - `npm.cmd run test:finance` passed 24 tests.
   - `npm.cmd run build` passed.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Local verification confirmed backup listing, refresh, and restore behavior in filesystem mode.
