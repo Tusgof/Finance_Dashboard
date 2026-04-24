@@ -68,6 +68,7 @@ Business rules for this tab:
 - `Type` determines cash sign and calculation direction.
 - `Main Category` drives KPI grouping and support-sheet checks.
 - `Original Forecast` is optional and should not block current dashboard use.
+- Nonblank invalid `Original Forecast` values trigger a management warning and still normalize through the existing numeric parser, so they should be corrected before relying on Forecast Accuracy.
 - `Running Balance` is not the authoritative month-end truth.
 
 ### Monthly Production Summary
@@ -177,6 +178,7 @@ Management-related:
 
 - `invalid-status`
 - `invalid-main-category`
+- `invalid-original-forecast`
 - `missing-cost-behavior`
 - `missing-sponsor`
 - `missing-person`

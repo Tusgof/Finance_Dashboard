@@ -182,6 +182,7 @@ Confirmed secondary metrics:
   - Added `OPERATOR_MANUAL.md` for day-to-day sheet/dashboard operation.
   - Added `GOOGLE_SHEET_CONTRACT.md` for active sheet tabs, field aliases, validation behavior, and refresh persistence rules.
   - Added optional support-sheet fallback guardrail so unusable support sheet refreshes do not overwrite usable local support snapshots.
+  - Added a management warning for nonblank invalid `Original Forecast` values so bad forecast-history inputs do not stay silent.
   - Added Monthly Production Summary cross-check warnings for actual COGS total and cost-per-content mismatches.
   - Moved Bull scenario assumptions into normalized scenario settings.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
@@ -192,12 +193,12 @@ Confirmed secondary metrics:
   - Use `GOOGLE_SHEET_CONTRACT.md` as the active field contract for `Transactions`, `Monthly Production Summary`, `Sponsor Pipeline`, and `Lists`.
   - Verify local refresh behavior and failed-refresh snapshot safety.
   - Confirm serverless refresh remains stateless and does not depend on durable `data/backups` writes.
-  - Review validation severity gaps for core fields only.
+  - Continue reviewing validation severity gaps for remaining core fields after `Original Forecast`.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 11 tests after M2 support-sheet fallback changes.
-  - `npm.cmd run build` passed after M2 support-sheet fallback changes.
+  - `npm.cmd run test:finance` passed 12 tests after M2 support-sheet fallback and `Original Forecast` validation changes.
+  - `npm.cmd run build` passed after M2 support-sheet fallback and `Original Forecast` validation changes.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Refresh via local dev server returned 148 transactions, 4 production summary rows, 12 sponsor pipeline rows, and 0 validation issues.
 

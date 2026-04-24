@@ -140,6 +140,26 @@ const tests: Array<[string, () => void]> = [
     },
   ],
   [
+    'original forecast warns only when a nonblank value is not numeric after normalization',
+    () => {
+  const csv = [
+    'Date,Work Month,Type,Main Category,Description,Amount,Status,Original Forecast',
+    '2026-01-02,2026-01,Outflow,OpEx,Invalid forecast,250,Actual,not-a-number',
+    '2026-01-03,2026-01,Inflow,Revenue,Blank forecast,500,Actual,',
+    '2026-01-04,2026-01,Inflow,Revenue,Normalized forecast,500,Actual,"1,200"',
+  ].join('\n');
+
+  const parsed = parseTransactionCsv(csv, DEFAULT_DASHBOARD_SETTINGS);
+  const codes = issueCodes(parsed.rowIssues);
+
+  assert.ok(codes.includes('invalid-original-forecast'));
+  assert.equal(codes.filter(code => code === 'invalid-original-forecast').length, 1);
+  assert.equal(parsed.dataFile.rawData[0].originalForecast, 0);
+  assert.equal(parsed.dataFile.rawData[1].originalForecast, undefined);
+  assert.equal(parsed.dataFile.rawData[2].originalForecast, 1200);
+    },
+  ],
+  [
     'production summary validation ignores forecast-only COGS months',
     () => {
   const report = buildValidationReport(

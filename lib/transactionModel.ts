@@ -325,6 +325,7 @@ function buildTransactionValidationIssues(
   const sponsorRaw = normalizeText(field(record, ['Sponsor', 'sponsor']));
   const personRaw = normalizeText(field(record, ['Person', 'person']));
   const costBehaviorRaw = normalizeText(field(record, ['Cost Behavior', 'costBehavior', 'cost behavior']));
+  const originalForecastRaw = field(record, ['Original Forecast', 'originalForecast', 'original forecast']);
   const descriptionRaw = normalizeText(field(record, ['Description', 'description', 'Desc', 'desc']));
   const subCategoryRaw = normalizeText(field(record, ['Sub Category', 'subCategory', 'sub category']));
   const noteRaw = normalizeText(field(record, ['Note', 'note']));
@@ -429,6 +430,19 @@ function buildTransactionValidationIssues(
       message: `Row ${rowIndex}: Revenue rows should include a Sponsor.`,
       rowIndex,
       field: 'Sponsor',
+    });
+  }
+
+  const originalForecastText = normalizeText(originalForecastRaw);
+  if (originalForecastText && !Number.isFinite(parseNumber(originalForecastRaw, NaN))) {
+    pushValidationIssue(issues, {
+      code: 'invalid-original-forecast',
+      scope: 'management',
+      severity: 'warning',
+      message: `Row ${rowIndex}: Original Forecast "${originalForecastText}" is not a valid numeric value.`,
+      rowIndex,
+      field: 'Original Forecast',
+      value: originalForecastText,
     });
   }
 
