@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { getRestoreUnavailableMessage, shouldPersistRefreshSnapshot } from '@/lib/refreshPersistence';
 import { ensureSnapshotMeta } from '@/lib/snapshotMeta';
 
 export async function POST(request: Request) {
@@ -9,6 +10,13 @@ export async function POST(request: Request) {
 
     if (!filename || typeof filename !== 'string') {
       return NextResponse.json({ error: 'filename required' }, { status: 400 });
+    }
+
+    if (!shouldPersistRefreshSnapshot()) {
+      return NextResponse.json(
+        { error: getRestoreUnavailableMessage() },
+        { status: 503 }
+      );
     }
 
     // Security: only allow simple filenames (no path traversal)

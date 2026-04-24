@@ -21,7 +21,7 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 - Milestone 4 status: Complete as of 2026-04-24.
 - Milestone 5 status: Complete as of 2026-04-24.
 - Milestone 6 status: Complete as of 2026-04-25.
-- Milestone 7 status: Ready to execute as of 2026-04-25.
+- Milestone 7 status: In progress as of 2026-04-25.
 - Last status update: 2026-04-25.
 
 ## Milestone 1 Completion Record
@@ -543,6 +543,7 @@ The project is operated by a single owner, so release and recovery steps must be
 - Confirm refresh behavior is stateless where required on Vercel.
 - Confirm local backups are not treated as durable production storage.
 - Confirm the latest pushed snapshot matches the intended Google Sheet state.
+- Confirm live verification stays manual after Vercel finishes deploying.
 - Confirm recovery playbooks exist for refresh failures, bad snapshots, and chart mismatches.
 - Confirm the deploy path from `main` and the post-deploy live check.
 
@@ -566,7 +567,7 @@ The project is operated by a single owner, so release and recovery steps must be
 - `npm.cmd run build`
 - `git status --short --branch`
 - `git diff --check`
-- Confirm refresh flow locally and on the live deployment.
+- Confirm refresh flow locally and then check the live deployment manually after the redeploy.
 
 **Stop Conditions**
 
@@ -577,6 +578,14 @@ The project is operated by a single owner, so release and recovery steps must be
 
 - This milestone should be completed before the project is treated as production-ready.
 - Any move toward persistent production storage or a database is a separate owner decision, not part of this plan.
+
+### M7 Active Progress
+
+- M7 batch 1 aligned `GET /api/backups` and `POST /api/restore` with the stateless Vercel model.
+- Backups remain local-only and restore now returns a clear unavailable message in serverless mode.
+- Operator docs now use `Critical`, `Management`, and `Info` wording and keep live verification as a manual post-deploy step.
+- M7 batch 2 verified the local flow end to end: backup listing, local refresh, and local restore all work, but restored backups still need validation review before management use.
+- Live deploy verification is still pending, so Milestone 7 is not complete yet.
 
 ## Milestone 8 - Documentation and Handoff Completion
 
@@ -593,6 +602,7 @@ This project has financial context, multi-step data flow, and operational risk. 
 - Explain refresh flow, validation severity, cash truth, and scenario reading.
 - Explain what good looks like in a weekly or monthly decision meeting.
 - Explain the release checklist and the common failure modes.
+- Keep backup and restore wording local-only unless durable production storage is explicitly introduced later.
 - Keep references to the main files easy to find.
 
 **Deliverables**

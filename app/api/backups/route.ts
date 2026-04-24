@@ -2,10 +2,15 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { loadSettings } from '@/lib/settings';
+import { shouldPersistRefreshSnapshot } from '@/lib/refreshPersistence';
 import type { BackupMeta } from '@/lib/types';
 import { normalizeDataFile } from '@/lib/transactionModel';
 
 export async function GET() {
+  if (!shouldPersistRefreshSnapshot()) {
+    return NextResponse.json([]);
+  }
+
   const settings = loadSettings();
   const backupDir = path.join(process.cwd(), 'data', 'backups');
 

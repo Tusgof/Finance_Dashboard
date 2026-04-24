@@ -47,6 +47,7 @@ After sheet edits:
 4. Confirm the new snapshot reflects the sheet change.
 
 Local refresh uses the app endpoint `POST /api/refresh`. Do not rely on manual JSON edits for normal operation.
+On the live deployment, refresh the sheet first and then verify the deployed dashboard after the redeploy finishes.
 
 ## How To Read Cash Flow
 
@@ -89,10 +90,11 @@ For the charts and scenario, `Work Month` is the monthly basis. If these two fie
 
 ## Validation Warnings
 
-Warnings are split into two kinds:
+Warnings are grouped as `Critical`, `Management`, and `Info`.
 
-- Rendering warnings: the dashboard can still show data, but the record needs cleanup.
-- Management warnings: the data may render, but the number should not be trusted for decision making yet.
+- `Critical` means the data should not be used for management decisions yet.
+- `Management` means the page can still load, but the number needs cleanup before relying on it.
+- `Info` is informational and does not block the page.
 
 Common fixes:
 
@@ -109,11 +111,20 @@ Treat warnings as sheet cleanup tasks, not dashboard bugs.
 Before handing off a change or refreshing production data:
 
 1. Refresh the Google Sheet data.
-2. Open the dashboard and check validation warnings.
-3. Confirm Cash Flow and Scenario still make sense for the latest month.
-4. Run `npm.cmd run test:finance`.
-5. Run `npm.cmd run build`.
-6. Run `git diff --check`.
-7. Run `git status --short --branch`.
+2. Check the live deployment after Vercel finishes.
+3. Open the dashboard and check validation warnings.
+4. Confirm Cash Flow and Scenario still make sense for the latest month.
+5. Run `npm.cmd run test:finance`.
+6. Run `npm.cmd run build`.
+7. Run `git diff --check`.
+8. Run `git status --short --branch`.
 
 If any check fails, fix that first. Do not ship a snapshot that you cannot explain.
+
+## Recovery
+
+- `GET /api/backups` lists local backup files under `data/backups`.
+- `POST /api/restore` restores one named local backup and saves the current snapshot first when one exists.
+- Use restore only for local recovery. `data/backups` is not durable production storage.
+- After a restore, open the dashboard and re-check validation before trusting the numbers. Older backups may restore successfully but still contain management issues.
+- Do not delete backups or snapshots unless the owner explicitly asks.

@@ -162,7 +162,7 @@ Confirmed secondary metrics:
 
 ## Current Verified State
 
-- Last verified: 2026-04-24, by local test/build run after Milestone 4 closeout changes.
+- Last verified: 2026-04-25, by local test/build run after Milestone 7 batch-1 ops changes.
 - Current branch: `main`.
 - Latest known pushed commit before this update: `1eab99f Close milestone two refresh reliability work`.
 - Git state before this update: `main...origin/main`.
@@ -208,16 +208,19 @@ Confirmed secondary metrics:
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
   - Milestone 7 - Deployment, Operations, and Release Readiness.
+  - M7 batch 1 aligned `GET /api/backups` and `POST /api/restore` with the stateless Vercel model: backups stay local-only and restore is unavailable in serverless mode.
+  - M7 batch 2 verified the local flow: `GET /api/backups`, `POST /api/refresh`, and `POST /api/restore` all work in local filesystem mode, but restored backups still need validation review before being trusted for management use.
 - Pending:
   - Keep monthly transaction drilldown aligned with the top-level cash truth.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits as part of deployment/release work, not sheet-contract work.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 20 tests after Milestone 6 regression additions.
-  - `npm.cmd run build` passed after Milestone 6 regression additions.
+  - `npm.cmd run test:finance` passed 21 tests after Milestone 7 batch-1 ops changes.
+  - `npm.cmd run build` passed after Milestone 7 batch-1 ops changes.
   - `git diff --check` passed with only LF/CRLF warnings.
-  - Regression coverage now protects support-sheet fallback, refresh persistence, validation grouping, monthly cash derivation, scenario anchoring, Bear delay logic, delayed-month horizon behavior, and Bull default normalization.
+  - Regression coverage now protects support-sheet fallback, refresh persistence, validation grouping, monthly cash derivation, scenario anchoring, Bear delay logic, delayed-month horizon behavior, Bull default normalization, and stateless backup/restore gating.
   - Current regression coverage protects refresh persistence, support-sheet fallback, validation grouping, monthly cash derivation, scenario anchoring, and Bull default normalization.
+  - Local verification confirmed `GET /api/backups`, `POST /api/refresh`, and `POST /api/restore` succeed in local filesystem mode. Restoring the older backup `2026-04-24T18-06-59.json` returned a valid snapshot file but surfaced 8 management issues, so restored backups still require validation review before management use.
 
 ## Next Safe Action
 
@@ -425,13 +428,13 @@ git status --short --branch
 2. Read the HTTP response body.
 3. Check `app/api/refresh/route.ts` and Google Sheet access.
 4. Retry with a fresh dev server on another port if an old server is stuck.
-5. Do not delete current snapshot while diagnosing.
+5. Do not delete the current snapshot while diagnosing.
 6. Escalate to user if Google Sheet access or sharing has changed.
 
 ### If `/api/refresh` fails on Vercel
 
 1. Check whether the error mentions filesystem paths such as `data/backups`.
-2. Confirm refresh route is using stateless response behavior for serverless.
+2. Confirm the refresh route is still using stateless response behavior for serverless.
 3. Confirm Google Sheet public CSV endpoints are reachable.
 4. Do not add serverless writes as a permanent fix.
 5. Escalate if durable production persistence is required.
@@ -477,8 +480,8 @@ git status --short --branch
 1. Do not commit immediately.
 2. Inspect `git diff -- data/current.json`.
 3. Check row count and validation report.
-4. If needed, restore from backup or previous commit.
-5. Ask user before destructive restore/delete operations.
+4. If needed, restore from a known-good local backup with `POST /api/restore`.
+5. Ask user before deleting backups, snapshots, or making other destructive recovery changes.
 
 ## Decision Log
 
@@ -499,6 +502,9 @@ git status --short --branch
 - 2026-04-24: Milestone 4 was closed after validation was regrouped into Critical/Management/Info buckets, legacy snapshots gained normalization into the new model, and the operator-facing summary panel was updated to match the new grouping.
 - 2026-04-24: Milestone 5 was closed after the first screen was tightened around cash truth, a compact scenario preview was added to the cash page, validation was visually de-emphasized relative to decision surfaces, and user-facing copy was cleaned up for scenario, revenue, and cash P&L sections.
 - 2026-04-25: Milestone 6 was closed after focused regression coverage was expanded to protect Bear-case delay logic, ad-revenue-on-schedule behavior, and the delayed-month projection horizon alongside the existing cash, refresh, and validation rules.
+- 2026-04-25: Milestone 7 batch 1 aligned `GET /api/backups` and `POST /api/restore` with the stateless Vercel model, kept live verification manual, and updated operator docs to use Critical/Management/Info validation wording.
+- 2026-04-25: Milestone 7 batch 2 verified the local release/recovery flow end to end. Local refresh and restore work, but successful restore is not enough by itself; restored backups must still pass validation before being trusted for management decisions.
+- 2026-04-25: Milestone 7 release docs should keep the live verification step manual, keep `data/backups` local-only, and use Critical/Management/Info wording for validation instead of the older rendering-versus-management phrasing.
 
 ## Document Map
 
@@ -539,7 +545,7 @@ git status --short --branch
 - Verified by: Codex primary agent.
 - Verification source:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` before work.
-  - `npm.cmd run test:finance` passed 20 tests.
+  - `npm.cmd run test:finance` passed 21 tests.
   - `npm.cmd run build` passed.
   - `git diff --check` passed with only LF/CRLF warnings.
-  - Worker audit confirmed no remaining M3 gap in the implemented scope.
+  - Local verification confirmed backup listing, refresh, and restore behavior in filesystem mode.

@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
 import { normalizeSettings } from '../lib/settings';
-import { persistRefreshSnapshot } from '../lib/refreshPersistence';
+import { getRestoreUnavailableMessage, isVercelStatelessRuntime, persistRefreshSnapshot, shouldPersistRefreshSnapshot } from '../lib/refreshPersistence';
 import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
 import { selectSupportSheetRows } from '../lib/supportSheetRefresh';
@@ -157,6 +157,15 @@ const tests: Array<[string, () => void]> = [
       assert.equal(fs.existsSync(path.join(dataDir, 'backups')), false);
       assert.equal(fs.existsSync(productionSummaryPath), false);
       assert.equal(fs.existsSync(sponsorPipelinePath), false);
+    },
+  ],
+  [
+    'stateless runtime helpers keep backups disabled and restore blocked on Vercel',
+    () => {
+      assert.equal(isVercelStatelessRuntime('1'), true);
+      assert.equal(shouldPersistRefreshSnapshot('1'), false);
+      assert.equal(shouldPersistRefreshSnapshot(undefined), true);
+      assert.equal(getRestoreUnavailableMessage(), 'Restore is only available in local filesystem mode.');
     },
   ],
   [

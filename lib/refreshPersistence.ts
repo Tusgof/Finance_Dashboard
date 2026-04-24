@@ -18,8 +18,16 @@ export interface PersistRefreshSnapshotOptions {
   vercel?: string | undefined;
 }
 
+export function isVercelStatelessRuntime(vercel: string | undefined = process.env.VERCEL): boolean {
+  return Boolean(vercel);
+}
+
 export function shouldPersistRefreshSnapshot(vercel: string | undefined = process.env.VERCEL): boolean {
-  return !vercel;
+  return !isVercelStatelessRuntime(vercel);
+}
+
+export function getRestoreUnavailableMessage(): string {
+  return 'Restore is only available in local filesystem mode.';
 }
 
 function writeJsonFileAtomic(filePath: string, value: unknown): void {
