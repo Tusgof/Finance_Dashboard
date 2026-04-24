@@ -16,11 +16,11 @@ import ScenarioPlannerSection from './sections/ScenarioPlannerSection';
 type DashboardPage = 'cash' | 'revenue' | 'pnl' | 'scenario' | 'ledger';
 
 const PAGES: { id: DashboardPage; label: string; title: string; description: string }[] = [
-  { id: 'cash', label: 'Cash', title: 'Cash Overview', description: 'Current cash position, runway, balance trend, and core alerts.' },
-  { id: 'revenue', label: 'Revenue', title: 'Revenue & Sponsor', description: 'Monthly sponsor revenue trend and committed pipeline.' },
-  { id: 'pnl', label: 'Cash P&L', title: 'Cash View', description: 'Monthly cash after COGS, OpEx, and CapEx with split forecast variance.' },
-  { id: 'scenario', label: 'Scenario', title: 'Scenario Planner', description: 'Best/base/worst projection, break-even revenue, and what-if sliders.' },
-  { id: 'ledger', label: 'Ledger', title: 'Transaction Ledger', description: 'Paged source data for inspection and search.' },
+  { id: 'cash', label: 'Cash', title: 'Cash Truth', description: 'Current cash, runway, and monthly balance trend.' },
+  { id: 'revenue', label: 'Revenue', title: 'Revenue & Sponsor', description: 'Sponsor revenue and committed pipeline.' },
+  { id: 'pnl', label: 'Cash P&L', title: 'Cash View', description: 'Cash view of COGS, OpEx, and CapEx.' },
+  { id: 'scenario', label: 'Scenario', title: 'Scenario', description: 'Base, Bull, and Bear cash paths.' },
+  { id: 'ledger', label: 'Ledger', title: 'Ledger', description: 'Row-level audit and search only.' },
 ];
 
 export default function DashboardClient() {
@@ -111,6 +111,10 @@ export default function DashboardClient() {
         },
       ]
     : [];
+  const hasValidationIssues = Boolean(validationReport && validationReport.issues.length > 0);
+  const criticalIssueCount = validationReport?.criticalIssues.length ?? 0;
+  const managementIssueCount = validationReport?.managementIssues.length ?? 0;
+  const infoIssueCount = validationReport?.infoIssues.length ?? 0;
 
   if (loading) {
     return (
@@ -153,22 +157,37 @@ export default function DashboardClient() {
           </aside>
 
           <div className="dashboard-content">
-            {validationReport && validationReport.issues.length > 0 ? (
+            <div className="workspace-nav">
+              <div className="workspace-nav-header">
+                <div>
+                  <div className="workspace-title">{activeMeta.title}</div>
+                  <div className="workspace-subtitle">{activeMeta.description}</div>
+                </div>
+              </div>
+            </div>
+
+            {activePage === 'cash' && <CashOverviewSection />}
+            {activePage === 'revenue' && <RevenueSponsorSection />}
+            {activePage === 'pnl' && <PnLCostSection />}
+            {activePage === 'scenario' && <ScenarioPlannerSection />}
+            {activePage === 'ledger' && <TransactionTable />}
+
+            {hasValidationIssues ? (
               <div className="validation-panel" role="status" aria-live="polite">
                 <div className="validation-panel-header">
                   <div>
-                    <div className="validation-title">Snapshot Validation</div>
+                    <div className="validation-title">Snapshot checks</div>
                     <div className="validation-subtitle">{validationSubtitle}</div>
                   </div>
                   <div className="validation-badges">
-                    <span className={`validation-badge ${validationReport.criticalReady ? 'ok' : 'critical'}`}>
-                      Critical {validationReport.criticalIssues.length > 0 ? validationReport.criticalIssues.length : 'clear'}
+                    <span className={`validation-badge ${validationReport?.criticalReady ? 'ok' : 'critical'}`}>
+                      Critical {criticalIssueCount > 0 ? criticalIssueCount : 'clear'}
                     </span>
-                    <span className={`validation-badge ${validationReport.managementReady ? 'ok' : 'warn'}`}>
-                      Management {validationReport.managementIssues.length > 0 ? validationReport.managementIssues.length : 'clear'}
+                    <span className={`validation-badge ${validationReport?.managementReady ? 'ok' : 'warn'}`}>
+                      Management {managementIssueCount > 0 ? managementIssueCount : 'clear'}
                     </span>
-                    <span className={`validation-badge ${validationReport.infoIssues.length > 0 ? 'info' : 'ok'}`}>
-                      Info {validationReport.infoIssues.length > 0 ? validationReport.infoIssues.length : 'clear'}
+                    <span className={`validation-badge ${infoIssueCount > 0 ? 'info' : 'ok'}`}>
+                      Info {infoIssueCount > 0 ? infoIssueCount : 'clear'}
                     </span>
                   </div>
                 </div>
@@ -206,21 +225,6 @@ export default function DashboardClient() {
                 </div>
               </div>
             ) : null}
-
-            <div className="workspace-nav">
-              <div className="workspace-nav-header">
-                <div>
-                  <div className="workspace-title">{activeMeta.title}</div>
-                  <div className="workspace-subtitle">{activeMeta.description}</div>
-                </div>
-              </div>
-            </div>
-
-            {activePage === 'cash' && <CashOverviewSection />}
-            {activePage === 'revenue' && <RevenueSponsorSection />}
-            {activePage === 'pnl' && <PnLCostSection />}
-            {activePage === 'scenario' && <ScenarioPlannerSection />}
-            {activePage === 'ledger' && <TransactionTable />}
           </div>
         </div>
       </div>

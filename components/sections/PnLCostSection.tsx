@@ -40,9 +40,16 @@ export default function PnLCostSection() {
     <div className="page-stack">
       <div className="health-grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
         <div className="health-card">
+          <div className="health-label">Latest Cash After CapEx</div>
+          <div className="health-value" style={{ color: latestCashAfterCapEx >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+            THB {fmt(latestCashAfterCapEx)}
+          </div>
+          <div className="health-status amber"><span className="health-dot amber"></span>{latestActualRow ? `${latestActualRow.month} operating profit less CapEx` : 'Operating profit less CapEx'}</div>
+        </div>
+        <div className="health-card">
           <div className="health-label">Cost per Content</div>
-          <div className="health-value">{latestCostPerContent !== null ? `฿${fmt(latestCostPerContent)}` : 'N/A'}</div>
-          <div className="health-status amber"><span className="health-dot amber"></span>{latestCostPerContentRow ? `${latestCostPerContentRow.month} with production count` : 'Requires a production count'}</div>
+          <div className="health-value">{latestCostPerContent !== null ? `THB ${fmt(latestCostPerContent)}` : 'N/A'}</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>{latestCostPerContentRow ? `${latestCostPerContentRow.month} actual month with production count` : 'Actual months only'}</div>
         </div>
         <div className="health-card">
           <div className="health-label">Headcount Cost Ratio</div>
@@ -51,15 +58,8 @@ export default function PnLCostSection() {
         </div>
         <div className="health-card">
           <div className="health-label">Forecast Accuracy</div>
-          <div className="health-value">{forecastAccuracy !== null ? `${(forecastAccuracy * 100).toFixed(1)}%` : 'N/A'}</div>
-          <div className="health-status amber"><span className="health-dot amber"></span>{forecastAccuracy !== null ? 'Actual rows with original forecast' : 'Starts after forecast rows become actual'}</div>
-        </div>
-        <div className="health-card">
-          <div className="health-label">Latest Cash After CapEx</div>
-          <div className="health-value" style={{ color: latestCashAfterCapEx >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
-            ฿{fmt(latestCashAfterCapEx)}
-          </div>
-          <div className="health-status amber"><span className="health-dot amber"></span>{latestActualRow ? `${latestActualRow.month} operating profit less CapEx` : 'Operating profit less CapEx'}</div>
+          <div className="health-value" style={{ color: 'var(--text-muted)' }}>{forecastAccuracy !== null ? `${(forecastAccuracy * 100).toFixed(1)}%` : 'N/A'}</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>{forecastAccuracy !== null ? 'Optional until enough original forecast rows exist' : 'Not enough original forecast history'}</div>
         </div>
       </div>
 
@@ -89,13 +89,13 @@ export default function PnLCostSection() {
               {pnlRows.map(row => (
                 <tr key={row.month}>
                   <td>{row.month}</td>
-                  <td>฿{fmt(row.revenue)}</td>
-                  <td>฿{fmt(row.cogs)}</td>
-                  <td>฿{fmt(row.grossProfit)}</td>
+                  <td>THB {fmt(row.revenue)}</td>
+                  <td>THB {fmt(row.cogs)}</td>
+                  <td>THB {fmt(row.grossProfit)}</td>
                   <td>{row.grossMarginPct !== null ? `${row.grossMarginPct.toFixed(1)}%` : 'N/A'}</td>
-                  <td>฿{fmt(row.opEx)}</td>
-                  <td>฿{fmt(row.capEx)}</td>
-                  <td style={{ color: row.cashAfterCapEx >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>฿{fmt(row.cashAfterCapEx)}</td>
+                  <td>THB {fmt(row.opEx)}</td>
+                  <td>THB {fmt(row.capEx)}</td>
+                  <td style={{ color: row.cashAfterCapEx >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>THB {fmt(row.cashAfterCapEx)}</td>
                   <td>{row.cashMarginPct !== null ? `${row.cashMarginPct.toFixed(1)}%` : 'N/A'}</td>
                   <td>{row.headcountCostRatio !== null ? `${(row.headcountCostRatio * 100).toFixed(1)}%` : 'N/A'}</td>
                   <td>{row.revenueVariancePct !== null ? `${row.revenueVariancePct.toFixed(1)}%` : 'N/A'}</td>
@@ -140,8 +140,8 @@ export default function PnLCostSection() {
                     <td>{row.totalContent || '-'}</td>
                     <td>{row.organicContent || '-'}</td>
                     <td>{row.sponsoredContent || '-'}</td>
-                    <td>{row.totalCogs !== undefined ? `฿${fmt(row.totalCogs)}` : '-'}</td>
-                    <td>{row.costPerContent !== undefined ? `฿${fmt(row.costPerContent)}` : 'N/A'}</td>
+                    <td>{row.totalCogs !== undefined ? `THB ${fmt(row.totalCogs)}` : '-'}</td>
+                    <td>{row.costPerContent !== undefined ? `THB ${fmt(row.costPerContent)}` : 'N/A'}</td>
                   </tr>
                 ))
               )}

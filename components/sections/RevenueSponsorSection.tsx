@@ -24,19 +24,19 @@ export default function RevenueSponsorSection() {
       <div className="health-grid" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
         <div className="health-card">
           <div className="health-label">Weighted Pipeline</div>
-          <div className="health-value">฿{fmt(weightedPipeline)}</div>
+          <div className="health-value">THB {fmt(weightedPipeline)}</div>
           <div className="health-status green">
             <span className="health-dot green"></span>
-            Committed/forecast revenue weighted by probability
+            Planning signal only, not booked cash
           </div>
         </div>
 
         <div className="health-card">
-          <div className="health-label">Pipeline Items</div>
+          <div className="health-label">Pipeline Rows</div>
           <div className="health-value">{sortedDeals.length}</div>
           <div className="health-status green">
             <span className="health-dot green"></span>
-            Rows from Sponsor Pipeline tab
+            Rows from the Sponsor Pipeline sheet
           </div>
         </div>
       </div>
@@ -74,9 +74,9 @@ export default function RevenueSponsorSection() {
                       <td>{deal.sponsor}</td>
                       <td>{deal.status}</td>
                       <td>{deal.expectedDate || '-'}</td>
-                      <td>฿{fmt(deal.dealValue)}</td>
+                      <td>THB {fmt(deal.dealValue)}</td>
                       <td>{deal.probability}%</td>
-                      <td>฿{fmt(weighted)}</td>
+                      <td>THB {fmt(weighted)}</td>
                     </tr>
                   );
                 })

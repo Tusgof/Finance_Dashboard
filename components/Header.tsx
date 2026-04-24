@@ -12,8 +12,8 @@ interface HeaderProps {
 export default function Header({ onRefresh, refreshing, snapshotMeta }: HeaderProps) {
   const snapshotStamp = snapshotMeta?.capturedAt ? new Date(snapshotMeta.capturedAt) : null;
   const snapshotLabel = snapshotStamp && !Number.isNaN(snapshotStamp.getTime())
-    ? `${snapshotMeta?.sourceLabel ?? 'Snapshot'} - ${snapshotStamp.toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}`
-    : (snapshotMeta?.sourceLabel ?? 'Snapshot data');
+    ? `${snapshotMeta?.sourceLabel ?? 'Latest snapshot'} - ${snapshotStamp.toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}`
+    : (snapshotMeta?.sourceLabel ?? 'Latest snapshot');
 
   return (
     <div className="header">
@@ -21,7 +21,7 @@ export default function Header({ onRefresh, refreshing, snapshotMeta }: HeaderPr
         <div className="logo">E</div>
         <div className="header-title">
           <h1>Finance Dashboard</h1>
-          <span>Management snapshot dashboard for Jan-Jun 2026</span>
+          <span>Weekly and monthly management dashboard</span>
         </div>
       </div>
       <div className="header-right">

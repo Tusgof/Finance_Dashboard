@@ -817,6 +817,121 @@ const tests: Array<[string, () => void]> = [
     },
   ],
   [
+    'scenario bear delays non-ad customer inflows but leaves ad revenue on schedule',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-04-01',
+      workMonth: '2026-04',
+      month: '2026-04',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-05-01',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Inflow',
+      status: 'Forecast',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      desc: 'Sponsor deal',
+      sponsor: 'Sponsor A',
+      amount: 120,
+      balance: 1220,
+    }),
+    makeRow({
+      date: '2026-05-02',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Inflow',
+      status: 'Forecast',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      desc: 'Meta ads revenue',
+      sponsor: 'Meta Ads',
+      amount: 30,
+      balance: 1250,
+    }),
+    makeRow({
+      date: '2026-06-01',
+      workMonth: '2026-06',
+      month: '2026-06',
+      type: 'Inflow',
+      status: 'Forecast',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      desc: 'TikTok ads revenue',
+      sponsor: 'TikTok Ads',
+      amount: 50,
+      balance: 1300,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const projection = buildScenarioProjection(normalized, 1000);
+  const may = projection.find(row => row.month === '2026-05');
+  const june = projection.find(row => row.month === '2026-06');
+  const july = projection.find(row => row.month === '2026-07');
+
+  assert.deepEqual(projection.map(row => row.month), ['2026-04', '2026-05', '2026-06', '2026-07']);
+  assert.equal(may?.baseNet, 150);
+  assert.equal(may?.bearNet, 30);
+  assert.equal(june?.baseNet, 50);
+  assert.equal(june?.bearNet, 170);
+  assert.equal(july?.baseNet, 0);
+  assert.equal(july?.bearNet, 0);
+    },
+  ],
+  [
+    'scenario projection keeps the delayed inflow month even when it has no same-month base activity',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-04-01',
+      workMonth: '2026-04',
+      month: '2026-04',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-05-01',
+      workMonth: '2026-05',
+      month: '2026-05',
+      type: 'Inflow',
+      status: 'Forecast',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      desc: 'Sponsor deal',
+      sponsor: 'Sponsor A',
+      amount: 120,
+      balance: 1220,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const projection = buildScenarioProjection(normalized, 1000);
+  const may = projection.find(row => row.month === '2026-05');
+  const june = projection.find(row => row.month === '2026-06');
+
+  assert.deepEqual(projection.map(row => row.month), ['2026-04', '2026-05', '2026-06']);
+  assert.equal(may?.baseNet, 120);
+  assert.equal(may?.bearNet, 0);
+  assert.equal(june?.baseNet, 0);
+  assert.equal(june?.bearNet, 120);
+  assert.equal(june?.baseBalance, 1220);
+  assert.equal(june?.bearBalance, 1220);
+    },
+  ],
+  [
     'scenario bull defaults normalize when legacy settings omit the new fields',
     () => {
       const { bullMonthlyCash: _bullMonthlyCash, bullCreditTermMonths: _bullCreditTermMonths, ...legacyScenario } = DEFAULT_DASHBOARD_SETTINGS.scenario;

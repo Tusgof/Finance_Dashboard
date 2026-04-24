@@ -14,13 +14,15 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 
 ## Milestone Status
 
-- Current milestone: Milestone 5 - Decision-First UI and UX Cleanup.
+- Current milestone: Milestone 7 - Deployment, Operations, and Release Readiness.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
 - Milestone 3 status: Complete as of 2026-04-24.
 - Milestone 4 status: Complete as of 2026-04-24.
-- Milestone 5 status: Ready to execute as of 2026-04-24.
-- Last status update: 2026-04-24.
+- Milestone 5 status: Complete as of 2026-04-24.
+- Milestone 6 status: Complete as of 2026-04-25.
+- Milestone 7 status: Ready to execute as of 2026-04-25.
+- Last status update: 2026-04-25.
 
 ## Milestone 1 Completion Record
 
@@ -174,6 +176,56 @@ M4 is complete because validation now matches the intended operator-action model
 - It does not redesign the Google Sheet schema.
 - It does not broaden support-sheet checks beyond business-relevant use.
 - It does not replace later UI cleanup work in Milestone 5.
+
+## Milestone 5 Completion Record
+
+M5 is complete because the first screen now prioritizes decision surfaces instead of forcing the operator to parse validation and secondary metrics first.
+
+### Closed M5 Outputs
+
+- The cash page now leads with a tighter cash summary for current cash, runway, and pressure.
+- Active cash warning signals are shown as a compact strip instead of equal-weight status cards.
+- The cash page now includes a compact Scenario preview so the first screen answers both cash and downside questions without opening another page.
+- Validation remains visible, but it no longer visually leads ahead of the active page content.
+- The header and page copy now use more neutral operator-facing wording.
+- Revenue and Cash P&L sections now use clearer operational copy and reduce the weight of immature metrics such as Forecast Accuracy.
+- User-facing mojibake was removed from the touched dashboard surfaces, and Scenario Logic remains available in simple Thai.
+
+### M5 Verification Record
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- `git diff --check`
+
+### What M5 Does Not Claim
+
+- It does not change cash, scenario, refresh, or validation business logic.
+- It does not add broad UI automation coverage yet. That belongs to Milestone 6.
+- It does not redesign the whole application shell beyond the decision-first surfaces touched here.
+
+## Milestone 6 Completion Record
+
+M6 is complete because the regression suite now protects the main finance rules that previously broke in refresh, cash, validation, and scenario behavior without relying on brittle UI snapshots.
+
+### Closed M6 Outputs
+
+- The finance regression suite now covers support-sheet fallback and stateless refresh persistence.
+- Validation coverage protects core-field severity grouping, legacy normalization, and invalid `Original Forecast` handling.
+- Cash coverage protects monthly balance derivation from monthly net and excludes cancelled-only months.
+- Scenario coverage protects anchoring to the latest actual month, inclusion of non-`Actual` rows, Bear delay behavior for non-ad customer inflows, ad revenue staying on schedule, delayed-month projection horizon, and Bull default normalization.
+- Test names stay aligned to the business rule or historical bug they protect.
+
+### M6 Verification Record
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- `git diff --check`
+
+### What M6 Does Not Claim
+
+- It does not add broad browser automation or visual regression coverage.
+- It does not require live Google Sheet access in test runs.
+- It does not change finance business logic; it locks the current behavior in place.
 
 ## Milestone 1 - Scope Lock and Baseline Freeze
 
@@ -455,6 +507,17 @@ This is a finance dashboard used for decisions. A quiet regression in cash logic
 - `npm.cmd run test:finance`
 - `npm.cmd run build`
 - `git diff --check`
+
+### Current Regression Coverage
+
+The current finance regression suite already protects these bug classes:
+
+- Local support-sheet fallback and stateless refresh persistence.
+- Core-field validation splits and invalid `Original Forecast` handling.
+- Monthly cash derivation from sorted monthly net, including cancelled-only month filtering.
+- Scenario anchoring to the latest actual month, inclusion of non-`Actual` rows, and Bull default normalization.
+
+These tests are meant to protect business behavior, not brittle implementation snapshots.
 
 **Stop Conditions**
 

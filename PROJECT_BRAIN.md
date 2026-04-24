@@ -166,7 +166,7 @@ Confirmed secondary metrics:
 - Current branch: `main`.
 - Latest known pushed commit before this update: `1eab99f Close milestone two refresh reliability work`.
 - Git state before this update: `main...origin/main`.
-- Current milestone: Milestone 5 - Decision-First UI and UX Cleanup.
+- Current milestone: Milestone 7 - Deployment, Operations, and Release Readiness.
 - Completed:
   - Milestone 1 - Scope Lock and Baseline Freeze completed.
   - Milestone 2 - Google Sheet Contract and Refresh Reliability completed.
@@ -191,6 +191,15 @@ Confirmed secondary metrics:
   - Added focused regression tests for local snapshot backup creation, stateless no-write behavior on Vercel, and the core-field validation group split.
   - Converted validation reporting to Critical/Management/Info buckets with operator-action grouping and legacy snapshot normalization.
   - Validation summary UI now reflects the new grouping and keeps legacy snapshots readable.
+  - Milestone 5 - Decision-First UI and UX Cleanup completed.
+  - Milestone 6 - Testing and Regression Coverage completed.
+  - First screen now puts cash truth ahead of validation noise and includes a compact scenario preview on the cash page.
+  - Cash page summary now compresses current cash, runway, pressure, and active warning signals into a faster management read.
+  - Scenario page copy was tightened, mojibake was removed from user-facing text, and the Scenario Logic section was restored in simple Thai.
+  - Revenue and Cash P&L pages now use clearer operational wording and de-emphasize immature metrics such as Forecast Accuracy.
+  - Header and page chrome now use neutral operator-facing wording instead of hard-coded period copy.
+  - Added focused regression tests for Bear-case revenue delay behavior so non-ad customer inflows shift by one month while ad revenue stays on schedule.
+  - Added focused regression tests for scenario projection horizon so the delayed month remains visible even when it has no same-month Base activity.
   - Added Monthly Production Summary cross-check warnings for actual COGS total and cost-per-content mismatches.
   - Moved Bull scenario assumptions into normalized scenario settings.
   - Current cash and Scenario actual history now derive from monthly cash balances instead of the last raw actual-row balance.
@@ -198,30 +207,31 @@ Confirmed secondary metrics:
   - Monthly cash rows now ignore months that only contain cancelled transactions.
   - Removed obvious mojibake from source/docs surfaces under `app`, `components`, `lib`, and `tests`.
 - In progress:
-  - Milestone 5 - Decision-First UI and UX Cleanup.
+  - Milestone 7 - Deployment, Operations, and Release Readiness.
 - Pending:
   - Keep monthly transaction drilldown aligned with the top-level cash truth.
   - Validate the live Vercel deployment after GitHub/Vercel finishes redeploying latest commits as part of deployment/release work, not sheet-contract work.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
-  - `npm.cmd run test:finance` passed 18 tests after Milestone 4 validation grouping changes.
-  - `npm.cmd run build` passed after Milestone 4 validation grouping changes.
+  - `npm.cmd run test:finance` passed 20 tests after Milestone 6 regression additions.
+  - `npm.cmd run build` passed after Milestone 6 regression additions.
   - `git diff --check` passed with only LF/CRLF warnings.
-  - Worker verification for Milestone 3 confirmed the updated scenario/cash alignment and management-chart scope behavior.
+  - Regression coverage now protects support-sheet fallback, refresh persistence, validation grouping, monthly cash derivation, scenario anchoring, Bear delay logic, delayed-month horizon behavior, and Bull default normalization.
+  - Current regression coverage protects refresh persistence, support-sheet fallback, validation grouping, monthly cash derivation, scenario anchoring, and Bull default normalization.
 
 ## Next Safe Action
 
-- Action: execute Milestone 5 by simplifying the first screen around cash truth, scenario, and validation summary.
+- Action: execute Milestone 7 by tightening deployment/release verification and live operating checks without changing business logic.
 - Preconditions:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` in order.
-  - Keep the Google Sheet contract, monthly cash logic, and validation grouping from Milestones 2 through 4 unchanged unless a bug proves they are insufficient.
+  - Keep the Google Sheet contract, monthly cash logic, validation grouping, M5 decision-first surface, and M6 regression scope unchanged unless a real bug requires a change.
 - Stop if:
   - A proposed change changes Google Sheet schema without explicit user approval.
-  - A proposed UI change makes cash truth, scenario, or validation harder to scan.
+  - A proposed deployment or ops change assumes durable serverless filesystem writes or changes cash/scenario meaning.
 - Verify with:
   - `npm.cmd run test:finance`.
   - `npm.cmd run build`.
-  - Manual review that the first screen still answers weekly/monthly management questions first.
+  - Local and live verification that refresh/release behavior matches the intended operating model.
 
 ## Improvement Triage
 
@@ -487,6 +497,8 @@ git status --short --branch
 - 2026-04-24: Milestone 2 was closed after the active sheet contract, core-field validation rules, optional support-sheet fallback, atomic local refresh persistence, and Vercel/stateless no-write behavior were all documented and covered by focused verification. Live deploy verification remains deployment work.
 - 2026-04-24: Milestone 3 was closed after current cash and scenario actual history were aligned to month-based balances, cancelled-only months stopped appearing in monthly cash rows, and management charts were detached from ledger filter state.
 - 2026-04-24: Milestone 4 was closed after validation was regrouped into Critical/Management/Info buckets, legacy snapshots gained normalization into the new model, and the operator-facing summary panel was updated to match the new grouping.
+- 2026-04-24: Milestone 5 was closed after the first screen was tightened around cash truth, a compact scenario preview was added to the cash page, validation was visually de-emphasized relative to decision surfaces, and user-facing copy was cleaned up for scenario, revenue, and cash P&L sections.
+- 2026-04-25: Milestone 6 was closed after focused regression coverage was expanded to protect Bear-case delay logic, ad-revenue-on-schedule behavior, and the delayed-month projection horizon alongside the existing cash, refresh, and validation rules.
 
 ## Document Map
 
@@ -522,12 +534,12 @@ git status --short --branch
 
 ## Last Updated / Last Verified
 
-- Last updated: 2026-04-24.
-- Last verified: 2026-04-24.
+- Last updated: 2026-04-25.
+- Last verified: 2026-04-25.
 - Verified by: Codex primary agent.
 - Verification source:
   - Read `PROJECT_BRAIN.md`, `IMPLEMENT_PLAN.md`, and `AGENTS.md` before work.
-  - `npm.cmd run test:finance` passed 18 tests.
+  - `npm.cmd run test:finance` passed 20 tests.
   - `npm.cmd run build` passed.
   - `git diff --check` passed with only LF/CRLF warnings.
   - Worker audit confirmed no remaining M3 gap in the implemented scope.

@@ -49,6 +49,7 @@ export default function ScenarioPlannerSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+
   useEffect(() => {
     let active = true;
     void loadDashboardSettings().then(next => {
@@ -58,6 +59,7 @@ export default function ScenarioPlannerSection() {
       active = false;
     };
   }, []);
+
   const normalized = useMemo(() => normalizeTransactions(rawData, settings), [rawData, settings]);
   const projection = useMemo(() => buildScenarioProjection(normalized, openingBalance, settings), [normalized, openingBalance, settings]);
   const scenarioProjection = projection.filter(row => row.baseBalance !== null);
@@ -74,7 +76,7 @@ export default function ScenarioPlannerSection() {
       label: 'Base',
       balance: latest?.baseBalance ?? startingCash,
       net: latest?.baseNet ?? 0,
-      status: 'Current forecast path',
+      status: 'แผนคาดการณ์ปัจจุบัน',
       color: '#d97706',
     },
     {
@@ -82,7 +84,7 @@ export default function ScenarioPlannerSection() {
       label: 'Bull',
       balance: latest?.bullBalance ?? startingCash,
       net: latest?.bullNet ?? 0,
-      status: `+${bullMonthlyCashLabel} ต่อเดือนหลังเครดิตเทอม ${bullCreditTermMonths} เดือน`,
+      status: `เพิ่มเงินเข้า ${bullMonthlyCashLabel}/เดือน หลังเครดิตเทอม ${bullCreditTermMonths} เดือน`,
       color: '#16a34a',
     },
     {
@@ -90,7 +92,7 @@ export default function ScenarioPlannerSection() {
       label: 'Bear',
       balance: latest?.bearBalance ?? startingCash,
       net: latest?.bearNet ?? 0,
-      status: 'ลูกค้าเลื่อนจ่าย',
+      status: 'เลื่อนรายได้ที่ไม่ใช่ ad ไป 1 เดือน',
       color: '#dc2626',
     },
   ];
@@ -227,17 +229,17 @@ export default function ScenarioPlannerSection() {
         <div className="health-card">
           <div className="health-label">Base Case</div>
           <div className="health-value" style={{ color: tone(latest?.baseBalance ?? 0) }}>{money(latest?.baseBalance ?? startingCash)}</div>
-          <div className="health-status amber"><span className="health-dot amber"></span>เงินสดตามแผนปัจจุบัน</div>
+          <div className="health-status amber"><span className="health-dot amber"></span>แผนคาดการณ์ปัจจุบัน</div>
         </div>
         <div className="health-card">
           <div className="health-label">Bull Case</div>
           <div className="health-value" style={{ color: tone(latest?.bullBalance ?? 0) }}>{money(latest?.bullBalance ?? startingCash)}</div>
-          <div className="health-status green"><span className="health-dot green"></span>{`+${bullMonthlyCashLabel} ต่อเดือนหลังเครดิตเทอม ${bullCreditTermMonths} เดือน`}</div>
+          <div className="health-status green"><span className="health-dot green"></span>{`เพิ่มเงินเข้า ${bullMonthlyCashLabel}/เดือน หลังเครดิตเทอม ${bullCreditTermMonths} เดือน`}</div>
         </div>
         <div className="health-card">
           <div className="health-label">Bear Case</div>
           <div className="health-value" style={{ color: tone(latest?.bearBalance ?? 0) }}>{money(latest?.bearBalance ?? startingCash)}</div>
-          <div className="health-status red"><span className="health-dot red"></span>ลูกค้าทั้งหมดเลื่อนจ่าย 1 เดือน ยกเว้น ad</div>
+          <div className="health-status red"><span className="health-dot red"></span>เลื่อนรายได้ที่ไม่ใช่ ad ไป 1 เดือน</div>
         </div>
       </div>
 
@@ -246,7 +248,7 @@ export default function ScenarioPlannerSection() {
           <div className="chart-header">
             <div>
               <div className="chart-title">Scenario Running Balance</div>
-              <div className="chart-subtitle">ยอดเงินจริงย้อนหลัง และยอดเงินสดคาดการณ์ของแต่ละกรณี</div>
+              <div className="chart-subtitle">ยอดเงินจริงเทียบ Base / Bull / Bear รายเดือน</div>
             </div>
           </div>
           <div className="chart-wrapper scenario-chart-wrapper">
@@ -256,9 +258,9 @@ export default function ScenarioPlannerSection() {
 
         <aside className="scenario-insights" aria-label="Scenario insights">
           <div className="scenario-insight-block">
-            <div className="scenario-insight-label">Spread at final month</div>
+            <div className="scenario-insight-label">Bull เทียบ Bear เดือนสุดท้าย</div>
             <div className="scenario-insight-value">{money(finalGap)}</div>
-            <div className="scenario-insight-note">เงินปลายงวดของ Bull ลบ Bear</div>
+            <div className="scenario-insight-note">ดูส่วนต่างระหว่างกรณีดีและกรณีเลื่อนจ่าย</div>
           </div>
 
           {caseSummaries.map(item => (
@@ -273,7 +275,7 @@ export default function ScenarioPlannerSection() {
           ))}
 
           <div className="scenario-risk-list">
-            <div className="scenario-risk-title">ตรวจความเสี่ยงเงินสด</div>
+            <div className="scenario-risk-title">เช็กความเสี่ยงเงินสด</div>
             {caseSummaries.map(item => (
               <div className="scenario-risk-row" key={`${item.key}-risk`}>
                 <span>{item.label}</span>
@@ -296,28 +298,28 @@ export default function ScenarioPlannerSection() {
               <tr>
                 <th>กรณี</th>
                 <th>นับอะไร</th>
-                <th>ปรับอะไรเพิ่ม</th>
+                <th>ปรับอะไร</th>
                 <th>ใช้ดูอะไร</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>ฐาน</td>
+                <td>Base</td>
                 <td>Committed + Forecast ที่ไม่ Cancelled</td>
                 <td>ไม่ปรับเพิ่ม</td>
-                <td>เงินสดตามแผนปัจจุบัน</td>
+                <td>แผนคาดการณ์ปัจจุบัน</td>
               </tr>
               <tr>
-                <td>ดี</td>
-                <td>เหมือนกรณีฐาน</td>
-                <td>{`เพิ่มเงินเข้า ${bullMonthlyCashLabel} ต่อเดือน หลังเครดิตเทอม ${bullCreditTermMonths} เดือน`}</td>
-                <td>ถ้าปิดลูกค้าใหม่ได้ต่อเนื่อง</td>
+                <td>Bull</td>
+                <td>เหมือนกรณี Base</td>
+                <td>{`เพิ่มเงินเข้า ${bullMonthlyCashLabel}/เดือน หลังเครดิตเทอม ${bullCreditTermMonths} เดือน`}</td>
+                <td>ดูกรณีได้ลูกค้าใหม่ต่อเนื่อง</td>
               </tr>
               <tr>
-                <td>แย่</td>
-                <td>เหมือนกรณีฐาน</td>
-                <td>เลื่อนรายได้ลูกค้าทั้งหมดออกไป 1 เดือน ยกเว้นรายได้ ad</td>
-                <td>ถ้าลูกค้าจ่ายช้ากว่าแผน</td>
+                <td>Bear</td>
+                <td>เหมือนกรณี Base</td>
+                <td>เลื่อนรายได้ที่ไม่ใช่ ad ไป 1 เดือน โดย ad ยังตามแผน</td>
+                <td>ดูกรณีจ่ายช้ากว่าแผน</td>
               </tr>
             </tbody>
           </table>
@@ -332,7 +334,7 @@ export default function ScenarioPlannerSection() {
           <table>
             <thead>
               <tr>
-                <th>Cash Month</th>
+                <th>Month</th>
                 <th>Base Net</th>
                 <th>Base Balance</th>
                 <th>Bull Net</th>
