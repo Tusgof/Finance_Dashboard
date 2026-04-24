@@ -305,6 +305,12 @@ function addUtcDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
+export function msUntilNextLocalMidnight(now: Date): number {
+  const nextMidnight = new Date(now);
+  nextMidnight.setHours(24, 0, 0, 0);
+  return Math.max(1, nextMidnight.getTime() - now.getTime());
+}
+
 export function buildMonthlyPnLRows(
   data: NormalizedTransaction[],
   settings?: DashboardSettings | null

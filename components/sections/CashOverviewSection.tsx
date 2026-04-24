@@ -10,6 +10,7 @@ import {
   getApproximateBaseForecastZeroCrossing,
   getCashAlerts,
   getCurrentCash,
+  msUntilNextLocalMidnight,
   normalizeTransactions,
   type ScenarioProjectionRow,
 } from '@/lib/dashboardMetrics';
@@ -33,6 +34,7 @@ function firstNegativeMonth(projection: ScenarioProjectionRow[], key: ScenarioCa
 export default function CashOverviewSection() {
   const { rawData, openingBalance } = useDashboard();
   const [settings, setSettings] = useState(DEFAULT_DASHBOARD_SETTINGS);
+  const [today, setToday] = useState(() => new Date());
 
   useEffect(() => {
     let active = true;
@@ -41,6 +43,23 @@ export default function CashOverviewSection() {
     });
     return () => {
       active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    const scheduleNextUpdate = () => {
+      timeoutId = window.setTimeout(() => {
+        setToday(new Date());
+        scheduleNextUpdate();
+      }, msUntilNextLocalMidnight(new Date()));
+    };
+
+    scheduleNextUpdate();
+
+    return () => {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -53,8 +72,8 @@ export default function CashOverviewSection() {
     [normalized, openingBalance, settings]
   );
   const baseForecastZero = useMemo(
-    () => getApproximateBaseForecastZeroCrossing(normalized, openingBalance, new Date(), settings),
-    [normalized, openingBalance, settings]
+    () => getApproximateBaseForecastZeroCrossing(normalized, openingBalance, today, settings),
+    [normalized, openingBalance, settings, today]
   );
   const baseForecastZeroNote = baseForecastZero
     ? `Approx. ${baseForecastZero.daysUntilCrossing} days to forecast zero on Base forecast path (${baseForecastZero.approximateNegativeDate}).`

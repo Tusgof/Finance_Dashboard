@@ -6,7 +6,7 @@ import path from 'node:path';
 import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
 import { normalizeSettings } from '../lib/settings';
 import { getRestoreUnavailableMessage, isVercelStatelessRuntime, persistRefreshSnapshot, shouldPersistRefreshSnapshot } from '../lib/refreshPersistence';
-import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getApproximateBaseForecastZeroCrossing, getCurrentCash, getMonths, normalizeTransactions } from '../lib/dashboardMetrics';
+import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getApproximateBaseForecastZeroCrossing, getCurrentCash, getMonths, msUntilNextLocalMidnight, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
 import { selectSupportSheetRows } from '../lib/supportSheetRefresh';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseTransactionCsv } from '../lib/transactionModel';
@@ -997,6 +997,19 @@ const tests: Array<[string, () => void]> = [
       const june = projection.find(row => row.month === '2026-06');
 
       assert.equal(june?.bullNet, 45080);
+    },
+  ],
+  [
+    'midnight refresh scheduler waits until the next local midnight',
+    () => {
+      const now = new Date('2026-04-25T06:15:30.000Z');
+      const oneSecondLater = new Date('2026-04-25T06:15:31.000Z');
+      const delay = msUntilNextLocalMidnight(now);
+      const laterDelay = msUntilNextLocalMidnight(oneSecondLater);
+
+      assert.ok(delay > 0);
+      assert.ok(delay <= 24 * 60 * 60 * 1000);
+      assert.equal(delay - laterDelay, 1000);
     },
   ],
   [

@@ -22,8 +22,9 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 
 ## Milestone Status
 
-- Current milestone: Milestone track complete. Project is in production-ready maintenance mode.
+- Current milestone: Production-ready maintenance mode. Maintenance milestone M10 is complete.
 - Maintenance milestone M9 status: Complete as of 2026-04-25.
+- Maintenance milestone M10 status: Complete as of 2026-04-25.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
 - Milestone 3 status: Complete as of 2026-04-24.
@@ -686,6 +687,29 @@ M9 is complete because the cash summary now includes an approximate Base-path da
 - Manual review of the cash summary copy and documentation wording
 
 ### What M9 Does Not Claim
+
+- It does not replace the monthly `Cash Runway` metric.
+- It does not add day-level forecast logic.
+- It does not change the Google Sheet contract or broaden product scope.
+
+## Maintenance Milestone M10 Completion Record
+
+M10 is complete because the approximate Base-path days-to-forecast-zero note no longer freezes at initial render; it now updates from the current local day while keeping the existing monthly runway and scenario meaning unchanged.
+
+### Closed M10 Outputs
+
+- The cash summary timing note now re-evaluates from the current local date on the client.
+- The client schedules the next recompute at local midnight so the displayed days stay current without requiring a manual refresh.
+- `Cash Runway` remains the monthly burn-based runway metric.
+- The monthly Base/Bull/Bear scenario model remains unchanged.
+
+### M10 Verification Record
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- Manual review of the cash summary timing note against the current local date
+
+### What M10 Does Not Claim
 
 - It does not replace the monthly `Cash Runway` metric.
 - It does not add day-level forecast logic.
