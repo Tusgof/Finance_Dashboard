@@ -66,6 +66,17 @@ Reliability success means:
 - Refresh failures do not corrupt the last known usable snapshot.
 - Local backup/snapshot writes are not assumed to work on Vercel.
 
+## Tech Stack
+
+- Framework: Next.js 14 App Router
+- Language: TypeScript
+- UI runtime: React client components
+- Charts: Chart.js with `chartjs-plugin-annotation`
+- Data source: Google Sheets public CSV/gviz CSV endpoints
+- Persistence: local JSON snapshots and local backup files for filesystem mode
+- Deployment: Vercel from GitHub `main`
+- Testing: TypeScript test build via `tsconfig.test.json` plus Node-based finance regression tests
+
 ## Architecture Overview
 
 - System shape: Next.js App Router dashboard with API routes, local JSON snapshots, Google Sheet refresh, and Chart.js visualizations.
