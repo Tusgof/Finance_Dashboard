@@ -175,9 +175,10 @@ Confirmed secondary metrics:
 
 - Last verified: 2026-04-25, by local verification after Maintenance Milestone M10 completion.
 - Current branch: `main`.
-- Latest known pushed commit before this update: `73934b3 Add maintenance milestone nine forecast timing note`.
+- Latest known pushed commit before this update: `b70eee0 Add tech stack to project brain`.
 - Git state before this update: `main...origin/main`.
 - Current milestone: Production-ready maintenance mode. Maintenance milestone M10 is complete.
+- Maintenance milestone M11 is planned next. It is not started or implemented yet.
 - Maintenance milestone M9: complete as of 2026-04-25. Cash summary now includes an approximate Base-path days-to-forecast-zero note while monthly Cash Runway stays unchanged.
 - Maintenance milestone M10: complete as of 2026-04-25. The approximate Base-path days-to-forecast-zero note now updates from the current local day instead of staying fixed after initial render.
 - Completed:
@@ -226,7 +227,7 @@ Confirmed secondary metrics:
 - In progress:
   - No open implementation milestone. Keep docs and verification aligned as operational maintenance continues.
 - Pending:
-  - Keep monthly transaction drilldown aligned with the top-level cash truth.
+  - Maintenance milestone M11: align monthly transaction drilldown and reconciliation views with the top-level cash truth.
   - Continue monitoring scenario and cash chart behavior as more future transaction rows are added.
 - Latest validation known from recent work:
   - `npm.cmd run test:finance` passed 25 tests after M10 implementation.
@@ -278,6 +279,25 @@ Confirmed secondary metrics:
   - It does not replace `Cash Runway`.
   - It does not change the monthly scenario model.
   - It does not expand the product scope.
+
+## Maintenance Milestone M11
+
+- Status: planned next as of 2026-04-25.
+- Goal: align monthly transaction drilldown and reconciliation behavior with the top-level cash truth so operators can trace monthly cash without getting a conflicting answer from row-level views.
+- Relationship to current cash truth: Cash Flow & Running Balance stays the monthly management truth. M11 is about keeping drilldown and reconciliation consistent with that truth, not redefining it.
+- Scope:
+  - Keep monthly transaction drilldown usable as a diagnostic view for cash questions.
+  - Align reconciliation logic and supporting copy with the same monthly cash basis used by the top-level cash view.
+  - Reduce gaps between row-level inspection and the month-end cash truth surfaced on the dashboard.
+  - Avoid changing Google Sheet schema, scenario assumptions, or the monthly cash model.
+- Verification:
+  - `npm.cmd run test:finance`
+  - `npm.cmd run build`
+  - Manual review of a month with drilldown/reconciliation questions against the cash summary and chart
+- What M11 does not claim:
+  - It does not change the top-level monthly cash truth.
+  - It does not introduce accounting-system behavior.
+  - It does not broaden dashboard scope beyond cash decision support.
 
 ## Next Safe Action
 

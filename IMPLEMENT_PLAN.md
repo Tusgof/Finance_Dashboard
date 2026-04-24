@@ -25,6 +25,7 @@ The order is intentional: stabilize the core truth first, then improve reliabili
 - Current milestone: Production-ready maintenance mode. Maintenance milestone M10 is complete.
 - Maintenance milestone M9 status: Complete as of 2026-04-25.
 - Maintenance milestone M10 status: Complete as of 2026-04-25.
+- Maintenance milestone M11 status: Planned next as of 2026-04-25.
 - Milestone 1 status: Complete as of 2026-04-23.
 - Milestone 2 status: Complete as of 2026-04-24.
 - Milestone 3 status: Complete as of 2026-04-24.
@@ -714,6 +715,56 @@ M10 is complete because the approximate Base-path days-to-forecast-zero note no 
 - It does not replace the monthly `Cash Runway` metric.
 - It does not add day-level forecast logic.
 - It does not change the Google Sheet contract or broaden product scope.
+
+## Maintenance Milestone M11
+
+**Objective**
+Align monthly transaction drilldown and reconciliation with the top-level cash truth so row-level inspection never tells a different monthly cash story.
+
+**Why It Matters**
+The dashboard is used to answer cash questions first. If the drilldown or reconciliation view disagrees with the monthly cash surface, operators waste time reconciling the dashboard against itself instead of making a decision.
+
+**Scope**
+
+- Keep the monthly transaction drilldown as a diagnostic view, not a second source of cash truth.
+- Align reconciliation logic and wording with the same monthly basis used by `Cash Flow & Running Balance`.
+- Make row-level inspection easier to connect back to month-end cash truth.
+- Keep Google Sheet schema, scenario assumptions, and the monthly cash model unchanged.
+
+**Deliverables**
+
+- A clearer monthly drilldown or reconciliation path for cash investigation.
+- Updated copy or helper logic that reflects the same monthly cash basis as the top-level view.
+- Focused tests or fixtures for any cash-truth alignment behavior that changes.
+
+**Acceptance Criteria**
+
+- A monthly drilldown can be traced back to the same month-end cash truth shown on the main cash surface.
+- The reconciliation path does not introduce a competing cash definition.
+- The dashboard still reads as one cash model, not separate truth layers.
+
+**Verification**
+
+- `npm.cmd run test:finance`
+- `npm.cmd run build`
+- Manual review of a representative month where drilldown and reconciliation are used to explain cash movement
+
+**Stop Conditions**
+
+- Stop if the work would change the top-level monthly cash truth.
+- Stop if the work requires a Google Sheet schema change or scenario assumption change.
+- Stop if the requested behavior becomes accounting-system scope rather than dashboard scope.
+
+**Dependencies/Notes**
+
+- This milestone should stay narrow and support cash decision-making only.
+- It depends on the existing monthly cash model and transaction data already used by the dashboard.
+
+**What M11 Does Not Claim**
+
+- It does not redefine monthly cash truth.
+- It does not add accounting or ledger-system behavior.
+- It does not expand the dashboard into new product scope.
 
 ## Production-Ready Exit Criteria
 
