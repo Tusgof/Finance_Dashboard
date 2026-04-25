@@ -153,6 +153,7 @@ Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentTy
 | Support metrics look unreliable | Production summary or sponsor pipeline sheet is missing or invalid | Secondary metrics lose decision-grade quality | Check validation report and support-sheet fallback status |
 | Restore succeeds but numbers still look unsafe | Older backup content may carry management issues | Operator may trust stale or low-quality snapshot | Re-open dashboard and review validation after restore |
 | Repo documentation drifts | Core docs still point to the backup plan or stale plan references | Humans and AI agents lose a clean execution path | Keep the active plan synced and update references |
+| Worker runs on the wrong model | `spawn_agent` full-history fork inherits the parent model and blocks model override | Policy drift and invalid orchestrator-worker compliance | Spawn without full-history fork when model override matters, then verify the returned worker setup before sending work |
 
 ## 12. Recovery Playbooks
 ### If `/api/refresh` fails locally:
@@ -186,6 +187,7 @@ Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentTy
 | 2026-04-25 | Keep monthly reconciliation on full-snapshot truth, not ledger scope filters | Ledger filtering is for audit convenience only | Month drilldown stays aligned with the top-level cash chart |
 | 2026-04-25 | Trim settings UI to refresh, cash-signal, and bull-scenario controls | The project direction is a lean cash-survival dashboard | Nonessential settings remain in saved schema but are no longer exposed in the browser |
 | 2026-04-25 | Tighten canonical field validation without changing sheet meaning | Important fields should surface cleanup work instead of relying on silent recovery | Invalid `Work Month` and `Cost Behavior` now have explicit issue codes, and invalid `Original Forecast` values are ignored rather than normalized to zero |
+| 2026-04-25 | Treat worker-model verification as a preflight gate | A previous worker spawn used the wrong model because a full-history fork inherited the parent model | Worker setup must now be verified immediately after spawn before implementation begins |
 
 ## 14. Document Map
 | Document | Purpose | Location |
@@ -209,6 +211,11 @@ Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentTy
 - **Main Policy**: Use an orchestrator-worker pattern: primary AI reads the core docs, plans the work, delegates substantial implementation to `gpt-5.4-mini` worker agents, then reviews and verifies the result.
 - **Sub Policy**: Follow `D:/Fogust/Workspace/Document/Prompt/AGENTS.md` before major work; keep changes simple, surgical, and goal-driven.
 - **Escalation Policy**: Stop and ask the owner when schema meaning changes, assumptions are ambiguous, destructive actions are needed, or verified repo state is insufficient to proceed safely.
+- **Worker Dispatch Guardrail**:
+  - Required worker default: `gpt-5.4-mini` with `medium` reasoning.
+  - If a specific worker model is required, do not use a full-history fork that forces the parent model to be inherited.
+  - After every spawn, verify the returned worker setup before sending implementation work.
+  - If the returned setup does not prove policy compliance, stop, close the worker, and respawn correctly.
 
 ## 17. Last Updated / Last Verified
 - **Last Updated**: 2026-04-25
