@@ -13,7 +13,6 @@
       "description": "รายได้จากสปอนเซอร์ Eightcap",
       "amount": 18000,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Eightcap",
       "note": "",
       "entity": "Revenue",
@@ -32,7 +31,6 @@
       "description": "รายได้จากสปอนเซอร์ InnovestX",
       "amount": 64020,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "InnovestX",
       "note": "",
       "entity": "Revenue",
@@ -89,7 +87,6 @@
       "description": "รายได้จากโฆษณาเดือนธันวาคม - Facebook",
       "amount": 1253.33,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Facebook",
       "note": "",
       "entity": "Revenue",
@@ -108,7 +105,6 @@
       "description": "รายได้จากสปอนเซอร์ OceanLife",
       "amount": 13580,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "OceanLife",
       "note": "",
       "entity": "Revenue",
@@ -564,7 +560,6 @@
       "description": "รายได้จากค่าสมาชิก - Tiktok",
       "amount": 596.74,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "TikTok",
       "note": "",
       "entity": "Revenue",
@@ -583,7 +578,6 @@
       "description": "รายได้จากโฆษณา Facebook เดือนกุมภาพันธ์",
       "amount": 3962.39,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Facebook",
       "note": "",
       "entity": "Revenue",
@@ -1001,7 +995,6 @@
       "description": "รายได้จากค่าสมาชิก - Tiktok",
       "amount": 300.91,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "TikTok",
       "note": "",
       "entity": "Revenue",
@@ -1058,7 +1051,6 @@
       "description": "รายได้จากสปอนเซอร์ Eightcap 3",
       "amount": 61500,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Eightcap",
       "note": "",
       "entity": "Revenue",
@@ -1077,7 +1069,6 @@
       "description": "รายได้จากโฆษณา Facebook เดือนมีนาคม",
       "amount": 3651.12,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Facebook",
       "note": "",
       "entity": "Revenue",
@@ -1381,7 +1372,6 @@
       "description": "รายได้จากสปอนเซอร์ เงินเทอร์โบ",
       "amount": 55290,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "เงินเทอร์โบ",
       "note": "",
       "entity": "Revenue",
@@ -1506,7 +1496,7 @@
       "workMonth": "2026-04",
       "month": "2026-04",
       "type": "Inflow",
-      "status": "Forecast",
+      "status": "Actual",
       "category": "Revenue",
       "mainCategory": "Revenue",
       "subCategory": "Sponsor Revenue",
@@ -1514,7 +1504,6 @@
       "description": "รายได้จากสปอนเซอร์ Webull เดือนเมษายน",
       "amount": 40000,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Webull",
       "note": "",
       "entity": "Revenue",
@@ -1533,7 +1522,6 @@
       "description": "รายได้จากโฆษณา Facebook เดือนเมษายน",
       "amount": 3600,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Facebook",
       "note": "",
       "entity": "Revenue",
@@ -1894,7 +1882,6 @@
       "description": "รายได้จากสปอนเซอร์ TTB",
       "amount": 15035,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "TTB",
       "note": "",
       "entity": "Revenue",
@@ -1932,7 +1919,6 @@
       "description": "รายได้จากสปอนเซอร์ Webull เดือนพฤษภาคม",
       "amount": 20000,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Webull",
       "note": "",
       "entity": "Revenue",
@@ -1951,7 +1937,6 @@
       "description": "รายได้จากโฆษณา Facebook เดือนพฤษภาคม",
       "amount": 3600,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Facebook",
       "note": "",
       "entity": "Revenue",
@@ -2331,7 +2316,6 @@
       "description": "รายได้จากสปอนเซอร์ Insurverse",
       "amount": 19400,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Insurverse",
       "note": "",
       "entity": "Revenue",
@@ -2369,7 +2353,6 @@
       "description": "รายได้จากสปอนเซอร์ Webull เดือนมิถุนายน",
       "amount": 10000,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Webull",
       "note": "",
       "entity": "Revenue",
@@ -2388,7 +2371,6 @@
       "description": "รายได้จากโฆษณา Facebook เดือนมิถุนายน",
       "amount": 3600,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Facebook",
       "note": "",
       "entity": "Revenue",
@@ -2787,7 +2769,6 @@
       "description": "รายได้จากสปอนเซอร์ Webull เดือนกรกฏาคม",
       "amount": 10000,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Webull",
       "note": "",
       "entity": "Revenue",
@@ -2806,7 +2787,6 @@
       "description": "รายได้จากโฆษณา Facebook เดือนกรกฏาคม",
       "amount": 3600,
       "person": "",
-      "costBehavior": "Fixed",
       "sponsor": "Facebook",
       "note": "",
       "entity": "Revenue",
@@ -2841,11 +2821,11 @@
     },
     {
       "workMonth": "2026-04",
-      "totalContent": 12,
-      "organicContent": 11,
+      "totalContent": 13,
+      "organicContent": 12,
       "sponsoredContent": 1,
       "totalCogs": 38836,
-      "costPerContent": 3236
+      "costPerContent": 2987
     }
   ],
   "sponsorPipeline": [
@@ -2959,17 +2939,148 @@
     }
   ],
   "snapshotMeta": {
-    "capturedAt": "2026-04-19T14:07:17.934Z",
+    "capturedAt": "2026-04-25T09:06:02.484Z",
     "sourceLabel": "Google Sheets export snapshot",
     "sourceKind": "snapshot",
-    "sourceUrl": "https://doc-04-2c-sheets.googleusercontent.com/export/54bogvaave6cua4cdnls17ksc4/9j9oam4njn06vjg9pruibam5k8/1776607635000/100561210597187986812/*/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8?format=csv&gid=0"
+    "sourceUrl": "https://doc-04-2c-sheets.googleusercontent.com/export/54bogvaave6cua4cdnls17ksc4/p1ojl9ru8av5rcds333g4vtpb0/1777107955000/100561210597187986812/*/1_3sPKPWT04HTdgFhDuYC0YyakXzKCi0D33YZQsqOnK8?format=csv&gid=0"
   },
   "validationReport": {
-    "generatedAt": "2026-04-19T14:07:17.947Z",
-    "renderingReady": true,
-    "managementReady": true,
-    "renderingWarnings": [],
-    "managementWarnings": [],
-    "issues": []
+    "generatedAt": "2026-04-25T09:06:02.488Z",
+    "criticalReady": true,
+    "managementReady": false,
+    "criticalIssues": [],
+    "managementIssues": [
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-01: Monthly Production Summary totalCogs (28699) does not match actual COGS outflows (28698.93).",
+        "workMonth": "2026-01",
+        "field": "Total COGS",
+        "value": "28699"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-01: Monthly Production Summary costPerContent (2208) does not match totalCogs / totalContent (2207.6153846153848).",
+        "workMonth": "2026-01",
+        "field": "Cost per Content",
+        "value": "2208"
+      },
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-02: Monthly Production Summary totalCogs (29670) does not match actual COGS outflows (29670.27).",
+        "workMonth": "2026-02",
+        "field": "Total COGS",
+        "value": "29670"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-02: Monthly Production Summary costPerContent (2119) does not match totalCogs / totalContent (2119.285714285714).",
+        "workMonth": "2026-02",
+        "field": "Cost per Content",
+        "value": "2119"
+      },
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-03: Monthly Production Summary totalCogs (37101) does not match actual COGS outflows (37101.270000000004).",
+        "workMonth": "2026-03",
+        "field": "Total COGS",
+        "value": "37101"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-03: Monthly Production Summary costPerContent (2854) does not match totalCogs / totalContent (2853.923076923077).",
+        "workMonth": "2026-03",
+        "field": "Cost per Content",
+        "value": "2854"
+      },
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-04: Monthly Production Summary totalCogs (38836) does not match actual COGS outflows (1306.54).",
+        "workMonth": "2026-04",
+        "field": "Total COGS",
+        "value": "38836"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-04: Monthly Production Summary costPerContent (2987) does not match totalCogs / totalContent (2987.3846153846152).",
+        "workMonth": "2026-04",
+        "field": "Cost per Content",
+        "value": "2987"
+      }
+    ],
+    "infoIssues": [],
+    "issues": [
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-01: Monthly Production Summary totalCogs (28699) does not match actual COGS outflows (28698.93).",
+        "workMonth": "2026-01",
+        "field": "Total COGS",
+        "value": "28699"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-01: Monthly Production Summary costPerContent (2208) does not match totalCogs / totalContent (2207.6153846153848).",
+        "workMonth": "2026-01",
+        "field": "Cost per Content",
+        "value": "2208"
+      },
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-02: Monthly Production Summary totalCogs (29670) does not match actual COGS outflows (29670.27).",
+        "workMonth": "2026-02",
+        "field": "Total COGS",
+        "value": "29670"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-02: Monthly Production Summary costPerContent (2119) does not match totalCogs / totalContent (2119.285714285714).",
+        "workMonth": "2026-02",
+        "field": "Cost per Content",
+        "value": "2119"
+      },
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-03: Monthly Production Summary totalCogs (37101) does not match actual COGS outflows (37101.270000000004).",
+        "workMonth": "2026-03",
+        "field": "Total COGS",
+        "value": "37101"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-03: Monthly Production Summary costPerContent (2854) does not match totalCogs / totalContent (2853.923076923077).",
+        "workMonth": "2026-03",
+        "field": "Cost per Content",
+        "value": "2854"
+      },
+      {
+        "code": "production-summary-total-cogs-mismatch",
+        "level": "management",
+        "message": "Month 2026-04: Monthly Production Summary totalCogs (38836) does not match actual COGS outflows (1306.54).",
+        "workMonth": "2026-04",
+        "field": "Total COGS",
+        "value": "38836"
+      },
+      {
+        "code": "production-summary-cost-per-content-mismatch",
+        "level": "management",
+        "message": "Month 2026-04: Monthly Production Summary costPerContent (2987) does not match totalCogs / totalContent (2987.3846153846152).",
+        "workMonth": "2026-04",
+        "field": "Cost per Content",
+        "value": "2987"
+      }
+    ]
   }
 }
