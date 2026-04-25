@@ -927,7 +927,7 @@ const tests: Array<[string, () => void]> = [
     },
   ],
   [
-    'current cash and scenario actual history use monthly balances, not the last raw actual balance',
+    'current cash and scenario actual history use monthly balances, and scenario balances start next month',
     () => {
   const rawRows: RawTransactionRow[] = [
     makeRow({
@@ -974,6 +974,17 @@ const tests: Array<[string, () => void]> = [
       amount: 5,
       balance: 8888,
     }),
+    makeRow({
+      date: '2026-06-01',
+      workMonth: '2026-06',
+      month: '2026-06',
+      type: 'Inflow',
+      status: 'Forecast',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 20,
+      balance: 1100,
+    }),
   ];
 
   const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
@@ -981,13 +992,16 @@ const tests: Array<[string, () => void]> = [
 
   const projection = buildScenarioProjection(normalized, 1000);
   const may = projection.find(row => row.month === '2026-05');
+  const june = projection.find(row => row.month === '2026-06');
 
+  assert.deepEqual(projection.filter(row => row.actualBalance !== null).map(row => row.month), ['2026-04', '2026-05']);
   assert.equal(may?.actualBalance, 1080);
-  assert.equal(may?.baseBalance, 1080);
+  assert.equal(may?.baseBalance, null);
+  assert.equal(june?.baseBalance, 1100);
     },
   ],
   [
-    'scenario includes non-Actual rows from the latest actual work month onward',
+    'scenario balances ignore forecast rows inside the latest actual work month',
     () => {
   const rawRows: RawTransactionRow[] = [
     makeRow({
@@ -1039,9 +1053,12 @@ const tests: Array<[string, () => void]> = [
   const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
   const projection = buildScenarioProjection(normalized, 1000);
   const may = projection.find(row => row.month === '2026-05');
+  const june = projection.find(row => row.month === '2026-06');
 
-  assert.equal(may?.baseNet, -60);
-  assert.equal(may?.baseBalance, 1140);
+  assert.equal(may?.actualBalance, 1200);
+  assert.equal(may?.baseBalance, null);
+  assert.equal(june?.baseNet, 80);
+  assert.equal(june?.baseBalance, 1280);
     },
   ],
   [

@@ -432,7 +432,7 @@ export function buildScenarioProjection(
   const actualMonths = actualMonthlyRows.map(row => row.month);
   const latestActualMonth = actualMonths.at(-1) ?? sortMonths(activeRows.map(row => row.workMonth)).at(0) ?? monthKey(new Date());
   const currentCash = getScenarioStartingCash(data, openingBalance);
-  const futureRows = activeRows.filter(row => row.status !== 'Actual' && row.workMonth >= latestActualMonth);
+  const futureRows = activeRows.filter(row => row.status !== 'Actual' && row.workMonth > latestActualMonth);
   const baseMonths = sortMonths(futureRows.map(row => row.workMonth));
   const fallbackStartMonth = nextMonth(latestActualMonth);
   const firstActualMonth = actualMonths[0] ?? latestActualMonth;
@@ -444,7 +444,7 @@ export function buildScenarioProjection(
   }
 
   const bullStartMonth = addMonths(latestActualMonth, resolved.scenario.bullCreditTermMonths);
-  const baseNetByMonth = months.map(month => (month < latestActualMonth ? 0 : sumMonthNet(futureRows, month)));
+  const baseNetByMonth = months.map(month => (month <= latestActualMonth ? 0 : sumMonthNet(futureRows, month)));
   const bullNetByMonth = baseNetByMonth.map((baseNet, index) => {
     const month = months[index];
     const isBeforeScenario = month < latestActualMonth;
@@ -453,7 +453,7 @@ export function buildScenarioProjection(
     return baseNet + bullExtra;
   });
   const bearNetByMonth = months.map(month => {
-    if (month < latestActualMonth) return 0;
+    if (month <= latestActualMonth) return 0;
     return futureRows.reduce((sum, row) => {
       const shiftedMonth = isShiftableCustomerInflow(row) ? nextMonth(row.workMonth) : row.workMonth;
       return shiftedMonth === month ? sum + signedAmount(row) : sum;
@@ -470,9 +470,9 @@ export function buildScenarioProjection(
     baseNet: baseNetByMonth[index],
     bullNet: bullNetByMonth[index],
     bearNet: bearNetByMonth[index],
-    baseBalance: month < latestActualMonth ? null : baseBalances[index],
-    bullBalance: month < latestActualMonth ? null : bullBalances[index],
-    bearBalance: month < latestActualMonth ? null : bearBalances[index],
+    baseBalance: month <= latestActualMonth ? null : baseBalances[index],
+    bullBalance: month <= latestActualMonth ? null : bullBalances[index],
+    bearBalance: month <= latestActualMonth ? null : bearBalances[index],
   }));
 }
 
