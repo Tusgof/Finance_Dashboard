@@ -1,7 +1,7 @@
 # IMPLEMENT_PLAN.md
 
 ## Overview
-- **Start state**: The dashboard is already in production-ready maintenance mode with passing finance tests/build, stable local refresh and restore behavior, stateless Vercel refresh behavior, and decision-grade cash/scenario foundations. The main remaining gaps are the missing active root-level plan, document-reference drift, incomplete monthly reconciliation flow, settings scope that should be trimmed, and the need for stronger field discipline on critical Google Sheet inputs.
+- **Start state**: The dashboard is already in production-ready maintenance mode with passing finance tests/build, stable local refresh and restore behavior, stateless Vercel refresh behavior, and decision-grade cash/scenario foundations. The active root-level plan now exists; the main remaining gaps are incomplete monthly reconciliation flow, settings scope that should be trimmed, and the need for stronger field discipline on critical Google Sheet inputs.
 - **End state**: The project has an active root-level implementation plan, synchronized docs, a monthly drilldown/reconciliation path aligned with cash truth, lean settings limited to decision-grade behavior, stronger operator discipline on critical sheet fields, and a verified maintenance baseline where cash/scenario remain decision-grade and supporting surfaces remain operator-grade without distorting decisions.
 - **Total milestones**: 5
 - **Estimated total effort**: L
@@ -10,7 +10,7 @@
 - Root `IMPLEMENT_PLAN.md` now exists and is the active planning surface.
 - `README.md`, `OPERATOR_MANUAL.md`, and `GOOGLE_SHEET_CONTRACT.md` now point to the active plan instead of the archived backup plan.
 - `PROJECT_BRAIN.md` and `IMPLEMENT_PLAN.md` are synced so the current milestone and next safe action point to the active roadmap.
-- The backup plan remains archived in `Back up implement plan/25042026_implement_plan.md` for reference only.
+- The backup plan remains archived in `Backup_IMPLEMENT_PLAN/25042026_IMPLEMENT_PLAN.md` for reference only.
 
 ---
 
@@ -36,7 +36,7 @@
 |:--|:-----|:------:|:----:|:-------------|
 | 2.1 | Define one reconciliation contract for monthly cash: opening balance, inflow, outflow, net, and month-end balance using `Work Month` only | S | HIGH | Manual comparison between the contract and `buildMonthlyCashFlowRows` / current cash logic |
 | 2.2 | Implement a monthly drilldown model/helper that groups ledger rows into the same month-level totals used by the cash chart | M | HIGH | Target month drilldown totals equal chart monthly totals on fixture data |
-| 2.3 | Update ledger or supporting UI so operators can inspect the exact rows behind a month’s cash movement without creating a competing truth layer | M | HIGH | Manual browser check shows month drilldown matches chart totals and does not alter cash overview logic |
+| 2.3 | Update ledger or supporting UI so operators can inspect the exact rows behind a month's cash movement without creating a competing truth layer | M | HIGH | Manual browser check shows month drilldown matches chart totals and does not alter cash overview logic |
 | 2.4 | Add focused regression tests for reconciliation alignment, including cancelled rows, mixed statuses, and interleaved row order | M | HIGH | `npm.cmd run test:finance` covers new reconciliation paths and passes |
 
 **Milestone complete when**: An operator can inspect any month from the cash surface and get the same monthly numbers in drilldown as in the top-level cash chart.

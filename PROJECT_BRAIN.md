@@ -79,8 +79,9 @@
 - **Last Verified**: 2026-04-25
 - **Current Milestone**: Milestone 2 - Monthly Cash Reconciliation.
 - **Completed**: Dashboard pages, refresh route, local backup/restore flow, settings API/UI, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, and root `IMPLEMENT_PLAN.md` creation.
-- **In Progress**: Monthly cash reconciliation work and any follow-up doc alignment needed for that milestone.
+- **In Progress**: Monthly cash reconciliation work under Milestone 2.
 - **Pending**: Execute the active plan milestone by milestone through the current root `IMPLEMENT_PLAN.md`.
+- **Plan File Convention**: `IMPLEMENT_PLAN.md` in project root is always the active implementation plan. Archived plans belong in `Backup_IMPLEMENT_PLAN/` using the `DDMMYYYY_IMPLEMENT_PLAN.md` naming format, with version suffixes when needed.
 - **Latest Validation**: `npm.cmd run test:finance` passed 25 tests on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned only LF/CRLF warnings and no diff errors.
 
 ## 7. Next Safe Action
@@ -181,12 +182,14 @@ Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentTy
 | 2026-04-19 | Replace old what-if flow with Base/Bull/Bear scenario view | Operator needs simpler decision cases | Scenario logic is explicit in dashboard metrics |
 | 2026-04-24 | Regroup validation into `Critical` / `Management` / `Info` | Operator needs action-oriented severity buckets | Legacy snapshots need normalization support |
 | 2026-04-25 | Add approximate days-to-forecast-zero note without changing runway meaning | Operator wanted day-level timing signal | Cash runway stays monthly, timing note stays approximate |
+| 2026-04-25 | Standardize implementation plan storage | The root plan must stay current and old plans must not be lost | `IMPLEMENT_PLAN.md` is the active plan, and archived plans live in `Backup_IMPLEMENT_PLAN/` |
 
 ## 14. Document Map
 | Document | Purpose | Location |
 |:---------|:--------|:---------|
 | PROJECT_BRAIN.md | Single source of truth | `PROJECT_BRAIN.md` |
 | IMPLEMENT_PLAN.md | Milestone execution plan | `IMPLEMENT_PLAN.md` |
+| Backup_IMPLEMENT_PLAN/ | Archive of older implementation plans | `Backup_IMPLEMENT_PLAN/` |
 | AGENTS.md | AI agent behavioral guidelines | `D:/Fogust/Workspace/Document/Prompt/AGENTS.md` |
 | README.md | Repo entry point and operating model summary | `README.md` |
 | OPERATOR_MANUAL.md | Day-to-day operation and recovery guidance | `OPERATOR_MANUAL.md` |
