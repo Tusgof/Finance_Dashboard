@@ -26,6 +26,7 @@ const VALID_ENTITIES: NonNullable<Transaction['entity']>[] = [
 
 const VALID_STATUS_VALUES: TransactionStatus[] = ['Actual', 'Committed', 'Forecast', 'Cancelled'];
 const VALID_MAIN_CATEGORIES: NonNullable<Transaction['mainCategory']>[] = ['Revenue', 'COGS', 'OpEx', 'CapEx'];
+const VALID_COST_BEHAVIOR_VALUES: NonNullable<Transaction['costBehavior']>[] = ['Fixed', 'Variable'];
 
 const CAPEX_KEYWORDS = ['capex', 'capital', 'asset', 'equipment', 'อุปกรณ์', 'ลงทุน'];
 const MARKETING_KEYWORDS = ['marketing', 'ads', 'facebook', 'meta', 'tiktok', 'โฆษณา'];
@@ -158,7 +159,7 @@ function normalizeValidationLevel(value: unknown): ValidationIssue['level'] {
 
 function normalizeLegacyValidationLevel(code: string, fallback: ValidationIssue['level']): ValidationIssue['level'] {
   if (code === 'unsupported-date') return 'info';
-  if (code === 'missing-work-month' || code === 'invalid-amount') return 'critical';
+  if (code === 'missing-work-month' || code === 'invalid-work-month' || code === 'invalid-amount') return 'critical';
   return fallback;
 }
 
@@ -249,14 +250,11 @@ function normalizeCostBehavior(
   value: unknown,
   mainCategory: Transaction['mainCategory'],
   text: string
-): Transaction['costBehavior'] {
+): Transaction['costBehavior'] | undefined {
   const explicit = normalizeKey(normalizeText(value));
   if (explicit === 'fixed') return 'Fixed';
   if (explicit === 'variable') return 'Variable';
-  if (mainCategory === 'COGS' || containsAny(text, ['production', 'video', 'ตัดต่อ', 'เขียนบท', 'กราฟิก', 'พากย์', 'ฟุตเทจ'])) {
-    return 'Variable';
-  }
-  return 'Fixed';
+  return undefined;
 }
 
 function normalizeValidationReport(value: unknown): ValidationReport | undefined {
@@ -387,19 +385,27 @@ function buildTransactionValidationIssues(
     });
   }
 
-  if (!workMonthRaw || !isCanonicalMonth(normalizeMonth(workMonthRaw))) {
+  const normalizedWorkMonth = normalizeMonth(workMonthRaw);
+  if (!workMonthRaw) {
     pushValidationIssue(issues, {
       code: 'missing-work-month',
       level: 'critical',
-      message: `Row ${rowIndex}: Work Month is missing or not normalized to YYYY-MM.`,
+      message: `Row ${rowIndex}: Work Month is missing. Enter the month as YYYY-MM.`,
       rowIndex,
       field: 'Work Month',
-      value: workMonthRaw || undefined,
+    });
+  } else if (!isCanonicalMonth(normalizedWorkMonth) || workMonthRaw !== normalizedWorkMonth) {
+    pushValidationIssue(issues, {
+      code: 'invalid-work-month',
+      level: 'critical',
+      message: `Row ${rowIndex}: Work Month "${workMonthRaw}" must be entered as YYYY-MM.`,
+      rowIndex,
+      field: 'Work Month',
+      value: workMonthRaw,
     });
   }
 
-  const normalizedStatus = normalizeKey(statusRaw);
-  if (!normalizedStatus || !VALID_STATUS_VALUES.some(status => normalizeKey(status) === normalizedStatus)) {
+  if (!statusRaw || !VALID_STATUS_VALUES.includes(statusRaw as TransactionStatus)) {
     pushValidationIssue(issues, {
       code: 'invalid-status',
       level: 'management',
@@ -410,8 +416,7 @@ function buildTransactionValidationIssues(
     });
   }
 
-  const canonicalMainCategoryValue = canonicalMainCategory(mainCategoryRaw);
-  if (!canonicalMainCategoryValue || !VALID_MAIN_CATEGORIES.includes(canonicalMainCategoryValue)) {
+  if (!mainCategoryRaw || !VALID_MAIN_CATEGORIES.includes(mainCategoryRaw as NonNullable<Transaction['mainCategory']>)) {
     pushValidationIssue(issues, {
       code: 'invalid-main-category',
       level: 'management',
@@ -426,9 +431,18 @@ function buildTransactionValidationIssues(
     pushValidationIssue(issues, {
       code: 'missing-cost-behavior',
       level: 'management',
-      message: `Row ${rowIndex}: Outflow rows should include a Cost Behavior before inference is used.`,
+      message: `Row ${rowIndex}: Outflow rows should include a canonical Cost Behavior of Fixed or Variable.`,
       rowIndex,
       field: 'Cost Behavior',
+    });
+  } else if (normalized.type === 'Outflow' && !VALID_COST_BEHAVIOR_VALUES.includes(costBehaviorRaw as NonNullable<Transaction['costBehavior']>)) {
+    pushValidationIssue(issues, {
+      code: 'invalid-cost-behavior',
+      level: 'management',
+      message: `Row ${rowIndex}: Cost Behavior "${costBehaviorRaw}" should be Fixed or Variable.`,
+      rowIndex,
+      field: 'Cost Behavior',
+      value: costBehaviorRaw || undefined,
     });
   }
 
@@ -458,7 +472,7 @@ function buildTransactionValidationIssues(
   if (originalForecastText && !Number.isFinite(parseNumber(originalForecastRaw, NaN))) {
     pushValidationIssue(issues, {
       code: 'invalid-original-forecast',
-      level: 'management',
+      level: 'info',
       message: `Row ${rowIndex}: Original Forecast "${originalForecastText}" is not a valid numeric value.`,
       rowIndex,
       field: 'Original Forecast',
@@ -709,6 +723,10 @@ export function normalizeTransactionRow(
   const date = normalizeDate(dueDateRaw || dateRaw);
   const dueDate = normalizeDate(dueDateRaw);
   const workMonth = normalizeMonth(workMonthRaw || dueDate || date);
+  const parsedOriginalForecast =
+    originalForecastRaw === undefined || originalForecastRaw === null || normalizeText(originalForecastRaw) === ''
+      ? undefined
+      : parseNumber(originalForecastRaw, NaN);
 
   return {
     date,
@@ -723,9 +741,7 @@ export function normalizeTransactionRow(
     desc: description,
     description,
     amount: parseNumber(amountRaw),
-    originalForecast: originalForecastRaw === undefined || originalForecastRaw === null || normalizeText(originalForecastRaw) === ''
-      ? undefined
-      : parseNumber(originalForecastRaw),
+    originalForecast: Number.isFinite(parsedOriginalForecast) ? parsedOriginalForecast : undefined,
     person: normalizeText(personRaw),
     costBehavior,
     sponsor: normalizeText(sponsorRaw),

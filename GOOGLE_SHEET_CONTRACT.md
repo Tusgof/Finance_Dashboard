@@ -54,18 +54,18 @@ Required fields for the active sheet contract:
 | Field | Required | Accepted parser aliases | Meaning |
 | --- | --- | --- | --- |
 | `Date` | Yes | `Date`, `date` | Transaction timing and audit date. |
-| `Work Month` | Yes | `Work Month`, `workMonth`, `work month`, `Month`, `month`, `Month-Year`, `month-year` | Monthly grouping key for cash views and scenarios. |
+| `Work Month` | Yes | `Work Month`, `workMonth`, `work month`, `Month`, `month`, `Month-Year`, `month-year` | Monthly grouping key for cash views and scenarios. Enter canonical `YYYY-MM` values. |
 | `Type` | Yes | `Type`, `type` | Cash direction. `Inflow` or `Outflow`. |
-| `Main Category` | Yes | `Main Category`, `mainCategory`, `main category`, `Category`, `category` | Revenue, COGS, OpEx, or CapEx. |
+| `Main Category` | Yes | `Main Category`, `mainCategory`, `main category`, `Category`, `category` | Revenue, COGS, OpEx, or CapEx. Enter the canonical category text. |
 | `Description` | Yes | `Description`, `description`, `Desc`, `desc` | Human-readable row label. |
 | `Amount` | Yes | `Amount`, `amount` | Absolute amount. Direction comes from `Type`, not from sign. |
-| `Status` | Yes | `Status`, `status` | `Actual`, `Committed`, `Forecast`, or `Cancelled`. |
+| `Status` | Yes | `Status`, `status` | `Actual`, `Committed`, `Forecast`, or `Cancelled`. Enter the canonical status text. |
 | `Sub Category` | No | `Sub Category`, `subCategory`, `sub category` | Optional detail label. |
-| `Original Forecast` | No | `Original Forecast`, `originalForecast`, `original forecast` | Optional legacy forecast anchor used for forecast accuracy only. |
+| `Original Forecast` | No | `Original Forecast`, `originalForecast`, `original forecast` | Optional legacy forecast anchor used for forecast accuracy only. Invalid nonblank values are treated as cleanup work, not as real forecasts. |
 | `Running Balance` | No | `Balance`, `balance`, `Running Balance`, `running balance` | Compatibility field only. The dashboard recomputes running balance. |
 | `Note` | No | `Note`, `note` | Free-form note. |
 | `Person` | No | `Person`, `person` | Required by validation when the row is a people-cost outflow. |
-| `Cost Behavior` | No | `Cost Behavior`, `costBehavior`, `cost behavior` | Required by validation for outflow rows before inference. |
+| `Cost Behavior` | No | `Cost Behavior`, `costBehavior`, `cost behavior` | Required by validation for outflow rows. Enter `Fixed` or `Variable`. |
 | `Sponsor` | No | `Sponsor`, `sponsor` | Required by validation for revenue rows. |
 
 Business rules for this tab:
@@ -73,8 +73,9 @@ Business rules for this tab:
 - `Cancelled` rows must not affect calculations.
 - `Type` determines cash sign and calculation direction.
 - `Main Category` drives KPI grouping and support-sheet checks.
+- `Work Month`, `Status`, `Main Category`, and `Cost Behavior` should be entered in canonical sheet values even when parser aliases can recover older forms.
 - `Original Forecast` is optional and should not block current dashboard use.
-- Nonblank invalid `Original Forecast` values trigger an info issue and still normalize through the existing numeric parser, so they should be corrected before relying on Forecast Accuracy.
+- Nonblank invalid `Original Forecast` values trigger an info issue and are ignored for forecast calculations until they are corrected.
 - `Running Balance` is not the authoritative month-end truth.
 
 ### Monthly Production Summary
@@ -181,6 +182,7 @@ Current issue codes visible in `lib/transactionModel.ts`:
 
 - `unsupported-date`
 - `missing-work-month`
+- `invalid-work-month`
 - `invalid-amount`
 
 Management-related:
@@ -188,6 +190,7 @@ Management-related:
 - `invalid-status`
 - `invalid-main-category`
 - `missing-cost-behavior`
+- `invalid-cost-behavior`
 - `missing-sponsor`
 - `missing-person`
 - `missing-production-summary`

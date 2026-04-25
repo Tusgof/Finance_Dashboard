@@ -28,13 +28,13 @@ Fill these fields consistently. They matter most for refresh, charting, and warn
 | `Date` | Actual transaction date for audit. |
 | `Due Date` | Due date for payment or receipt, if needed. |
 | `Work Month` | The month the row should count in reports. Use `YYYY-MM`, for example `2026-04`. |
-| `Status` | Use `Actual`, `Committed`, `Forecast`, or `Cancelled`. |
-| `Main Category` | Use `Revenue`, `COGS`, `OpEx`, or `CapEx`. |
+| `Status` | Use the canonical values `Actual`, `Committed`, `Forecast`, or `Cancelled`. |
+| `Main Category` | Use the canonical values `Revenue`, `COGS`, `OpEx`, or `CapEx`. |
 | `Amount` | Enter a positive number for the row value. Inflow / outflow direction comes from the row type, not from a negative sign. |
-| `Cost Behavior` | Fill this on outflow rows and keep the wording consistent with team usage. |
+| `Cost Behavior` | Fill this on outflow rows using the canonical values `Fixed` or `Variable`. |
 | `Sponsor` | Enter the sponsor or source name for revenue rows. Important for revenue view and sponsor pipeline. |
 | `Person` | Enter the person name for staff cost or payroll-related rows. |
-| `Original Forecast` | Keep the original forecast when a row becomes `Actual` if you want forecast accuracy and variance. |
+| `Original Forecast` | Keep the original forecast when a row becomes `Actual` if you want forecast accuracy and variance. Invalid nonblank values are ignored rather than treated as `0`. |
 
 Useful supporting fields:
 
@@ -135,9 +135,10 @@ Common fixes:
 
 - Missing or unnormalized `Work Month` -> fill `YYYY-MM`.
 - Unsupported `Date` or `Due Date` -> use a supported date format.
-- Invalid `Status` -> use only the allowed values.
-- Invalid `Main Category` -> use only the allowed values.
-- Missing `Cost Behavior` on outflow rows -> fill it before relying on the result.
+- Invalid `Status` -> use only the canonical allowed values.
+- Invalid `Main Category` -> use only the canonical allowed values.
+- Missing or invalid `Cost Behavior` on outflow rows -> fill `Fixed` or `Variable` before relying on the result.
+- Invalid `Original Forecast` -> correct the number or leave it blank until you have the original value.
 
 Treat warnings as sheet cleanup tasks, not dashboard bugs.
 

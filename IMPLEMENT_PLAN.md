@@ -88,6 +88,14 @@
 
 ---
 
+## Milestone 4 Completion Record
+- Tightened transaction validation so canonical `Work Month`, `Status`, `Main Category`, and `Cost Behavior` values are checked explicitly instead of being treated as silently acceptable input.
+- Added explicit issue codes for `invalid-work-month` and `invalid-cost-behavior` while keeping sheet meaning unchanged.
+- Changed invalid nonblank `Original Forecast` handling so the parser drops the unusable value instead of normalizing it to `0`.
+- Updated focused regression tests and the active Google Sheet contract to match the stricter field discipline.
+
+---
+
 ## Milestone 5: Release Gate And Maintenance Baseline
 **Goal**: Close the roadmap with a repeatable maintenance baseline for future feature batches.
 **Dependencies**: Milestones 2, 3, and 4

@@ -77,18 +77,18 @@
 
 ## 6. Current Verified State
 - **Last Verified**: 2026-04-25
-- **Current Milestone**: Milestone 4 - Critical Sheet Discipline Hardening.
-- **Completed**: Dashboard pages, refresh route, local backup/restore flow, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, root `IMPLEMENT_PLAN.md` creation, monthly cash reconciliation drilldown tied to chart cash truth, and lean settings trimming so only refresh, cash-signal, and bull-scenario controls stay exposed.
-- **In Progress**: None. Milestones 2 and 3 are complete and Milestone 4 has not started yet.
-- **Pending**: Start Milestone 4 from the active root `IMPLEMENT_PLAN.md`.
+- **Current Milestone**: Milestone 5 - Release Gate And Maintenance Baseline.
+- **Completed**: Dashboard pages, refresh route, local backup/restore flow, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, root `IMPLEMENT_PLAN.md` creation, monthly cash reconciliation drilldown tied to chart cash truth, lean settings trimming so only refresh, cash-signal, and bull-scenario controls stay exposed, and stricter critical-field discipline for `Work Month`, `Status`, `Main Category`, `Cost Behavior`, and `Original Forecast`.
+- **In Progress**: None. Milestones 2, 3, and 4 are complete and Milestone 5 has not started yet.
+- **Pending**: Start Milestone 5 from the active root `IMPLEMENT_PLAN.md`.
 - **Plan File Convention**: `IMPLEMENT_PLAN.md` in project root is always the active implementation plan. Archived plans belong in `Backup_IMPLEMENT_PLAN/` using the `DDMMYYYY_IMPLEMENT_PLAN.md` naming format, with version suffixes when needed.
-- **Latest Validation**: `npm.cmd run test:finance` passed 28 tests on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned only LF/CRLF warnings and no diff errors.
+- **Latest Validation**: `npm.cmd run test:finance` passed 29 tests on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned only LF/CRLF warnings and no diff errors.
 
 ## 7. Next Safe Action
-- **Action**: Start Milestone 4 - Critical Sheet Discipline Hardening using the active root `IMPLEMENT_PLAN.md`.
-- **Preconditions**: Milestones 2 and 3 remain verified and no sheet schema meaning change is required.
-- **Stop If**: Tightening field discipline would require a schema redesign or change business meaning without owner approval.
-- **Verify With**: Confirm validation and operator guidance get stricter on critical fields without breaking current refresh, cash truth, or support-sheet behavior.
+- **Action**: Start Milestone 5 - Release Gate And Maintenance Baseline using the active root `IMPLEMENT_PLAN.md`.
+- **Preconditions**: Milestones 2, 3, and 4 remain verified and core docs reflect the shipped behavior.
+- **Stop If**: Release-gate work uncovers a regression in cash truth, scenario outputs, or sheet contract behavior.
+- **Verify With**: Run the full verification pass and confirm docs, validation behavior, and operator steps match the shipped implementation.
 
 ## 8. Invariants & Guardrails
 ### Never:
@@ -185,6 +185,7 @@ Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentTy
 | 2026-04-25 | Standardize implementation plan storage | The root plan must stay current and old plans must not be lost | `IMPLEMENT_PLAN.md` is the active plan, and archived plans live in `Backup_IMPLEMENT_PLAN/` |
 | 2026-04-25 | Keep monthly reconciliation on full-snapshot truth, not ledger scope filters | Ledger filtering is for audit convenience only | Month drilldown stays aligned with the top-level cash chart |
 | 2026-04-25 | Trim settings UI to refresh, cash-signal, and bull-scenario controls | The project direction is a lean cash-survival dashboard | Nonessential settings remain in saved schema but are no longer exposed in the browser |
+| 2026-04-25 | Tighten canonical field validation without changing sheet meaning | Important fields should surface cleanup work instead of relying on silent recovery | Invalid `Work Month` and `Cost Behavior` now have explicit issue codes, and invalid `Original Forecast` values are ignored rather than normalized to zero |
 
 ## 14. Document Map
 | Document | Purpose | Location |

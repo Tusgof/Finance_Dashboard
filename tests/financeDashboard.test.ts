@@ -239,8 +239,30 @@ const tests: Array<[string, () => void]> = [
   assert.ok(report.managementIssues.some(issue => issue.code === 'invalid-status'));
   assert.ok(report.managementIssues.some(issue => issue.code === 'invalid-main-category'));
   assert.ok(report.managementIssues.some(issue => issue.code === 'missing-cost-behavior'));
-  assert.ok(report.managementIssues.some(issue => issue.code === 'invalid-original-forecast'));
-  assert.equal(report.infoIssues.length, 0);
+  assert.ok(report.infoIssues.some(issue => issue.code === 'invalid-original-forecast'));
+    },
+  ],
+  [
+    'parser flags canonical sheet fields when compatibility fallbacks would otherwise recover them',
+    () => {
+  const csv = [
+    'Date,Work Month,Type,Main Category,Description,Amount,Status,Cost Behavior,Original Forecast',
+    '2026-01-02,Jan 2026,Outflow,income,Salary payment,250,actual,fixed cost,not-a-number',
+  ].join('\n');
+
+  const parsed = parseTransactionCsv(csv, DEFAULT_DASHBOARD_SETTINGS);
+  const codes = issueCodes(parsed.rowIssues);
+
+  assert.ok(codes.includes('invalid-work-month'));
+  assert.ok(codes.includes('invalid-status'));
+  assert.ok(codes.includes('invalid-main-category'));
+  assert.ok(codes.includes('invalid-cost-behavior'));
+  assert.ok(codes.includes('invalid-original-forecast'));
+  assert.equal(parsed.dataFile.rawData[0].workMonth, '2026-01');
+  assert.equal(parsed.dataFile.rawData[0].status, 'Actual');
+  assert.equal(parsed.dataFile.rawData[0].mainCategory, 'Revenue');
+  assert.equal(parsed.dataFile.rawData[0].costBehavior, undefined);
+  assert.equal(parsed.dataFile.rawData[0].originalForecast, undefined);
     },
   ],
   [
@@ -298,7 +320,7 @@ const tests: Array<[string, () => void]> = [
 
   assert.ok(codes.includes('invalid-original-forecast'));
   assert.equal(codes.filter(code => code === 'invalid-original-forecast').length, 1);
-  assert.equal(parsed.dataFile.rawData[0].originalForecast, 0);
+  assert.equal(parsed.dataFile.rawData[0].originalForecast, undefined);
   assert.equal(parsed.dataFile.rawData[1].originalForecast, undefined);
   assert.equal(parsed.dataFile.rawData[2].originalForecast, 1200);
     },
