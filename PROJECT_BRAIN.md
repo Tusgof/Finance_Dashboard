@@ -77,18 +77,18 @@
 
 ## 6. Current Verified State
 - **Last Verified**: 2026-04-25
-- **Current Milestone**: Milestone 5 - Release Gate And Maintenance Baseline.
-- **Completed**: Dashboard pages, refresh route, local backup/restore flow, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, root `IMPLEMENT_PLAN.md` creation, monthly cash reconciliation drilldown tied to chart cash truth, lean settings trimming so only refresh, cash-signal, and bull-scenario controls stay exposed, and stricter critical-field discipline for `Work Month`, `Status`, `Main Category`, `Cost Behavior`, and `Original Forecast`.
-- **In Progress**: None. Milestones 2, 3, and 4 are complete and Milestone 5 has not started yet.
-- **Pending**: Start Milestone 5 from the active root `IMPLEMENT_PLAN.md`.
+- **Current Milestone**: Milestone 5 - Release Gate And Maintenance Baseline (complete).
+- **Completed**: Dashboard pages, refresh route, local backup/restore flow, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, root `IMPLEMENT_PLAN.md` creation, monthly cash reconciliation drilldown tied to chart cash truth, lean settings trimming so only refresh, cash-signal, and bull-scenario controls stay exposed, stricter critical-field discipline for `Work Month`, `Status`, `Main Category`, `Cost Behavior`, and `Original Forecast`, and the Milestone 5 release-gate closeout.
+- **In Progress**: None. Milestones 2, 3, 4, and 5 are complete.
+- **Pending**: None. Future work starts only at the next gated decision point in the active root `IMPLEMENT_PLAN.md`.
 - **Plan File Convention**: `IMPLEMENT_PLAN.md` in project root is always the active implementation plan. Archived plans belong in `Backup_IMPLEMENT_PLAN/` using the `DDMMYYYY_IMPLEMENT_PLAN.md` naming format, with version suffixes when needed.
-- **Latest Validation**: `npm.cmd run test:finance` passed 29 tests on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned only LF/CRLF warnings and no diff errors.
+- **Latest Validation**: `npm.cmd run test:finance` passed on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned LF/CRLF warnings only and no diff errors on 2026-04-25.
 
 ## 7. Next Safe Action
-- **Action**: Start Milestone 5 - Release Gate And Maintenance Baseline using the active root `IMPLEMENT_PLAN.md`.
+- **Action**: Hold the stable maintenance baseline; the next safe action for new work is the next gated decision point in the active root `IMPLEMENT_PLAN.md`.
 - **Preconditions**: Milestones 2, 3, and 4 remain verified and core docs reflect the shipped behavior.
-- **Stop If**: Release-gate work uncovers a regression in cash truth, scenario outputs, or sheet contract behavior.
-- **Verify With**: Run the full verification pass and confirm docs, validation behavior, and operator steps match the shipped implementation.
+- **Stop If**: Future work would bypass the gated decision process or weaken cash truth, scenario outputs, or sheet contract behavior.
+- **Verify With**: Confirm the next planned change is explicitly approved at the next gate and the baseline still matches the shipped implementation.
 
 ## 8. Invariants & Guardrails
 ### Never:

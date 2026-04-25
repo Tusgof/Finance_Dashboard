@@ -2,7 +2,7 @@
 
 ## Overview
 - **Start state**: The dashboard is already in production-ready maintenance mode with passing finance tests/build, stable local refresh and restore behavior, stateless Vercel refresh behavior, and decision-grade cash/scenario foundations. The active root-level plan now exists; the main remaining gaps are incomplete monthly reconciliation flow, settings scope that should be trimmed, and the need for stronger field discipline on critical Google Sheet inputs.
-- **End state**: The project has an active root-level implementation plan, synchronized docs, a monthly drilldown/reconciliation path aligned with cash truth, lean settings limited to decision-grade behavior, stronger operator discipline on critical sheet fields, and a verified maintenance baseline where cash/scenario remain decision-grade and supporting surfaces remain operator-grade without distorting decisions.
+- **End state**: The project has an active root-level implementation plan, synchronized docs, a monthly drilldown/reconciliation path aligned with cash truth, lean settings limited to decision-grade behavior, stronger operator discipline on critical sheet fields, and a verified maintenance baseline where cash/scenario remain decision-grade and supporting surfaces remain operator-grade without distorting decisions. Milestone 5 closes the roadmap, and future work enters only at the next gated decision point.
 - **Total milestones**: 5
 - **Estimated total effort**: L
 
@@ -108,6 +108,12 @@
 | 5.4 | Record the next gated decision points for future work so new feature requests do not bypass the orchestrator-worker and verification model | S | LOW | Active plan and brain both show the next gated decision points |
 
 **Milestone complete when**: The repo has a stable post-change maintenance baseline with aligned docs, passing verification, and a clear handoff point for the next feature batch.
+
+## Milestone 5 Completion Record
+- Ran the release-gate verification pass: `npm.cmd run test:finance`, `npm.cmd run build`, and `git diff --check`.
+- Marked Milestone 5 complete in `PROJECT_BRAIN.md` and aligned the next safe action with the next gated decision point.
+- Updated `OPERATOR_MANUAL.md` with the final monthly reconciliation and validation workflow used for closeout.
+- Confirmed the repo remains at the stable maintenance baseline established by Milestones 2, 3, and 4.
 
 ---
 

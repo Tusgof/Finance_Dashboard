@@ -72,20 +72,22 @@ How to interpret it:
 - Negative monthly net means cash decreased that month.
 - If the balance drops below zero, it is a real cash warning for the operating model.
 
-## How To Read Monthly Reconciliation
+## Monthly Reconciliation Workflow
 
 `Monthly Cash Reconciliation` on the ledger page is tied to the same monthly cash truth as the cash chart.
 
-- It always uses the full snapshot, not the ledger scope buttons.
-- It shows `Opening`, `Inflow`, `Outflow`, `Net`, and `Closing` for one selected `Work Month`.
-- The transaction list below it shows the exact active rows behind that month.
-- `Cancelled` rows do not appear in the reconciliation totals or month drilldown rows.
+1. Refresh the dashboard from the latest Google Sheet snapshot.
+2. Select the target `Work Month`.
+3. Compare `Opening`, `Inflow`, `Outflow`, `Net`, and `Closing` to the cash chart for that month.
+4. Review the transaction list below it for the exact active rows behind that month.
+5. Confirm `Cancelled` rows are excluded from both the reconciliation totals and the month drilldown rows.
 
 Use it when:
 
 - the chart balance looks surprising,
 - you need to explain one month from row level,
-- or you want to verify that a sheet edit landed in the expected month.
+- you want to verify that a sheet edit landed in the expected month,
+- or you are closing the month and need the row-level totals to match the chart.
 
 The ledger scope buttons still affect the lower ledger table only. They do not redefine cash truth.
 
@@ -127,8 +129,8 @@ For the charts and scenario, `Work Month` is the monthly basis. If these two fie
 
 Warnings are grouped as `Critical`, `Management`, and `Info`.
 
-- `Critical` means the data should not be used for management decisions yet.
-- `Management` means the page can still load, but the number needs cleanup before relying on it.
+- `Critical` means the data should not be used for management decisions yet and the month is not closed.
+- `Management` means the page can still load, but the number needs cleanup before trusting it for month closeout.
 - `Info` is informational and does not block the page.
 
 Common fixes:
@@ -140,7 +142,7 @@ Common fixes:
 - Missing or invalid `Cost Behavior` on outflow rows -> fill `Fixed` or `Variable` before relying on the result.
 - Invalid `Original Forecast` -> correct the number or leave it blank until you have the original value.
 
-Treat warnings as sheet cleanup tasks, not dashboard bugs.
+Treat warnings as sheet cleanup tasks, not dashboard bugs. For month closeout, clear `Critical` issues first and explain or clean up `Management` issues before treating the month as settled.
 
 ## Settings Boundary
 
@@ -154,12 +156,12 @@ Editable controls are limited to:
 
 Revenue mappings, keyword editors, broader threshold tuning, and other nonessential controls are not exposed in the browser. This is deliberate. The project is keeping settings focused on inputs that change live cash or scenario behavior.
 
-## Release / Verification Checklist
+## Final Monthly Closeout Checklist
 
-Before handing off a change or refreshing production data:
+Before handing off a change or closing the month:
 
 1. Refresh the Google Sheet data.
-2. Check the live deployment after Vercel finishes.
+2. Check `Monthly Cash Reconciliation` against `Cash Flow & Running Balance` for the latest closed `Work Month`.
 3. Open the dashboard and check validation warnings.
 4. Confirm Cash Flow and Scenario still make sense for the latest month.
 5. Run `npm.cmd run test:finance`.
