@@ -234,6 +234,16 @@ export interface MonthlyCashFlowRow {
   balance: number;
 }
 
+export interface MonthlyCashReconciliationRow {
+  month: string;
+  openingBalance: number;
+  inflow: number;
+  outflow: number;
+  net: number;
+  closingBalance: number;
+  rows: NormalizedTransaction[];
+}
+
 export interface ScenarioProjectionRow {
   month: string;
   actualBalance: number | null;
@@ -387,6 +397,25 @@ export function buildMonthlyCashFlowRows(
     inflow: inflows[index],
     outflow: outflows[index],
     balance: balances[index],
+  }));
+}
+
+export function buildMonthlyCashReconciliationRows(
+  data: NormalizedTransaction[],
+  openingBalance: number
+): MonthlyCashReconciliationRow[] {
+  const cashFlowRows = buildMonthlyCashFlowRows(data, openingBalance);
+  const activeRows = data.filter(row => row.status !== 'Cancelled');
+  const rowsByMonth = groupByMonth(activeRows);
+
+  return cashFlowRows.map((row, index) => ({
+    month: row.month,
+    openingBalance: index === 0 ? openingBalance : cashFlowRows[index - 1].balance,
+    inflow: row.inflow,
+    outflow: row.outflow,
+    net: row.inflow - row.outflow,
+    closingBalance: row.balance,
+    rows: (rowsByMonth[row.month] ?? []).slice().sort((a, b) => a.date.localeCompare(b.date) || a.description.localeCompare(b.description)),
   }));
 }
 

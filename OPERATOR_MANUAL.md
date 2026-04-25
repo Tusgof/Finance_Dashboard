@@ -72,6 +72,23 @@ How to interpret it:
 - Negative monthly net means cash decreased that month.
 - If the balance drops below zero, it is a real cash warning for the operating model.
 
+## How To Read Monthly Reconciliation
+
+`Monthly Cash Reconciliation` on the ledger page is tied to the same monthly cash truth as the cash chart.
+
+- It always uses the full snapshot, not the ledger scope buttons.
+- It shows `Opening`, `Inflow`, `Outflow`, `Net`, and `Closing` for one selected `Work Month`.
+- The transaction list below it shows the exact active rows behind that month.
+- `Cancelled` rows do not appear in the reconciliation totals or month drilldown rows.
+
+Use it when:
+
+- the chart balance looks surprising,
+- you need to explain one month from row level,
+- or you want to verify that a sheet edit landed in the expected month.
+
+The ledger scope buttons still affect the lower ledger table only. They do not redefine cash truth.
+
 ## Cash Runway Note
 
 The cash summary now shows one extra timing note beside `Cash Runway`.
@@ -123,6 +140,18 @@ Common fixes:
 - Missing `Cost Behavior` on outflow rows -> fill it before relying on the result.
 
 Treat warnings as sheet cleanup tasks, not dashboard bugs.
+
+## Settings Boundary
+
+The settings page is intentionally lean.
+
+Editable controls are limited to:
+
+- refresh source,
+- cash signal thresholds,
+- bull scenario inputs.
+
+Revenue mappings, keyword editors, broader threshold tuning, and other nonessential controls are not exposed in the browser. This is deliberate. The project is keeping settings focused on inputs that change live cash or scenario behavior.
 
 ## Release / Verification Checklist
 

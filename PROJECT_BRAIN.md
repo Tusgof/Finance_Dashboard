@@ -77,18 +77,18 @@
 
 ## 6. Current Verified State
 - **Last Verified**: 2026-04-25
-- **Current Milestone**: Milestone 2 - Monthly Cash Reconciliation.
-- **Completed**: Dashboard pages, refresh route, local backup/restore flow, settings API/UI, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, and root `IMPLEMENT_PLAN.md` creation.
-- **In Progress**: Monthly cash reconciliation work under Milestone 2.
-- **Pending**: Execute the active plan milestone by milestone through the current root `IMPLEMENT_PLAN.md`.
+- **Current Milestone**: Milestone 4 - Critical Sheet Discipline Hardening.
+- **Completed**: Dashboard pages, refresh route, local backup/restore flow, validation grouping, scenario charting, finance regression tests, README, operator manual, Google Sheet contract doc, this `PROJECT_BRAIN.md` rewrite to the 17-section operating template, root `IMPLEMENT_PLAN.md` creation, monthly cash reconciliation drilldown tied to chart cash truth, and lean settings trimming so only refresh, cash-signal, and bull-scenario controls stay exposed.
+- **In Progress**: None. Milestones 2 and 3 are complete and Milestone 4 has not started yet.
+- **Pending**: Start Milestone 4 from the active root `IMPLEMENT_PLAN.md`.
 - **Plan File Convention**: `IMPLEMENT_PLAN.md` in project root is always the active implementation plan. Archived plans belong in `Backup_IMPLEMENT_PLAN/` using the `DDMMYYYY_IMPLEMENT_PLAN.md` naming format, with version suffixes when needed.
-- **Latest Validation**: `npm.cmd run test:finance` passed 25 tests on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned only LF/CRLF warnings and no diff errors.
+- **Latest Validation**: `npm.cmd run test:finance` passed 28 tests on 2026-04-25; `npm.cmd run build` passed on 2026-04-25; `git diff --check` returned only LF/CRLF warnings and no diff errors.
 
 ## 7. Next Safe Action
-- **Action**: Start Milestone 2 - Monthly Cash Reconciliation using the active root `IMPLEMENT_PLAN.md`.
-- **Preconditions**: `IMPLEMENT_PLAN.md` exists in repo root and the doc sync from Milestone 1 is complete.
-- **Stop If**: The reconciliation path would create a competing cash truth or require a sheet schema change.
-- **Verify With**: Confirm monthly drilldown/reconciliation matches the same month-end cash truth as the top-level cash surface.
+- **Action**: Start Milestone 4 - Critical Sheet Discipline Hardening using the active root `IMPLEMENT_PLAN.md`.
+- **Preconditions**: Milestones 2 and 3 remain verified and no sheet schema meaning change is required.
+- **Stop If**: Tightening field discipline would require a schema redesign or change business meaning without owner approval.
+- **Verify With**: Confirm validation and operator guidance get stricter on critical fields without breaking current refresh, cash truth, or support-sheet behavior.
 
 ## 8. Invariants & Guardrails
 ### Never:
@@ -183,6 +183,8 @@ Invoke-WebRequest -Uri http://localhost:3011/api/restore -Method POST -ContentTy
 | 2026-04-24 | Regroup validation into `Critical` / `Management` / `Info` | Operator needs action-oriented severity buckets | Legacy snapshots need normalization support |
 | 2026-04-25 | Add approximate days-to-forecast-zero note without changing runway meaning | Operator wanted day-level timing signal | Cash runway stays monthly, timing note stays approximate |
 | 2026-04-25 | Standardize implementation plan storage | The root plan must stay current and old plans must not be lost | `IMPLEMENT_PLAN.md` is the active plan, and archived plans live in `Backup_IMPLEMENT_PLAN/` |
+| 2026-04-25 | Keep monthly reconciliation on full-snapshot truth, not ledger scope filters | Ledger filtering is for audit convenience only | Month drilldown stays aligned with the top-level cash chart |
+| 2026-04-25 | Trim settings UI to refresh, cash-signal, and bull-scenario controls | The project direction is a lean cash-survival dashboard | Nonessential settings remain in saved schema but are no longer exposed in the browser |
 
 ## 14. Document Map
 | Document | Purpose | Location |

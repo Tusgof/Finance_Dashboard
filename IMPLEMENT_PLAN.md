@@ -43,6 +43,14 @@
 
 ---
 
+## Milestone 2 Completion Record
+- Added a single monthly reconciliation helper in `lib/dashboardMetrics.ts` that derives opening balance, inflow, outflow, net, and closing balance from `buildMonthlyCashFlowRows`.
+- Updated the ledger page to show month drilldown rows behind a selected month while keeping ledger search and paging available.
+- Kept monthly reconciliation tied to the full snapshot so ledger scope filters do not create a competing cash truth.
+- Added focused regression coverage for cancelled rows, mixed statuses, and interleaved row order.
+
+---
+
 ## Milestone 3: Lean Settings And Decision Surface Tightening
 **Goal**: Reduce settings and secondary UI weight so the product stays a lean cash-survival dashboard.
 **Dependencies**: Milestone 1
@@ -55,6 +63,13 @@
 | 3.4 | Update docs to state the lean settings rule clearly so future work does not re-expand configurability by accident | S | LOW | `PROJECT_BRAIN.md` and `OPERATOR_MANUAL.md` reflect the lean settings boundary |
 
 **Milestone complete when**: Settings and supporting UI contain only essential controls for decision-grade behavior, and the first-read experience stays focused on cash survival.
+
+---
+
+## Milestone 3 Completion Record
+- Reduced `app/settings/SettingsClient.tsx` to the controls that still affect live decision-grade behavior: refresh source, cash-signal thresholds, and bull-scenario inputs.
+- Removed nonessential settings surfaces from the browser UI, including revenue mappings, cost keyword editors, broader threshold tuning, unused scenario tuning controls, payload preview, and the backups link.
+- Kept the underlying settings schema and persistence flow unchanged so saved settings remain backwards-compatible.
 
 ---
 

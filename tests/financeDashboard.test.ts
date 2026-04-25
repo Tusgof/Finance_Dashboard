@@ -6,7 +6,7 @@ import path from 'node:path';
 import { DEFAULT_DASHBOARD_SETTINGS } from '../lib/settingsDefaults';
 import { normalizeSettings } from '../lib/settings';
 import { getRestoreUnavailableMessage, isVercelStatelessRuntime, persistRefreshSnapshot, shouldPersistRefreshSnapshot } from '../lib/refreshPersistence';
-import { buildMonthlyCashFlowRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getApproximateBaseForecastZeroCrossing, getCurrentCash, getMonths, msUntilNextLocalMidnight, normalizeTransactions } from '../lib/dashboardMetrics';
+import { buildMonthlyCashFlowRows, buildMonthlyCashReconciliationRows, buildMonthlyPnLRows, buildScenarioProjection, calculateCashRunway, calculateCostPerContent, calculateWeightedPipeline, getApproximateBaseForecastZeroCrossing, getCurrentCash, getMonths, msUntilNextLocalMidnight, normalizeTransactions } from '../lib/dashboardMetrics';
 import { buildLegacySnapshotMeta, createSnapshotMeta, ensureSnapshotMeta } from '../lib/snapshotMeta';
 import { selectSupportSheetRows } from '../lib/supportSheetRefresh';
 import { buildSupportSheetValidationIssues, buildValidationReport, normalizeDataFile, parseTransactionCsv } from '../lib/transactionModel';
@@ -705,6 +705,203 @@ const tests: Array<[string, () => void]> = [
 
   assert.deepEqual(series.map(row => row.month), ['2026-04']);
   assert.equal(series[0]?.balance, 1100);
+    },
+  ],
+  [
+    'monthly reconciliation excludes cancelled rows from month totals and drilldown rows',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-01-02',
+      workMonth: '2026-01',
+      month: '2026-01',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-01-03',
+      workMonth: '2026-01',
+      month: '2026-01',
+      type: 'Outflow',
+      status: 'Cancelled',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 999,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-01-04',
+      workMonth: '2026-01',
+      month: '2026-01',
+      type: 'Outflow',
+      status: 'Actual',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 20,
+      balance: 1080,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const reconciliation = buildMonthlyCashReconciliationRows(normalized, 1000);
+
+  assert.deepEqual(reconciliation.map(row => row.month), ['2026-01']);
+  assert.equal(reconciliation[0]?.openingBalance, 1000);
+  assert.equal(reconciliation[0]?.inflow, 100);
+  assert.equal(reconciliation[0]?.outflow, 20);
+  assert.equal(reconciliation[0]?.net, 80);
+  assert.equal(reconciliation[0]?.closingBalance, 1080);
+  assert.deepEqual(reconciliation[0]?.rows, [normalized[0], normalized[2]]);
+  assert.equal(reconciliation[0]?.rows.some(row => row.status === 'Cancelled'), false);
+    },
+  ],
+  [
+    'monthly reconciliation keeps mixed statuses aligned with the same month cash truth',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-02-01',
+      workMonth: '2026-02',
+      month: '2026-02',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 120,
+      balance: 1120,
+    }),
+    makeRow({
+      date: '2026-02-02',
+      workMonth: '2026-02',
+      month: '2026-02',
+      type: 'Outflow',
+      status: 'Committed',
+      mainCategory: 'COGS',
+      category: 'COGS',
+      amount: 30,
+      balance: 1090,
+    }),
+    makeRow({
+      date: '2026-02-03',
+      workMonth: '2026-02',
+      month: '2026-02',
+      type: 'Outflow',
+      status: 'Forecast',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 10,
+      balance: 1080,
+    }),
+    makeRow({
+      date: '2026-03-01',
+      workMonth: '2026-03',
+      month: '2026-03',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 40,
+      balance: 1120,
+    }),
+    makeRow({
+      date: '2026-03-02',
+      workMonth: '2026-03',
+      month: '2026-03',
+      type: 'Outflow',
+      status: 'Cancelled',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 500,
+      balance: 1120,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const reconciliation = buildMonthlyCashReconciliationRows(normalized, 1000);
+  const cashFlow = buildMonthlyCashFlowRows(normalized, 1000);
+  const february = reconciliation.find(row => row.month === '2026-02');
+
+  assert.equal(february?.openingBalance, 1000);
+  assert.equal(february?.inflow, 120);
+  assert.equal(february?.outflow, 40);
+  assert.equal(february?.net, 80);
+  assert.equal(february?.closingBalance, cashFlow.find(row => row.month === '2026-02')?.balance);
+  assert.equal(february?.rows.length, 3);
+    },
+  ],
+  [
+    'monthly reconciliation stays stable with interleaved row order',
+    () => {
+  const rawRows: RawTransactionRow[] = [
+    makeRow({
+      date: '2026-03-02',
+      workMonth: '2026-03',
+      month: '2026-03',
+      type: 'Outflow',
+      status: 'Actual',
+      mainCategory: 'OpEx',
+      category: 'OpEx',
+      amount: 15,
+      balance: 1185,
+    }),
+    makeRow({
+      date: '2026-01-01',
+      workMonth: '2026-01',
+      month: '2026-01',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 100,
+      balance: 1100,
+    }),
+    makeRow({
+      date: '2026-02-05',
+      workMonth: '2026-02',
+      month: '2026-02',
+      type: 'Outflow',
+      status: 'Actual',
+      mainCategory: 'COGS',
+      category: 'COGS',
+      amount: 30,
+      balance: 1070,
+    }),
+    makeRow({
+      date: '2026-03-01',
+      workMonth: '2026-03',
+      month: '2026-03',
+      type: 'Inflow',
+      status: 'Forecast',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 40,
+      balance: 1225,
+    }),
+    makeRow({
+      date: '2026-02-01',
+      workMonth: '2026-02',
+      month: '2026-02',
+      type: 'Inflow',
+      status: 'Actual',
+      mainCategory: 'Revenue',
+      category: 'Revenue',
+      amount: 50,
+      balance: 1150,
+    }),
+  ];
+
+  const normalized = normalizeTransactions(rawRows, DEFAULT_DASHBOARD_SETTINGS);
+  const shuffled = [normalized[3], normalized[1], normalized[4], normalized[0], normalized[2]];
+  const reconciliation = buildMonthlyCashReconciliationRows(shuffled, 1000);
+
+  assert.deepEqual(reconciliation.map(row => row.month), ['2026-01', '2026-02', '2026-03']);
+  assert.deepEqual(reconciliation[0]?.rows.map(row => row.date), ['2026-01-01']);
+  assert.deepEqual(reconciliation[1]?.rows.map(row => row.date), ['2026-02-01', '2026-02-05']);
+  assert.deepEqual(reconciliation[2]?.rows.map(row => row.date), ['2026-03-01', '2026-03-02']);
     },
   ],
   [
